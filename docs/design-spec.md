@@ -852,12 +852,12 @@ Navigation properties (virtual ICollection or reference properties) are drawn as
 | TrainerAvailability | One weekly time window | Covers(start, minutes) |
 | TrainerAssignment | Client–trainer link with history | IsActive, End(endDate) |
 | Exercise | Exercise library entry with MET value | EstimateCalories(weightKg, minutes) |
-| WorkoutPlan | Client plan or reusable template | CreateCopyForClient(clientId, trainerId, start), GetExercisesFor(day), GetScheduledDays(), Activate(), Archive() |
+| WorkoutPlan | Client plan or reusable template | CreateCopyForClient(clientId, trainerId, start), GetExercisesFor(day), GetScheduledDays(), Activate(), Complete(), Archive() |
 | WorkoutPlanExercise | One prescribed exercise on one weekday | IsValidPrescription() |
-| WorkoutLog | A session the client performed | TotalDurationMinutes, TotalCaloriesBurned, AddEntry(exercise, weightKg, minutes) |
+| WorkoutLog | A session the client performed | TotalDurationMinutes, TotalCaloriesBurned, AddEntry(exercise, weightKg, minutes, sets, reps, loadKg, distanceKm) – the last four optional |
 | WorkoutLogEntry | One exercise done in a session | Data only; calories set by WorkoutLog.AddEntry |
 | FoodItem | Food library entry, nutrition per serving | CaloriesFor(quantity) |
-| DietPlan | Daily targets and scheduled meals | GetMealsFor(day), IsActiveOn(date), Activate() |
+| DietPlan | Daily targets and scheduled meals | GetMealsFor(day), IsActiveOn(date), Activate(), Complete() |
 | DietPlanMeal | One scheduled meal | AppliesTo(day) |
 | MealLog | A meal the client ate | TotalCalories, TotalProteinG, TotalCarbsG, TotalFatG, AddItem(food, quantity) |
 | MealLogItem | One food in a logged meal | Data only; values set by MealLog.AddItem |

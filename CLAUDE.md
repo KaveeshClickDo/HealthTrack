@@ -72,6 +72,7 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 
 ## Identity and security setup (Program.cs)
 
+- Leave `options.Stores.SchemaVersion` at its default. .NET 10's `IdentitySchemaVersions.Version3` adds an AspNetUserPasskeys table, which would be a schema change.
 - Password: at least 8 characters with upper case, lower case, a digit and a symbol; `RequireUniqueEmail = true`; `SignIn.RequireConfirmedAccount = false`; `PasswordHasherOptions.IterationCount = 100_000` (stated explicitly for the report).
 - Lockout: 5 failed attempts → 15 minutes, on for every user; sign-in checks always use `lockoutOnFailure: true`.
 - Login: find the user, `CheckPasswordSignInAsync(user, password, lockoutOnFailure: true)`, and only after the password is right check `user.CanSignIn()` (Pending, Suspended and Deactivated get their own message), then `SignInAsync`. Unknown email and wrong password show the same message. Redirect to `returnUrl` only if `Url.IsLocalUrl(returnUrl)`, otherwise to the role's dashboard.
