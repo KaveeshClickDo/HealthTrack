@@ -15,4 +15,13 @@
             event.preventDefault();
         }
     });
+
+    // Progress bars: data-progress-width="40" sets the width to 40%. Set through the style property rather than a
+    // style attribute in the markup, which a Content-Security-Policy without 'unsafe-inline' styles would block.
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('[data-progress-width]').forEach(function (bar) {
+            var percent = Math.max(0, Math.min(100, Number(bar.getAttribute('data-progress-width')) || 0));
+            bar.style.width = percent + '%';
+        });
+    });
 })();

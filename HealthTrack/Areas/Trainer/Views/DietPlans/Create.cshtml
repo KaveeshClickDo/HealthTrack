@@ -1,0 +1,108 @@
+@model DietPlanViewModel
+@{
+    ViewData["Title"] = "New diet plan";
+    var clients = new SelectList(Model.ClientOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <p><a asp-action="Index">&larr; Diet plans</a></p>
+        <h1 class="h2 mb-4">@(Model.ClientName is null ? "New diet plan" : "New diet plan for " + Model.ClientName)</h1>
+
+        @if (Model.ClientName is null)
+        {
+            @* Choose the client first, so the calorie target can be suggested from their measurements and goal. *@
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    @if (Model.ClientOptions.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No clients are assigned to you yet, so there is nobody to plan for.</p>
+                    }
+                    else
+                    {
+                        <form asp-action="Create" method="get" class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label for="clientId" class="form-label">Client</label>
+                                <select id="clientId" name="clientId" class="form-select" asp-items="clients" required>
+                                    <option value="">Choose a client…</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-grid">
+                                <button type="submit" class="btn btn-primary">Continue</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                        <input asp-for="ClientId" type="hidden" />
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Title" class="form-label"></label>
+                                <input asp-for="Title" class="form-control" placeholder="For example, steady weight loss" />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                                <textarea asp-for="Description" class="form-control" rows="2" placeholder="Guidance for the client"></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="DailyCalorieTarget" class="form-label"></label>
+                                <input asp-for="DailyCalorieTarget" type="number" min="1200" max="5000" step="10" class="form-control" />
+                                <span asp-validation-for="DailyCalorieTarget" class="text-danger small"></span>
+                                <partial name="_PlanTargets" model="Model.SuggestedCalorieTarget" />
+                            </div>
+                            <div class="col-md-6">
+                                <span class="form-label d-block">Daily macros <span class="text-muted small">(optional, grams)</span></span>
+                                <div class="row g-2">
+                                    <div class="col-4">
+                                        <label asp-for="ProteinTargetG" class="form-label small"></label>
+                                        <input asp-for="ProteinTargetG" type="number" min="0" max="1000" class="form-control" />
+                                    </div>
+                                    <div class="col-4">
+                                        <label asp-for="CarbsTargetG" class="form-label small"></label>
+                                        <input asp-for="CarbsTargetG" type="number" min="0" max="1000" class="form-control" />
+                                    </div>
+                                    <div class="col-4">
+                                        <label asp-for="FatTargetG" class="form-label small"></label>
+                                        <input asp-for="FatTargetG" type="number" min="0" max="1000" class="form-control" />
+                                    </div>
+                                </div>
+                                <span asp-validation-for="ProteinTargetG" class="text-danger small d-block"></span>
+                                <span asp-validation-for="CarbsTargetG" class="text-danger small d-block"></span>
+                                <span asp-validation-for="FatTargetG" class="text-danger small d-block"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="StartDate" class="form-label"></label>
+                                <input asp-for="StartDate" class="form-control" />
+                                <span asp-validation-for="StartDate" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="EndDate" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                                <input asp-for="EndDate" class="form-control" />
+                                <span asp-validation-for="EndDate" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Create and add meals</button>
+                            <a class="btn btn-outline-secondary" asp-action="Create">Choose another client</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

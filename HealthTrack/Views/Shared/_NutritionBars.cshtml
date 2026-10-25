@@ -1,0 +1,24 @@
+@model DailyNutritionViewModel
+@* One day's eating against the plan's targets: kcal as a bar, the macros as text. *@
+@{
+    var percent = Model.PercentOfTarget;
+    var over = percent > 110;
+
+    string Macro(string name, decimal eaten, int? target) =>
+        $"{name} {eaten:0} g" + (target is { } grams ? $" of {grams} g" : string.Empty);
+}
+<div class="d-flex justify-content-between small mb-1">
+    <span><strong>@Model.CaloriesEaten.ToString("N0")</strong> kcal eaten</span>
+    <span class="text-muted">@(Model.CalorieTarget is { } target ? "Target " + target.ToString("N0") + " kcal" : "No diet plan that day")</span>
+</div>
+@if (percent is { } value)
+{
+    <div class="progress mb-2" role="progressbar" aria-label="Calories eaten against the target" aria-valuenow="@value" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar @(over ? "bg-warning" : "bg-success")" data-progress-width="@Math.Min(value, 100)">@value%</div>
+    </div>
+}
+<div class="small text-muted">
+    @Macro("Protein", Model.ProteinG, Model.ProteinTargetG) &middot;
+    @Macro("Carbohydrate", Model.CarbsG, Model.CarbsTargetG) &middot;
+    @Macro("Fat", Model.FatG, Model.FatTargetG)
+</div>

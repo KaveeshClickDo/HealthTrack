@@ -52,10 +52,17 @@
                                     <li><a class="dropdown-item" asp-area="Client" asp-controller="Workouts" asp-action="Today">Today's workout</a></li>
                                     <li><a class="dropdown-item" asp-area="Client" asp-controller="Diet" asp-action="LogMeal">Log a meal</a></li>
                                     <li><a class="dropdown-item" asp-area="Client" asp-controller="Measurements" asp-action="Create">Add a measurement</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-area="Client" asp-controller="Workouts" asp-action="History">Workout history</a></li>
+                                    <li><a class="dropdown-item" asp-area="Client" asp-controller="Diet" asp-action="History">Meal history</a></li>
                                 </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link @Active("Client", "Progress")" asp-area="Client" asp-controller="Progress" asp-action="Index">Progress</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle @Active("Client", "Progress") @Active("Client", "Measurements")" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Progress</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-area="Client" asp-controller="Progress" asp-action="Index">Charts</a></li>
+                                    <li><a class="dropdown-item" asp-area="Client" asp-controller="Measurements" asp-action="Index">Measurements</a></li>
+                                </ul>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link @Active("Client", "Appointments")" asp-area="Client" asp-controller="Appointments" asp-action="Index">Appointments</a>
@@ -152,6 +159,10 @@
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" asp-area="" asp-controller="Manage" asp-action="Index">Manage account</a></li>
+                                    @if (User.IsInRole(AppRoles.Client))
+                                    {
+                                        <li><a class="dropdown-item" asp-area="Client" asp-controller="Profile" asp-action="Edit">Health profile</a></li>
+                                    }
                                     <li><a class="dropdown-item" asp-area="" asp-controller="Notifications" asp-action="Preferences">Notification settings</a></li>
                                     <li><hr class="dropdown-divider" /></li>
                                     <li>

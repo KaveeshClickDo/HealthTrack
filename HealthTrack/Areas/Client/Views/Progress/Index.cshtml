@@ -1,0 +1,83 @@
+@model ClientProgressViewModel
+@{
+    ViewData["Title"] = "Progress";
+    ViewData["LiveRange"] = true;
+    var charts = new ProgressChartsViewModel
+    {
+        WeightDataUrl = Url.Action("WeightData", "Progress", new { area = "Client" }),
+        CaloriesDataUrl = Url.Action("CaloriesData", "Progress", new { area = "Client" }),
+        VitalsDataUrl = Url.Action("VitalsData", "Progress", new { area = "Client" })
+    };
+    var change = Model.Latest is { } latest && Model.First is { } first && first.MeasurementId != latest.MeasurementId
+        ? latest.WeightKg - first.WeightKg
+        : (decimal?)null;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Progress</h1>
+        <p class="text-muted mb-0">Your weight, BMI, calories and vital signs over time.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" asp-controller="Measurements" asp-action="Index">Measurements</a>
+        <a class="btn btn-primary" asp-controller="Measurements" asp-action="Create">Add a measurement</a>
+    </div>
+</div>
+
+@if (Model.Latest is null)
+{
+    <div class="alert alert-info">
+        You haven't recorded a measurement yet. <a asp-controller="Measurements" asp-action="Create" class="alert-link">Add your weight and height</a>
+        to start your weight and BMI charts; workouts and meals you log appear in the calories chart.
+    </div>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted">Latest weight</div>
+                <div class="fs-4 fw-semibold">@Model.Latest.WeightKg.ToString("0.0") kg</div>
+                <div class="small text-muted">@Model.Latest.MeasuredAt.ToString("dd MMM yyyy")</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted">BMI</div>
+                <div class="fs-4 fw-semibold">@Model.Latest.Bmi.ToString("0.0")</div>
+                <span class="badge @StatusBadges.For(Model.Latest.BmiCategory)">@Model.Latest.BmiCategory.GetDisplayName()</span>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted">Change since your first weigh-in</div>
+                <div class="fs-4 fw-semibold">@(change is { } kg ? (kg > 0 ? "+" : string.Empty) + kg.ToString("0.0") + " kg" : "–")</div>
+                <div class="small text-muted">@(Model.First is { } start ? "Since " + start.MeasuredAt.ToString("dd MMM yyyy") : string.Empty)</div>
+            </div></div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100"><div class="card-body">
+                <div class="small text-muted">Target weight</div>
+                @if (Model.TargetWeightKg is { } target)
+                {
+                    <div class="fs-4 fw-semibold">@target.ToString("0.0") kg</div>
+                    var gap = Model.Latest.WeightKg - target;
+                    <div class="small text-muted">@(gap == 0 ? "Reached" : Math.Abs(gap).ToString("0.0") + " kg to " + (gap > 0 ? "lose" : "gain"))</div>
+                }
+                else
+                {
+                    <div class="fs-4 fw-semibold">–</div>
+                    <a class="small" asp-controller="Profile" asp-action="Edit">Set a target</a>
+                }
+            </div></div>
+        </div>
+    </div>
+}
+
+<partial name="_ProgressRange" model="Model.Range" />
+<partial name="_ProgressCharts" model="charts" />
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/progress-charts.js" asp-append-version="true"></script>
+}

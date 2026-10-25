@@ -47,7 +47,9 @@ else
                             <td>@(client.ActivePlanTitle ?? "No active plan")</td>
                             <td class="text-end">
                                 <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                    <a class="btn btn-sm btn-primary" asp-action="Progress" asp-route-clientId="@client.ClientId">Progress</a>
                                     <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@client.ClientId">New plan</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="DietPlans" asp-action="Create" asp-route-clientId="@client.ClientId">Diet plan</a>
                                     <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Templates" asp-route-clientId="@client.ClientId">Assign template</a>
                                     <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@client.ClientId">Give feedback</a>
                                 </div>

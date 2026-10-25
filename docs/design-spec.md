@@ -115,9 +115,9 @@ Only Pending, Approved and Rescheduled appointments can still change; the five c
 
 ### 1.7 Task 7 – Progress tracking and analytics
 
-- Clients see line charts of weight and BMI (target weight as a reference line), weekly bars of calories burned and calories eaten vs target, and heart-rate and blood-pressure trends. Ranges: 4 weeks, 3 months or custom.
+- Clients see line charts of weight and BMI (target weight as a reference line), weekly bars of calories burned and calories eaten vs target, and heart-rate and blood-pressure trends. Ranges: 4 weeks, 3 months or custom. Heart rate (bpm) and blood pressure (mmHg) are drawn as two charts so that each chart has one y-axis. The weekly target is the daily calorie target added up over the days a diet plan applied that week.
 - Charts use Chart.js fed by JSON actions on ProgressController, which return date–value pairs from ProgressService.
-- Trainers open the same progress page for any assigned client, plus adherence figures.
+- Trainers open the same progress page for any assigned client, plus adherence figures. Their page embeds the chart data in the HTML instead of calling the JSON actions, so changing the range reloads the page. The medical details and measurement notes show only when the client shares them.
 - Three reports, each with a date range, on-screen table and chart, CSV export and print view. Trainers see their assigned clients; admins see everyone.
   - Client performance: start vs latest weight and BMI, workouts completed, workout adherence %, average daily calories vs target, calories burned, appointments attended.
   - Popular routines: templates ranked by clients assigned, active plans and average adherence; top 10 exercises by times logged; share of each exercise category.
@@ -171,6 +171,8 @@ Mifflin–St Jeor: W = weight (kg), H = height (cm), A = age (years); s = +5 mal
 ```latex
 \text{workout adherence \%} = \frac{\text{scheduled days with a logged session}}{\text{days scheduled by the plan}} \times 100
 ```
+
+Adherence counts the days in the range up to today. Each day follows the plan in effect on it: the active or completed plan with the latest start date on or before that day, so a new plan takes over from its start date (BR-09).
 
 Food: item calories = quantity × CaloriesPerServing, and the same for protein, carbs and fat; daily intake is the sum of the day's items.
 
@@ -890,11 +892,11 @@ Every service implements an interface of the same name with an I prefix (for exa
 
 | Service | Responsibility | Key methods |
 | --- | --- | --- |
-| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, GetUsersAsync, GetUserDetailsAsync, GetPendingTrainersAsync, GetClientIdAsync, GetTrainerIdAsync, ExportPersonalData, DeleteAccountAsync |
+| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, GetUsersAsync, GetUserDetailsAsync, GetPendingTrainersAsync, GetClientIdAsync, GetTrainerIdAsync, GetHealthProfileAsync, UpdateHealthProfileAsync, ExportPersonalData, DeleteAccountAsync |
 | AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients, GetTrainerClients, GetAssignments, GetTrainerLoad, GetOverview, GetAssignForm |
 | WorkoutService | Plans, templates and workout logging | CreatePlan, GetTrainerPlans, GetPlanForEdit, UpdatePlan, AddExercise, ArchivePlan, SaveAsTemplate, GetTemplates, AssignTemplate, ActivatePlan, GetWeek, GetTodaysWorkout, LogWorkout, GetHistory |
-| DietService | Diet plans and meal logging | CreatePlan, AddMeal, ActivatePlan, GetTodaysMeals, LogMeal, GetDailySummary |
-| ProgressService | Measurements, trends and adherence | AddMeasurement, GetLatestMeasurement, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget |
+| DietService | Diet plans and meal logging | CreatePlan, GetTrainerPlans, GetPlanForEdit, UpdatePlan, AddMeal, ActivatePlan, GetWeek, GetTodaysMeals, GetLogMealForm, LogMeal, GetDailySummary, GetHistory |
+| ProgressService | Measurements, trends and adherence | GetMeasurementForm, AddMeasurement, GetLatestMeasurement, GetMeasurements, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget, GetClientProgress, GetTrainerClientProgress |
 | AppointmentService | Slots, booking and the status workflow | GetAvailableSlots, Book, Approve, Reject, Reschedule, Cancel, Complete, MarkNoShow, GetUpcoming |
 | FeedbackService | Trainer feedback | GetFeedbackForm, GiveFeedback, GetForClient |
 | NotificationService | In-app notifications and preferences | Notify, GetUnread, GetUnreadCount, MarkAsRead, MarkAllAsRead, GetPreferences, SavePreferences |
@@ -929,7 +931,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | SecurityHeadersMiddleware | Adds Content-Security-Policy, X-Frame-Options, X-Content-Type-Options and Referrer-Policy headers |
 | BusinessRuleException | Thrown by services when a business rule fails; controllers turn it into a form error |
 
-View models keep entities out of forms: RegisterClientViewModel, RegisterTrainerViewModel, LoginViewModel, ProfileViewModel, ChangePasswordViewModel, ClientDashboardViewModel, TrainerDashboardViewModel, AdminDashboardViewModel, WorkoutPlanViewModel, PlanExerciseViewModel, LogWorkoutViewModel, DietPlanViewModel, PlanMealViewModel, LogMealViewModel, MeasurementViewModel, BookAppointmentViewModel, FeedbackViewModel, AvailabilityViewModel, ReminderPreferencesViewModel, AssignTrainerViewModel, ChartSeries and the report row classes.
+View models keep entities out of forms: RegisterClientViewModel, RegisterTrainerViewModel, LoginViewModel, ProfileViewModel, ChangePasswordViewModel, ClientDashboardViewModel, TrainerDashboardViewModel, AdminDashboardViewModel, WorkoutPlanViewModel, PlanExerciseViewModel, LogWorkoutViewModel, DietPlanViewModel, PlanMealViewModel, LogMealViewModel, MeasurementViewModel, HealthProfileViewModel, BookAppointmentViewModel, FeedbackViewModel, AvailabilityViewModel, ReminderPreferencesViewModel, AssignTrainerViewModel, ChartSeries and the report row classes.
 
 Naming conventions: PascalCase for classes, methods and properties; camelCase for parameters and locals; I prefix for interfaces; Async suffix for asynchronous methods; Controller, Service and ViewModel suffixes; one class per file.
 

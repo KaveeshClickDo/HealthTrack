@@ -588,6 +588,53 @@ namespace HealthTrack.Services
         public Task<int?> GetTrainerIdAsync(string userId) =>
             _db.TrainerProfiles.Where(t => t.UserId == userId).Select(t => (int?)t.TrainerId).FirstOrDefaultAsync();
 
+        /// <inheritdoc />
+        public async Task<HealthProfileViewModel?> GetHealthProfileAsync(string userId)
+        {
+            var profile = await _db.ClientProfiles.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == userId);
+            return profile is null
+                ? null
+                : new HealthProfileViewModel
+                {
+                    FitnessGoal = profile.FitnessGoal,
+                    ActivityLevel = profile.ActivityLevel,
+                    TargetWeightKg = profile.TargetWeightKg,
+                    MedicalConditions = profile.MedicalConditions,
+                    Allergies = profile.Allergies,
+                    CurrentMedications = profile.CurrentMedications,
+                    EmergencyContactName = profile.EmergencyContactName,
+                    EmergencyContactPhone = profile.EmergencyContactPhone,
+                    ShareMedicalInfoWithTrainer = profile.ShareMedicalInfoWithTrainer
+                };
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> UpdateHealthProfileAsync(string userId, HealthProfileViewModel model)
+        {
+            var profile = await _db.ClientProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (profile is null)
+            {
+                return false;
+            }
+
+            profile.FitnessGoal = model.FitnessGoal!.Value;
+            profile.ActivityLevel = model.ActivityLevel!.Value;
+            profile.TargetWeightKg = model.TargetWeightKg;
+            profile.MedicalConditions = model.MedicalConditions.NullIfBlank();
+            profile.Allergies = model.Allergies.NullIfBlank();
+            profile.CurrentMedications = model.CurrentMedications.NullIfBlank();
+            profile.EmergencyContactName = model.EmergencyContactName.NullIfBlank();
+            profile.EmergencyContactPhone = model.EmergencyContactPhone.NullIfBlank();
+            profile.ShareMedicalInfoWithTrainer = model.ShareMedicalInfoWithTrainer;
+            profile.UpdatedAt = _clock.Now;
+            await _db.SaveChangesAsync();
+
+            // No health values in the audit row; the sharing choice is a privacy setting, so it is recorded.
+            await _audit.LogAsync(userId, AuditAction.Update, nameof(ClientProfile), profile.ClientId.ToString(CultureInfo.InvariantCulture),
+                $"Health profile updated; medical details {(profile.ShareMedicalInfoWithTrainer ? "shared with" : "hidden from")} the trainer.");
+            return true;
+        }
+
         // BR-03: only a registration that is still waiting can be approved or rejected.
         private static void EnsurePendingApproval(TrainerProfile trainer)
         {

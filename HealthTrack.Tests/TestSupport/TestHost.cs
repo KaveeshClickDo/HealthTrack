@@ -98,6 +98,8 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<ILibraryService, LibraryService>();
         services.AddScoped<IWorkoutService, WorkoutService>();
         services.AddScoped<IFeedbackService, FeedbackService>();
+        services.AddScoped<IProgressService, ProgressService>();
+        services.AddScoped<IDietService, DietService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 
@@ -310,6 +312,80 @@ public sealed class TestHost : IAsyncDisposable
         await Db.SaveChangesAsync();
         return plan;
     }
+
+    /// <summary>
+    /// Adds a food to the library.
+    /// </summary>
+    /// <param name="name">Unique name.</param>
+    /// <param name="kcal">kcal per serving.</param>
+    /// <param name="protein">Protein in grams per serving.</param>
+    /// <param name="carbs">Carbohydrate in grams per serving.</param>
+    /// <param name="fat">Fat in grams per serving.</param>
+    /// <param name="isActive">Whether it is active.</param>
+    /// <returns>The saved food.</returns>
+    public async Task<FoodItem> AddFoodAsync(string name, decimal kcal, decimal protein = 0m, decimal carbs = 0m, decimal fat = 0m,
+        bool isActive = true)
+    {
+        var food = new FoodItem
+        {
+            Name = name,
+            Category = FoodCategory.Grains,
+            ServingSize = 100m,
+            ServingUnit = "g",
+            CaloriesPerServing = kcal,
+            ProteinG = protein,
+            CarbsG = carbs,
+            FatG = fat,
+            IsActive = isActive
+        };
+        Db.FoodItems.Add(food);
+        await Db.SaveChangesAsync();
+        return food;
+    }
+
+    /// <summary>
+    /// Adds a diet plan with meals.
+    /// </summary>
+    /// <param name="trainer">The author.</param>
+    /// <param name="client">The client.</param>
+    /// <param name="status">The status.</param>
+    /// <param name="dailyCalories">The daily calorie target.</param>
+    /// <param name="startDate">The start date; a week ago by default.</param>
+    /// <param name="meals">The meals.</param>
+    /// <returns>The saved plan, with its meals.</returns>
+    public async Task<DietPlan> AddDietPlanAsync(TrainerProfile trainer, ClientProfile client, PlanStatus status = PlanStatus.Draft,
+        int dailyCalories = 2000, DateTime? startDate = null, params DietPlanMeal[] meals)
+    {
+        var plan = new DietPlan
+        {
+            TrainerId = trainer.TrainerId,
+            ClientId = client.ClientId,
+            Title = "Diet",
+            DailyCalorieTarget = dailyCalories,
+            StartDate = startDate ?? Clock.Today.AddDays(-7),
+            Status = status,
+            CreatedAt = Clock.Now
+        };
+        foreach (var meal in meals)
+        {
+            plan.Meals.Add(meal);
+        }
+
+        Db.DietPlans.Add(plan);
+        await Db.SaveChangesAsync();
+        return plan;
+    }
+
+    /// <summary>
+    /// A planned meal for <see cref="AddDietPlanAsync"/>.
+    /// </summary>
+    /// <param name="type">Breakfast, lunch, dinner or snack.</param>
+    /// <param name="day">The weekday, or null for every day.</param>
+    /// <param name="hour">The hour it is scheduled.</param>
+    /// <param name="kcal">Target kcal.</param>
+    /// <returns>The meal, not yet saved.</returns>
+    public static DietPlanMeal Meal(MealType type, DayOfWeek? day = null, int hour = 8, int kcal = 500) =>
+        new() { MealType = type, DayOfWeek = day, ScheduledTime = TimeSpan.FromHours(hour), MealDescription = type + " meal", TargetCalories = kcal };
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

@@ -155,5 +155,20 @@ namespace HealthTrack.Services
         /// <param name="userId">The user.</param>
         /// <returns>The TrainerId, or null when the user has no trainer profile.</returns>
         Task<int?> GetTrainerIdAsync(string userId);
+
+        /// <summary>
+        /// The signed-in client's health profile, with the medical details decrypted for them.
+        /// </summary>
+        /// <param name="userId">The client's user ID.</param>
+        /// <returns>The form, or null when the user has no client profile.</returns>
+        Task<HealthProfileViewModel?> GetHealthProfileAsync(string userId);
+
+        /// <summary>
+        /// Saves the signed-in client's health profile; the medical details are encrypted by the value converter (BR-20).
+        /// </summary>
+        /// <param name="userId">The client's user ID.</param>
+        /// <param name="model">The form.</param>
+        /// <returns>False when the user has no client profile.</returns>
+        Task<bool> UpdateHealthProfileAsync(string userId, HealthProfileViewModel model);
     }
 }

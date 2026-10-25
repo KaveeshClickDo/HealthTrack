@@ -34,6 +34,18 @@ namespace HealthTrack.Helpers
         };
 
         /// <summary>
+        /// The badge class for a BMI category: normal green, under- and overweight amber, obese red.
+        /// </summary>
+        /// <param name="category">The BMI category.</param>
+        /// <returns>A Bootstrap text-bg-* class.</returns>
+        public static string For(BmiCategory category) => category switch
+        {
+            BmiCategory.Normal => "text-bg-success",
+            BmiCategory.Obese => "text-bg-danger",
+            _ => "text-bg-warning"
+        };
+
+        /// <summary>
         /// The badge class for an audit event: security failures red, approvals and creations green, the rest neutral.
         /// </summary>
         /// <param name="action">The audited action.</param>

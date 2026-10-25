@@ -1,0 +1,93 @@
+@model HealthProfileViewModel
+@{
+    ViewData["Title"] = "Health profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h2 mb-1">Health profile</h1>
+        <p class="text-muted mb-4">
+            Your goal and activity level set your suggested calorie target. Your name, email and password are under
+            <a asp-area="" asp-controller="Manage" asp-action="Index">Manage account</a>.
+        </p>
+
+        <form asp-action="Edit" method="post">
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body row g-3">
+                    <h2 class="h5 col-12 mb-0">Goal</h2>
+                    <div class="col-md-6">
+                        <label asp-for="FitnessGoal" class="form-label"></label>
+                        <select asp-for="FitnessGoal" asp-items="Html.GetEnumSelectList<FitnessGoal>()" class="form-select"></select>
+                        <span asp-validation-for="FitnessGoal" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ActivityLevel" class="form-label"></label>
+                        <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="form-select"></select>
+                        <span asp-validation-for="ActivityLevel" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="TargetWeightKg" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                        <input asp-for="TargetWeightKg" type="number" min="30" max="300" step="0.1" class="form-control" />
+                        <span asp-validation-for="TargetWeightKg" class="text-danger small"></span>
+                        <div class="form-text">Shown as a dashed line on your weight chart.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body row g-3">
+                    <div class="col-12">
+                        <h2 class="h5 mb-1">Medical details</h2>
+                        <p class="small text-muted mb-0">Optional. Stored encrypted, and only you and, if you allow it, your trainer can see them.</p>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="MedicalConditions" class="form-label"></label>
+                        <textarea asp-for="MedicalConditions" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="MedicalConditions" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Allergies" class="form-label"></label>
+                        <textarea asp-for="Allergies" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="Allergies" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="CurrentMedications" class="form-label"></label>
+                        <textarea asp-for="CurrentMedications" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="CurrentMedications" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="ShareMedicalInfoWithTrainer" class="form-check-input" />
+                            <label asp-for="ShareMedicalInfoWithTrainer" class="form-check-label"></label>
+                        </div>
+                        <div class="form-text">When this is off, your trainer still sees your measurements and logs, but not these three fields or your measurement notes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body row g-3">
+                    <h2 class="h5 col-12 mb-0">Emergency contact</h2>
+                    <div class="col-md-6">
+                        <label asp-for="EmergencyContactName" class="form-label"></label>
+                        <input asp-for="EmergencyContactName" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="EmergencyContactPhone" class="form-label"></label>
+                        <input asp-for="EmergencyContactPhone" type="tel" class="form-control" autocomplete="off" />
+                        <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save health profile</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

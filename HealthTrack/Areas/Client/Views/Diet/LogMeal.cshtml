@@ -1,0 +1,119 @@
+@using System.Globalization
+@model LogMealViewModel
+@{
+    ViewData["Title"] = "Log a meal";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Log a meal</h1>
+        <p class="text-muted mb-0">Pick what you ate and how many servings; calories and macros are worked out for you.</p>
+    </div>
+    <a class="btn btn-outline-primary" asp-action="MyPlan">My diet plan</a>
+</div>
+
+@* wwwroot/js/meal-log.js adds and removes food rows, filters the food lists and shows a live kcal total. *@
+<form asp-action="LogMeal" method="post" id="meal-log-form">
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    <input asp-for="DietPlanMealId" type="hidden" />
+
+    @if (Model.PlannedDescription is not null)
+    {
+        <div class="alert alert-info">
+            <strong>Planned:</strong> @Model.PlannedDescription
+            @if (Model.PlannedCalories is { } planned)
+            {
+                <span>&middot; target @planned.ToString("N0") kcal</span>
+            }
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body row g-3">
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="MealDate" class="form-label"></label>
+                <input asp-for="MealDate" class="form-control" />
+                <span asp-validation-for="MealDate" class="text-danger small"></span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="MealType" class="form-label"></label>
+                <select asp-for="MealType" asp-items="Html.GetEnumSelectList<MealType>()" class="form-select">
+                    <option value="">Choose…</option>
+                </select>
+                <span asp-validation-for="MealType" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Notes" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                <input asp-for="Notes" class="form-control" placeholder="For example, ate out" />
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body pb-0">
+            <label for="food-search" class="form-label">Find a food</label>
+            <input type="search" id="food-search" class="form-control" placeholder="Type to filter the food lists, for example rice" autocomplete="off" />
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 entry-table" id="item-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Food</th>
+                        <th scope="col">Servings</th>
+                        <th scope="col" class="text-end">kcal</th>
+                        <th scope="col"><span class="visually-hidden">Remove</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Items.Count; i++)
+                    {
+                        <tr class="item-row">
+                            <td class="entry-exercise">
+                                <select asp-for="Items[i].FoodItemId" class="form-select form-select-sm" data-food-select>
+                                    <option value="">Choose a food…</option>
+                                    @foreach (var group in Model.FoodOptions.GroupBy(o => o.Category))
+                                    {
+                                        <optgroup label="@group.Key">
+                                            @foreach (var food in group)
+                                            {
+                                                <option value="@food.FoodItemId" data-kcal="@food.CaloriesPerServing.ToString(CultureInfo.InvariantCulture)">@food.Name (@food.Serving, @food.CaloriesPerServing.ToString("0") kcal)</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                </select>
+                                <span asp-validation-for="Items[i].FoodItemId" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Items[i].Quantity" type="number" min="0.25" max="20" step="0.25" class="form-control form-control-sm" data-quantity />
+                                <span asp-validation-for="Items[i].Quantity" class="text-danger small"></span>
+                            </td>
+                            <td class="text-end text-nowrap" data-row-kcal>&ndash;</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-remove-row aria-label="Remove this food">&times;</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th scope="row" colspan="2" class="text-end">Total</th>
+                        <td class="text-end text-nowrap fw-semibold"><span data-meal-total>0</span> kcal</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-between">
+        <button type="button" class="btn btn-outline-primary" id="add-item">Add a food</button>
+        <button type="submit" class="btn btn-primary">Save meal</button>
+    </div>
+    <p class="form-text mt-2">The total here is an estimate while you type; the saved values are worked out on the server from the food library.</p>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/meal-log.js" asp-append-version="true"></script>
+}

@@ -158,7 +158,7 @@
                             </div>
                             <div class="progress" role="progressbar" aria-label="@trainer.FullName's load"
                                  aria-valuenow="@trainer.LoadPercent" aria-valuemin="0" aria-valuemax="100">
-                                <div class="progress-bar @(trainer.HasCapacity ? string.Empty : "bg-danger")" style="width: @trainer.LoadPercent%"></div>
+                                <div class="progress-bar @(trainer.HasCapacity ? string.Empty : "bg-danger")" data-progress-width="@trainer.LoadPercent"></div>
                             </div>
                         </div>
                     }

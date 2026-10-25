@@ -1,0 +1,123 @@
+@model DietWeekViewModel
+@{
+    ViewData["Title"] = "My diet plan";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">@(Model.HasPlan ? Model.Title : "My diet plan")</h1>
+        @if (Model.HasPlan)
+        {
+            <p class="text-muted mb-0">
+                From @Model.TrainerName &middot; @Model.StartDate.ToString("dd MMM yyyy")
+                @(Model.EndDate is { } end ? "to " + end.ToString("dd MMM yyyy") : "onwards")
+            </p>
+        }
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" asp-action="History">Meal history</a>
+        <a class="btn btn-primary" asp-action="LogMeal">Log a meal</a>
+    </div>
+</div>
+
+@if (!Model.HasPlan)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            You don't have an active diet plan yet. Your trainer will set one up with a daily calorie target; you'll get a
+            notification when it's ready. Meanwhile you can <a asp-action="LogMeal">log what you eat</a>.
+        </div>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <p class="mb-3">@Model.Description</p>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5">Today</h2>
+                    <partial name="_NutritionBars" model="Model.Today" />
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h5">Today's meals</h2>
+                    @if (Model.TodaysMeals.Count == 0)
+                    {
+                        <p class="text-muted mb-0">
+                            @(!Model.HasStarted
+                                ? "Your plan starts on " + Model.StartDate.ToString("dd MMM yyyy") + "."
+                                : "No meals are planned for today. You can still log what you eat.")
+                        </p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var meal in Model.TodaysMeals)
+                            {
+                                <li class="list-group-item px-0 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <strong>@meal.ScheduledTime.ToString("hh\\:mm") @meal.MealType.GetDisplayName()</strong>
+                                        <span class="text-muted small">&middot; @meal.TargetCalories kcal</span>
+                                        <div class="small">@meal.MealDescription</div>
+                                    </div>
+                                    @if (meal.IsLogged)
+                                    {
+                                        <span class="badge text-bg-success">Logged &middot; @meal.LoggedCalories!.Value.ToString("N0") kcal</span>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-primary" asp-action="LogMeal" asp-route-dietPlanMealId="@meal.DietPlanMealId">Log it</a>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="h5">The week</h2>
+    <div class="week-grid">
+        @foreach (var day in Model.Days)
+        {
+            <section class="card shadow-sm @(day.IsToday ? "today-card" : string.Empty)">
+                <div class="card-header d-flex justify-content-between align-items-baseline">
+                    <h3 class="h6 mb-0">@day.DayOfWeek</h3>
+                    @if (day.IsToday)
+                    {
+                        <span class="badge text-bg-primary">Today</span>
+                    }
+                </div>
+                <div class="card-body small">
+                    @if (day.Meals.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No meals planned.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-2">
+                            @foreach (var meal in day.Meals)
+                            {
+                                <li class="mb-2">
+                                    <strong>@meal.ScheduledTime.ToString("hh\\:mm") @meal.MealType.GetDisplayName()</strong>
+                                    <span class="text-muted">&middot; @meal.TargetCalories kcal</span>
+                                    <div>@meal.MealDescription</div>
+                                </li>
+                            }
+                        </ul>
+                        <div class="text-muted border-top pt-1">Planned @day.PlannedCalories.ToString("N0") kcal</div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

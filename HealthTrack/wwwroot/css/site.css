@@ -152,3 +152,17 @@ html {
     color: #d97706;
     letter-spacing: 0.1em;
 }
+
+/* Progress charts: a fixed-height box, so Chart.js (maintainAspectRatio: false) fills it on every screen width. */
+.chart-box {
+    position: relative;
+    height: 260px;
+}
+
+.chart-box[hidden] {
+    display: none;
+}
+
+[data-chart-table] table {
+    font-variant-numeric: tabular-nums;
+}

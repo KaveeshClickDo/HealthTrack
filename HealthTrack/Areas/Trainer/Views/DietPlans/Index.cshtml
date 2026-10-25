@@ -1,0 +1,60 @@
+@model PagedResult<DietPlanListItemViewModel>
+@{
+    ViewData["Title"] = "Diet plans";
+    var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">Diet plans</h1>
+    <a class="btn btn-primary" asp-action="Create">New diet plan</a>
+</div>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            You haven't written any diet plans yet. <a asp-action="Create">Create one</a> for one of your clients;
+            the calorie target is suggested from their latest measurement and goal.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Plan</th>
+                        <th scope="col">Client</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Dates</th>
+                        <th scope="col" class="text-end">kcal a day</th>
+                        <th scope="col" class="text-end">Meals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var plan in Model.Items)
+                    {
+                        <tr>
+                            <td><a asp-action="Edit" asp-route-id="@plan.DietPlanId">@plan.Title</a></td>
+                            <td>@plan.ClientName</td>
+                            <td><span class="badge @StatusBadges.For(plan.Status)">@plan.Status.GetDisplayName()</span></td>
+                            <td class="text-nowrap small">
+                                @plan.StartDate.ToString("dd MMM yyyy")
+                                @if (plan.EndDate is { } end)
+                                {
+                                    <span>to @end.ToString("dd MMM yyyy")</span>
+                                }
+                            </td>
+                            <td class="text-end">@plan.DailyCalorieTarget.ToString("N0")</td>
+                            <td class="text-end">@plan.MealCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<partial name="_Pager" model="pager" />

@@ -1,0 +1,43 @@
+@using System.Text.Json
+@model ProgressChartsViewModel
+@{
+    // One card per chart. A chart either fetches its series (data-url + data-key, the client's page) or reads the series
+    // the server embedded (data-series, the trainer's page). Heart rate and blood pressure share the vitals series but are
+    // drawn apart, so bpm and mmHg never share an axis.
+    string? Embed(ChartSeries? series) => series is null ? null : JsonSerializer.Serialize(series, JsonSerializerOptions.Web);
+    var charts = new[]
+    {
+        new { Title = "Weight", Key = "weight", Url = Model.WeightDataUrl, Series = Embed(Model.Weight), Datasets = (string?)null, Decimals = 1,
+              Empty = "No weigh-ins in this range." },
+        new { Title = "BMI", Key = "bmi", Url = Model.WeightDataUrl, Series = Embed(Model.Bmi), Datasets = (string?)null, Decimals = 1,
+              Empty = "No weigh-ins in this range." },
+        new { Title = "Calories per week", Key = "calories", Url = Model.CaloriesDataUrl, Series = Embed(Model.Calories), Datasets = (string?)null, Decimals = 0,
+              Empty = "No workouts, meals or diet plan in this range." },
+        new { Title = "Resting heart rate", Key = "vitals", Url = Model.VitalsDataUrl, Series = Embed(Model.Vitals), Datasets = (string?)"0", Decimals = 0,
+              Empty = "No heart-rate readings in this range." },
+        new { Title = "Blood pressure", Key = "vitals", Url = Model.VitalsDataUrl, Series = Embed(Model.Vitals), Datasets = (string?)"1,2", Decimals = 0,
+              Empty = "No blood-pressure readings in this range." }
+    };
+}
+<div class="row g-3">
+    @foreach (var chart in charts)
+    {
+        <div class="col-lg-6">
+            <section class="card shadow-sm h-100" data-chart-card>
+                <div class="card-body">
+                    <h2 class="h6 mb-2">@chart.Title</h2>
+                    <div class="chart-box">
+                        <canvas role="img" aria-label="@chart.Title chart; the data is also in the table below"
+                                data-chart data-key="@chart.Key" data-url="@chart.Url" data-series="@(chart.Url is null ? chart.Series : null)"
+                                data-datasets="@chart.Datasets" data-decimals="@chart.Decimals"></canvas>
+                    </div>
+                    <p class="text-muted small mb-0" data-chart-empty hidden>@chart.Empty</p>
+                    <details class="mt-2 small" data-chart-table>
+                        <summary>Show the data as a table</summary>
+                        <div class="table-responsive mt-2"></div>
+                    </details>
+                </div>
+            </section>
+        </div>
+    }
+</div>
