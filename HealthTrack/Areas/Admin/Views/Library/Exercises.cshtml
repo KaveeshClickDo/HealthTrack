@@ -1,0 +1,110 @@
+@using HealthTrack.Models.Entities
+@model LibraryListViewModel<Exercise, ExerciseCategory>
+@{
+    ViewData["Title"] = "Exercise library";
+    var filter = Model.Filter;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var pager = new PagerViewModel(Model.Results.Page, Model.Results.TotalPages, Model.Results.TotalCount,
+        new Dictionary<string, string?>
+        {
+            ["search"] = filter.Search,
+            ["category"] = filter.Category is { } categoryFilter ? ((int)categoryFilter).ToString() : null,
+            ["includeInactive"] = filter.IncludeInactive ? "true" : null
+        });
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-0">Exercise library</h1>
+        <p class="text-muted mb-0">Trainers build plans from these; MET values drive the calories clients burn.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="Foods">Food library</a>
+        <a class="btn btn-primary" asp-action="EditExercise">Add exercise</a>
+    </div>
+</div>
+
+<form method="get" asp-action="Exercises" class="card shadow-sm mb-3">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-md-5">
+            <label for="search" class="form-label small">Name</label>
+            <input type="search" id="search" name="search" value="@filter.Search" class="form-control" maxlength="100" />
+        </div>
+        <div class="col-md-3">
+            <label for="category" class="form-label small">Category</label>
+            <select id="category" name="category" class="form-select">
+                <option value="">All categories</option>
+                @foreach (var category in Enum.GetValues<ExerciseCategory>())
+                {
+                    <option value="@((int)category)" selected="@(filter.Category == category)">@category.GetDisplayName()</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="form-check mb-2">
+                <input type="checkbox" id="includeInactive" name="includeInactive" value="true" class="form-check-input" checked="@filter.IncludeInactive" />
+                <label for="includeInactive" class="form-check-label">Show inactive</label>
+            </div>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
+            <a class="btn btn-link" asp-action="Exercises">Clear</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.Results.TotalCount == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            No exercises match. <a asp-action="Exercises">Clear the filters</a> or <a asp-action="EditExercise">add an exercise</a>.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Muscle group</th>
+                        <th scope="col">Equipment</th>
+                        <th scope="col" class="text-end">MET</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var exercise in Model.Results.Items)
+                    {
+                        <tr class="@(exercise.IsActive ? string.Empty : "text-muted")">
+                            <td><a asp-action="EditExercise" asp-route-id="@exercise.ExerciseId">@exercise.Name</a></td>
+                            <td>@exercise.Category.GetDisplayName()</td>
+                            <td>@exercise.MuscleGroup.GetDisplayName()</td>
+                            <td>@(exercise.Equipment ?? "Body weight")</td>
+                            <td class="text-end">@exercise.MetValue.ToString("0.0")</td>
+                            <td><span class="badge @(exercise.IsActive ? "text-bg-success" : "text-bg-secondary")">@(exercise.IsActive ? "Active" : "Inactive")</span></td>
+                            <td class="text-end">
+                                <form asp-action="ToggleActive" method="post"
+                                      data-confirm="@(exercise.IsActive ? $"Deactivate {exercise.Name}? It disappears from the plan and log pickers; existing plans and logs keep it." : null)">
+                                    <input type="hidden" name="type" value="exercise" />
+                                    <input type="hidden" name="id" value="@exercise.ExerciseId" />
+                                    <input type="hidden" name="isActive" value="@(exercise.IsActive ? "false" : "true")" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn btn-sm @(exercise.IsActive ? "btn-outline-danger" : "btn-outline-primary")">
+                                        @(exercise.IsActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<partial name="_Pager" model="pager" />

@@ -1,11 +1,13 @@
 using HealthTrack.Models.Entities;
+using HealthTrack.Models.Enums;
 using HealthTrack.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
 namespace HealthTrack.Services
 {
     /// <summary>
-    /// Registration, sign-in and the signed-in user's own account (UC01–UC05).
+    /// Registration, sign-in and the signed-in user's own account (UC01–UC05); creating admins, trainer approvals and
+    /// account status for administrators (UC29, UC30).
     /// </summary>
     public interface IAccountService
     {
@@ -76,5 +78,68 @@ namespace HealthTrack.Services
         /// <param name="model">The validated form.</param>
         /// <returns>Identity's result; a wrong current password gives the PasswordMismatch error.</returns>
         Task<IdentityResult> ChangePasswordAsync(string userId, ChangePasswordViewModel model);
+
+        /// <summary>
+        /// Creates an active administrator (BR-04: admins are seeded or created by an admin, never self-registered).
+        /// </summary>
+        /// <param name="model">The validated form.</param>
+        /// <param name="actingAdminId">The administrator creating the account.</param>
+        /// <returns>The new user, or Identity's errors.</returns>
+        Task<RegistrationResult> CreateAdminAsync(CreateAdminViewModel model, string actingAdminId);
+
+        /// <summary>
+        /// Approves a pending trainer: ApprovedAt is set, the account becomes Active and the trainer is told (UC30, BR-03).
+        /// </summary>
+        /// <param name="trainerId">The trainer profile.</param>
+        /// <param name="actingAdminId">The administrator approving.</param>
+        /// <returns>False when the trainer doesn't exist.</returns>
+        /// <exception cref="Helpers.BusinessRuleException">The trainer isn't waiting for approval (BR-03).</exception>
+        Task<bool> ApproveTrainerAsync(int trainerId, string actingAdminId);
+
+        /// <summary>
+        /// Rejects a pending trainer: the account is deactivated and the reason is kept in the audit log (UC30).
+        /// </summary>
+        /// <param name="trainerId">The trainer profile.</param>
+        /// <param name="reason">Why the registration is rejected; required.</param>
+        /// <param name="actingAdminId">The administrator rejecting.</param>
+        /// <returns>False when the trainer doesn't exist.</returns>
+        /// <exception cref="Helpers.BusinessRuleException">No reason, or the trainer isn't waiting for approval (BR-03).</exception>
+        Task<bool> RejectTrainerAsync(int trainerId, string reason, string actingAdminId);
+
+        /// <summary>
+        /// Suspends an active account or reactivates a suspended one (UC29). The security stamp always changes, so a
+        /// suspended user is signed out within a minute (BR-05).
+        /// </summary>
+        /// <param name="userId">The account.</param>
+        /// <param name="status">Suspended or Active.</param>
+        /// <param name="actingAdminId">The administrator making the change.</param>
+        /// <returns>False when the user doesn't exist.</returns>
+        /// <exception cref="Helpers.BusinessRuleException">
+        /// BR-04: suspending yourself or the last active admin; BR-05: the account isn't in the right state.
+        /// </exception>
+        Task<bool> SetAccountStatusAsync(string userId, AccountStatus status, string actingAdminId);
+
+        /// <summary>
+        /// One page of users with their roles, by name (UC29).
+        /// </summary>
+        /// <param name="filter">Optional search, role and status filters.</param>
+        /// <param name="page">The 1-based page.</param>
+        /// <returns>The page.</returns>
+        Task<PagedResult<UserListItemViewModel>> GetUsersAsync(UserFilterViewModel filter, int page);
+
+        /// <summary>
+        /// One account's details, activity totals and recent audit events, for an administrator.
+        /// Never includes clinical notes or measurement values (spec 1.2).
+        /// </summary>
+        /// <param name="userId">The account.</param>
+        /// <param name="currentUserId">The administrator looking, to flag their own account.</param>
+        /// <returns>The details, or null when the user doesn't exist.</returns>
+        Task<UserDetailsViewModel?> GetUserDetailsAsync(string userId, string currentUserId);
+
+        /// <summary>
+        /// Trainer registrations waiting for approval, oldest first (UC30).
+        /// </summary>
+        /// <returns>The pending trainers.</returns>
+        Task<IReadOnlyList<PendingTrainerViewModel>> GetPendingTrainersAsync();
     }
 }

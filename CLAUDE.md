@@ -91,7 +91,8 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 
 - Bootstrap 5 cards and tables, one consistent navigation per role, page titles via `ViewData["Title"]`.
 - Success and error messages through TempData and the `_Alerts` partial.
-- Destructive actions confirm first. Lists page at 20 rows. Empty states say what to do next.
+- Destructive actions confirm first: put `data-confirm="..."` on the form and healthtrack.js asks (no onclick). Lists page at 20 rows through `query.ToPagedResultAsync(page)` (Helpers/Paging) and the `_Pager` partial. Empty states say what to do next.
+- List filters are GET forms with plain lower-case field names. Never name a filter `action`, `controller` or `area`: route values win over the query string in model binding, so the filter silently never applies. In Razor, `page` is the `@page` directive, so don't use it as a variable name either.
 - Forms show validation messages next to fields and a summary at the top. Enum dropdowns use `Html.GetEnumSelectList<T>()` with the enums' `[Display]` names.
 - Dates `dd MMM yyyy`, times `HH:mm`; weight and BMI 1 dp, kcal 0 dp. The app always runs in the `en-GB` culture (`UseRequestLocalization` in Program.cs), so decimals bind with a dot and month names are English on every machine.
 - Role names come from `AppRoles` (`[Authorize(Roles = AppRoles.Client)]`, `User.IsInRole(AppRoles.Admin)`); enum labels in code and views come from `value.GetDisplayName()`.

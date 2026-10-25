@@ -13,9 +13,12 @@ namespace HealthTrack.Models.ViewModels
         [Display(Name = "User email")]
         public string? UserEmail { get; set; }
 
-        /// <summary>Only this kind of event.</summary>
+        /// <summary>
+        /// Only this kind of event. Not called Action: "action" is a route value, and route values win over the
+        /// query string in model binding, so the filter would never apply.
+        /// </summary>
         [Display(Name = "Action")]
-        public AuditAction? Action { get; set; }
+        public AuditAction? AuditAction { get; set; }
 
         /// <summary>First day to include.</summary>
         [DataType(DataType.Date)]

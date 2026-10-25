@@ -9,6 +9,9 @@ namespace HealthTrack.Models.Entities
     /// </summary>
     public class FoodItem
     {
+        /// <summary>The serving units the library uses (spec 2.6).</summary>
+        public static readonly IReadOnlyList<string> ServingUnits = ["g", "ml", "piece", "cup", "slice", "tbsp"];
+
         /// <summary>Primary key.</summary>
         public int FoodItemId { get; set; }
 

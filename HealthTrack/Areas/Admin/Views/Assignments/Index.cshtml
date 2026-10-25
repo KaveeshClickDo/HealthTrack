@@ -1,0 +1,169 @@
+@model AssignmentsOverviewViewModel
+@{
+    ViewData["Title"] = "Assignments";
+    var filter = Model.Filter;
+    var pager = new PagerViewModel(Model.Assignments.Page, Model.Assignments.TotalPages, Model.Assignments.TotalCount,
+        new Dictionary<string, string?>
+        {
+            ["search"] = filter.Search,
+            ["activeOnly"] = filter.ActiveOnly ? "true" : null
+        });
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">Assignments</h1>
+    <a class="btn btn-primary" asp-action="Assign">Assign a trainer</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-8">
+        <form method="get" asp-action="Index" class="card shadow-sm mb-3">
+            <div class="card-body row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label for="search" class="form-label small">Client or trainer</label>
+                    <input type="search" id="search" name="search" value="@filter.Search" class="form-control" maxlength="256" />
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mb-2">
+                        <input type="checkbox" id="activeOnly" name="activeOnly" value="true" class="form-check-input" checked="@filter.ActiveOnly" />
+                        <label for="activeOnly" class="form-check-label">Active only</label>
+                    </div>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
+                    <a class="btn btn-link" asp-action="Index">Clear</a>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.Assignments.TotalCount == 0)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted py-5">
+                    No assignments match. <a asp-action="Assign">Assign a trainer</a> to a client to get started.
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Client</th>
+                                <th scope="col">Trainer</th>
+                                <th scope="col">From</th>
+                                <th scope="col">To</th>
+                                <th scope="col"><span class="visually-hidden">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var assignment in Model.Assignments.Items)
+                            {
+                                <tr class="@(assignment.IsActive ? string.Empty : "text-muted")">
+                                    <td>
+                                        @assignment.ClientName
+                                        <div class="small text-muted">@assignment.ClientEmail</div>
+                                    </td>
+                                    <td>
+                                        @assignment.TrainerName
+                                        <div class="small text-muted">@assignment.ProfessionalType.GetDisplayName()</div>
+                                    </td>
+                                    <td class="text-nowrap">@assignment.StartDate.ToString("dd MMM yyyy")</td>
+                                    <td class="text-nowrap">
+                                        @if (assignment.EndDate is { } endDate)
+                                        {
+                                            <span class="badge text-bg-secondary">Ended</span> @endDate.ToString("dd MMM yyyy")
+                                        }
+                                        else
+                                        {
+                                            <span class="badge text-bg-success">Active</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (assignment.IsActive)
+                                        {
+                                            <form asp-action="End" asp-route-id="@assignment.AssignmentId" method="post"
+                                                  data-confirm="End the assignment of @assignment.ClientName to @assignment.TrainerName today?">
+                                                <input type="hidden" name="endDate" value="@Model.Today.ToString("yyyy-MM-dd")" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">End</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                                @if (!string.IsNullOrEmpty(assignment.Notes))
+                                {
+                                    <tr class="assignment-notes">
+                                        <td colspan="5" class="small text-muted pt-0 border-top-0">Note: @assignment.Notes</td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <partial name="_Pager" model="pager" />
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h2 class="h5">Clients without a trainer</h2>
+                @if (Model.UnassignedClients.Count == 0)
+                {
+                    <p class="text-muted mb-0">Every active client has a trainer.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var client in Model.UnassignedClients)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span>
+                                    @client.User.FullName
+                                    <span class="d-block small text-muted">@client.FitnessGoal.GetDisplayName()</span>
+                                </span>
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign</a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Trainer workload</h2>
+                @if (Model.TrainerLoad.Count == 0)
+                {
+                    <p class="text-muted mb-0">No approved trainers yet. Approve one under Trainer approvals.</p>
+                }
+                else
+                {
+                    @foreach (var trainer in Model.TrainerLoad)
+                    {
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>
+                                    @trainer.FullName
+                                    @if (trainer.AccountStatus != AccountStatus.Active)
+                                    {
+                                        <span class="badge @StatusBadges.For(trainer.AccountStatus)">@trainer.AccountStatus.GetDisplayName()</span>
+                                    }
+                                </span>
+                                <span class="text-muted">@trainer.ActiveClients of @trainer.MaxClients</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="@trainer.FullName's load"
+                                 aria-valuenow="@trainer.LoadPercent" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar @(trainer.HasCapacity ? string.Empty : "bg-danger")" style="width: @trainer.LoadPercent%"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

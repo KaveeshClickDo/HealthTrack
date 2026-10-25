@@ -1,0 +1,73 @@
+@model IReadOnlyList<PendingTrainerViewModel>
+@{
+    ViewData["Title"] = "Trainer approvals";
+}
+
+<h1 class="h2 mb-1">Trainer approvals</h1>
+<p class="text-muted mb-4">Professionals can't log in until you approve them. Check their qualifications and licence before approving.</p>
+
+@if (Model.Count == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            No trainer registrations are waiting. New ones appear here, and you get a notification for each.
+        </div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var trainer in Model)
+        {
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                                <h2 class="h5 mb-0">@trainer.FullName</h2>
+                                <div class="text-muted small">
+                                    @trainer.Email
+                                    @if (trainer.PhoneNumber is not null)
+                                    {
+                                        <span>&middot; @trainer.PhoneNumber</span>
+                                    }
+                                </div>
+                            </div>
+                            <span class="badge text-bg-warning">@trainer.ProfessionalType.GetDisplayName()</span>
+                        </div>
+
+                        <dl class="row small mb-3">
+                            <dt class="col-sm-4">Specialisation</dt>
+                            <dd class="col-sm-8">@trainer.Specialization</dd>
+                            <dt class="col-sm-4">Qualifications</dt>
+                            <dd class="col-sm-8">@trainer.Qualifications</dd>
+                            <dt class="col-sm-4">Licence number</dt>
+                            <dd class="col-sm-8">@(trainer.LicenseNumber ?? "None given (fitness trainer)")</dd>
+                            <dt class="col-sm-4">Experience</dt>
+                            <dd class="col-sm-8">@trainer.YearsOfExperience years</dd>
+                            <dt class="col-sm-4">Bio</dt>
+                            <dd class="col-sm-8">@(trainer.Bio ?? "No bio")</dd>
+                            <dt class="col-sm-4">Registered</dt>
+                            <dd class="col-sm-8">@trainer.RegisteredAt.ToString("dd MMM yyyy HH:mm")</dd>
+                        </dl>
+
+                        <div class="mt-auto">
+                            <form asp-action="Approve" asp-route-id="@trainer.TrainerId" method="post" class="mb-3">
+                                <button type="submit" class="btn btn-primary">Approve</button>
+                            </form>
+                            <form asp-action="Reject" asp-route-id="@trainer.TrainerId" method="post"
+                                  data-confirm="Reject @trainer.FullName's registration? The account will be deactivated.">
+                                <label for="reason-@trainer.TrainerId" class="form-label small">Reason for rejecting (required)</label>
+                                <div class="input-group">
+                                    <input type="text" id="reason-@trainer.TrainerId" name="Reason" class="form-control" required maxlength="400"
+                                           placeholder="For example, the licence number could not be verified" />
+                                    <button type="submit" class="btn btn-outline-danger">Reject</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

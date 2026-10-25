@@ -12,9 +12,6 @@ namespace HealthTrack.Services
     /// </summary>
     public class AuditService : IAuditService
     {
-        /// <summary>Rows per page in the viewer.</summary>
-        public const int PageSize = 20;
-
         private readonly ApplicationDbContext _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IClock _clock;
@@ -61,7 +58,7 @@ namespace HealthTrack.Services
                 query = query.Where(a => a.User != null && a.User.NormalizedEmail != null && a.User.NormalizedEmail.Contains(email));
             }
 
-            if (filter.Action is { } action)
+            if (filter.AuditAction is { } action)
             {
                 query = query.Where(a => a.Action == action);
             }
@@ -79,15 +76,9 @@ namespace HealthTrack.Services
                 query = query.Where(a => a.Timestamp < end);
             }
 
-            var totalCount = await query.CountAsync();
-            var totalPages = Math.Max(1, (int)Math.Ceiling(totalCount / (double)PageSize));
-            page = Math.Clamp(page, 1, totalPages);
-
-            var items = await query
+            return await query
                 .OrderByDescending(a => a.Timestamp)
                 .ThenByDescending(a => a.AuditLogId)
-                .Skip((page - 1) * PageSize)
-                .Take(PageSize)
                 .Select(a => new AuditLogItemViewModel
                 {
                     AuditLogId = a.AuditLogId,
@@ -100,9 +91,7 @@ namespace HealthTrack.Services
                     Details = a.Details,
                     IpAddress = a.IpAddress
                 })
-                .ToListAsync();
-
-            return new PagedResult<AuditLogItemViewModel>(items, page, PageSize, totalCount);
+                .ToPagedResultAsync(page);
         }
 
         private string? GetIpAddress()

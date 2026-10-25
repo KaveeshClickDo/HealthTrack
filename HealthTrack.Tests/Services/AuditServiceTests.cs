@@ -76,7 +76,7 @@ public sealed class AuditServiceTests
         var page = await host.Get<IAuditService>().GetPageAsync(new AuditLogFilterViewModel
         {
             UserEmail = "AMAYA@",
-            Action = AuditAction.Login,
+            AuditAction = AuditAction.Login,
             From = today.AddDays(-2),
             To = today.AddDays(-1)
         }, 1);

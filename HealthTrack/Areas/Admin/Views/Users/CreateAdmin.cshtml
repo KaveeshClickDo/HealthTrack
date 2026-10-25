@@ -1,0 +1,43 @@
+@model CreateAdminViewModel
+@{
+    ViewData["Title"] = "Create administrator";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <p><a asp-action="Index">&larr; All users</a></p>
+        <h1 class="h2 mb-2">Create an administrator</h1>
+        <p class="text-muted mb-4">
+            Administrators can't register themselves. Choose a temporary password, share it with them securely and ask them
+            to change it under Manage account after their first login.
+        </p>
+
+        <form asp-action="CreateAdmin" method="post">
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <partial name="~/Views/Account/_AccountFields.cshtml" model="Model" />
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="AcceptPrivacy" class="form-check-input" />
+                <label asp-for="AcceptPrivacy" class="form-check-label">
+                    The new administrator has read and accepted the
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" target="_blank" rel="noopener">privacy notice</a>.
+                </label>
+                <div><span asp-validation-for="AcceptPrivacy" class="text-danger small"></span></div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Create administrator</button>
+                <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

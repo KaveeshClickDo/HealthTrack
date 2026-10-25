@@ -1,0 +1,92 @@
+@using HealthTrack.Models.Entities
+@model FoodItemViewModel
+@{
+    var isNew = Model.FoodItemId is null;
+    ViewData["Title"] = isNew ? "Add food" : "Edit food";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <p><a asp-action="Foods">&larr; Food library</a></p>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <h1 class="h2 mb-0">@ViewData["Title"]</h1>
+            @if (!isNew && !Model.IsActive)
+            {
+                <span class="badge text-bg-secondary">Inactive</span>
+            }
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="EditFood" method="post">
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    <input asp-for="FoodItemId" type="hidden" />
+                    <input asp-for="IsActive" type="hidden" />
+
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label asp-for="Name" class="form-label"></label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Category" class="form-label"></label>
+                            <select asp-for="Category" asp-items="Html.GetEnumSelectList<FoodCategory>()" class="form-select">
+                                <option value="">Choose…</option>
+                            </select>
+                            <span asp-validation-for="Category" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ServingSize" class="form-label"></label>
+                            <input asp-for="ServingSize" type="number" step="0.01" min="0.1" max="5000" class="form-control" />
+                            <span asp-validation-for="ServingSize" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ServingUnit" class="form-label"></label>
+                            <select asp-for="ServingUnit" class="form-select">
+                                @foreach (var unit in FoodItem.ServingUnits)
+                                {
+                                    <option value="@unit">@unit</option>
+                                }
+                            </select>
+                            <span asp-validation-for="ServingUnit" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CaloriesPerServing" class="form-label"></label>
+                            <input asp-for="CaloriesPerServing" type="number" step="0.01" min="0" max="2000" class="form-control" />
+                            <span asp-validation-for="CaloriesPerServing" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="ProteinG" class="form-label"></label>
+                            <input asp-for="ProteinG" type="number" step="0.01" min="0" max="500" class="form-control" />
+                            <span asp-validation-for="ProteinG" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="CarbsG" class="form-label"></label>
+                            <input asp-for="CarbsG" type="number" step="0.01" min="0" max="500" class="form-control" />
+                            <span asp-validation-for="CarbsG" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="FatG" class="form-label"></label>
+                            <input asp-for="FatG" type="number" step="0.01" min="0" max="500" class="form-control" />
+                            <span asp-validation-for="FatG" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <p class="form-text mt-3 mb-4">
+                        Values are per serving. Changes only affect new meal logs; logged meals keep the nutrition they were saved with.
+                    </p>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a class="btn btn-outline-secondary" asp-action="Foods">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

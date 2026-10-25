@@ -95,6 +95,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAssignmentService, AssignmentService>();
+        services.AddScoped<ILibraryService, LibraryService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 
@@ -179,13 +180,19 @@ public sealed class TestHost : IAsyncDisposable
     }
 
     /// <summary>
-    /// Creates an approved, active fitness trainer with a profile.
+    /// Creates a fitness trainer with a profile; approved and active unless told otherwise.
     /// </summary>
     /// <param name="email">Email address.</param>
+    /// <param name="approved">Whether ApprovedAt is set; an unapproved trainer is PendingApproval unless a status is given.</param>
+    /// <param name="status">The account status; Active for approved trainers by default.</param>
+    /// <param name="maxClients">The trainer's capacity.</param>
+    /// <param name="firstName">First name.</param>
     /// <returns>The saved profile, with its user.</returns>
-    public async Task<TrainerProfile> CreateTrainerAsync(string email)
+    public async Task<TrainerProfile> CreateTrainerAsync(string email, bool approved = true, AccountStatus? status = null,
+        int maxClients = 20, string firstName = "Trainer")
     {
-        var user = await CreateUserAsync(email, AppRoles.Trainer);
+        var user = await CreateUserAsync(email, AppRoles.Trainer,
+            status ?? (approved ? AccountStatus.Active : AccountStatus.PendingApproval), firstName);
         var profile = new TrainerProfile
         {
             UserId = user.Id,
@@ -193,7 +200,8 @@ public sealed class TestHost : IAsyncDisposable
             ProfessionalType = ProfessionalType.FitnessTrainer,
             Specialization = "Strength",
             Qualifications = "Level 3",
-            ApprovedAt = Clock.Now,
+            MaxClients = maxClients,
+            ApprovedAt = approved ? Clock.Now : null,
             CreatedAt = Clock.Now
         };
 
@@ -208,14 +216,16 @@ public sealed class TestHost : IAsyncDisposable
     /// <param name="trainer">The trainer.</param>
     /// <param name="client">The client.</param>
     /// <param name="endDate">The end date; null for an active assignment.</param>
+    /// <param name="startDate">The start date; three months ago by default.</param>
     /// <returns>The saved assignment.</returns>
-    public async Task<TrainerAssignment> AssignAsync(TrainerProfile trainer, ClientProfile client, DateTime? endDate = null)
+    public async Task<TrainerAssignment> AssignAsync(TrainerProfile trainer, ClientProfile client, DateTime? endDate = null,
+        DateTime? startDate = null)
     {
         var assignment = new TrainerAssignment
         {
             TrainerId = trainer.TrainerId,
             ClientId = client.ClientId,
-            StartDate = Clock.Today.AddMonths(-3),
+            StartDate = startDate ?? Clock.Today.AddMonths(-3),
             EndDate = endDate
         };
 

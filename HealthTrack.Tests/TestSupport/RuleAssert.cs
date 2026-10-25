@@ -19,4 +19,17 @@ public static class RuleAssert
         Assert.AreEqual(ruleId, exception.RuleId);
         return exception;
     }
+
+    /// <summary>
+    /// Asserts that an async service call throws a <see cref="BusinessRuleException"/> for the given rule.
+    /// </summary>
+    /// <param name="ruleId">The expected rule ID, for example "BR-07".</param>
+    /// <param name="action">The call that should break the rule.</param>
+    /// <returns>The exception, for further checks on its message.</returns>
+    public static async Task<BusinessRuleException> BrokenAsync(string ruleId, Func<Task> action)
+    {
+        var exception = await Assert.ThrowsExactlyAsync<BusinessRuleException>(action);
+        Assert.AreEqual(ruleId, exception.RuleId);
+        return exception;
+    }
 }

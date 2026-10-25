@@ -890,8 +890,8 @@ Every service implements an interface of the same name with an I prefix (for exa
 
 | Service | Responsibility | Key methods |
 | --- | --- | --- |
-| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, ExportPersonalData, DeleteAccountAsync |
-| AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients |
+| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, GetUsersAsync, GetUserDetailsAsync, GetPendingTrainersAsync, ExportPersonalData, DeleteAccountAsync |
+| AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients, GetAssignments, GetTrainerLoad, GetOverview, GetAssignForm |
 | WorkoutService | Plans, templates and workout logging | CreatePlan, AddExercise, SaveAsTemplate, AssignTemplate, ActivatePlan, GetTodaysWorkout, LogWorkout, GetHistory |
 | DietService | Diet plans and meal logging | CreatePlan, AddMeal, ActivatePlan, GetTodaysMeals, LogMeal, GetDailySummary |
 | ProgressService | Measurements, trends and adherence | AddMeasurement, GetLatestMeasurement, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget |
@@ -901,7 +901,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now) |
 | ReportService | The three reports and trainer workload | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload |
 | DashboardService | One view model per role | GetClientDashboard, GetTrainerDashboard, GetAdminDashboard |
-| LibraryService | Exercise and food libraries | GetExercises, SaveExercise, SetExerciseActive, GetFoods, SaveFood, SetFoodActive |
+| LibraryService | Exercise and food libraries | GetExercises, GetExercise, SaveExercise, SetExerciseActive, GetFoods, GetFood, SaveFood, SetFoodActive, GetActiveExercises, GetActiveFoods |
 | HealthCalculator (static) | Pure health formulas, unit-tested | CalculateBmi, GetBmiCategory, CalculateAge, CalculateBmr, CalculateTdee, SuggestCalorieTarget, CaloriesBurned |
 
 | Area | Controllers and main actions |
