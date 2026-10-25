@@ -100,6 +100,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<IFeedbackService, FeedbackService>();
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IDietService, DietService>();
+        services.AddScoped<IAppointmentService, AppointmentService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 
@@ -386,6 +387,57 @@ public sealed class TestHost : IAsyncDisposable
     /// <returns>The meal, not yet saved.</returns>
     public static DietPlanMeal Meal(MealType type, DayOfWeek? day = null, int hour = 8, int kcal = 500) =>
         new() { MealType = type, DayOfWeek = day, ScheduledTime = TimeSpan.FromHours(hour), MealDescription = type + " meal", TargetCalories = kcal };
+
+    /// <summary>
+    /// Adds a weekly availability window for a trainer.
+    /// </summary>
+    /// <param name="trainer">The trainer.</param>
+    /// <param name="day">The weekday.</param>
+    /// <param name="fromHour">The hour it opens.</param>
+    /// <param name="toHour">The hour it closes.</param>
+    /// <returns>The saved window.</returns>
+    public async Task<TrainerAvailability> AddAvailabilityAsync(TrainerProfile trainer, DayOfWeek day, int fromHour, int toHour)
+    {
+        var window = new TrainerAvailability
+        {
+            TrainerId = trainer.TrainerId,
+            DayOfWeek = day,
+            StartTime = TimeSpan.FromHours(fromHour),
+            EndTime = TimeSpan.FromHours(toHour)
+        };
+        Db.TrainerAvailabilities.Add(window);
+        await Db.SaveChangesAsync();
+        return window;
+    }
+
+    /// <summary>
+    /// Adds an appointment directly, without the booking rules.
+    /// </summary>
+    /// <param name="client">The client.</param>
+    /// <param name="trainer">The professional.</param>
+    /// <param name="start">The start.</param>
+    /// <param name="minutes">The length.</param>
+    /// <param name="status">The status.</param>
+    /// <returns>The saved appointment.</returns>
+    public async Task<Appointment> AddAppointmentAsync(ClientProfile client, TrainerProfile trainer, DateTime start, int minutes = 60,
+        AppointmentStatus status = AppointmentStatus.Approved)
+    {
+        var appointment = new Appointment
+        {
+            ClientId = client.ClientId,
+            TrainerId = trainer.TrainerId,
+            AppointmentType = AppointmentType.PersonalTraining,
+            Mode = AppointmentMode.InPerson,
+            StartDateTime = start,
+            DurationMinutes = minutes,
+            ClientReason = "Knee feels stiff",
+            Status = status,
+            CreatedAt = Clock.Now.AddDays(-3)
+        };
+        Db.Appointments.Add(appointment);
+        await Db.SaveChangesAsync();
+        return appointment;
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

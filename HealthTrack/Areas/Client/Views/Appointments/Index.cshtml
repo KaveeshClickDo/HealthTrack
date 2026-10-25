@@ -1,0 +1,116 @@
+@model ClientAppointmentsViewModel
+@{
+    ViewData["Title"] = "Appointments";
+    var pager = new PagerViewModel(Model.Past.Page, Model.Past.TotalPages, Model.Past.TotalCount, new Dictionary<string, string?>());
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">Appointments</h1>
+    <a class="btn btn-primary" asp-action="Book">Book an appointment</a>
+</div>
+
+<section class="card shadow-sm mb-4">
+    <div class="card-body pb-0">
+        <h2 class="h5">Upcoming</h2>
+    </div>
+    @if (Model.Upcoming.Count == 0)
+    {
+        <p class="text-muted px-3 pb-3 mb-0">
+            Nothing booked. <a asp-action="Book">Book a session</a> with a trainer, nutritionist or other professional; only
+            their free times are offered.
+        </p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">When</th>
+                        <th scope="col">With</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appointment in Model.Upcoming)
+                    {
+                        <tr>
+                            <td class="text-nowrap">
+                                @appointment.StartDateTime.ToString("ddd dd MMM yyyy")
+                                <div class="small text-muted">@appointment.StartDateTime.ToString("HH:mm")&ndash;@appointment.EndDateTime.ToString("HH:mm")</div>
+                            </td>
+                            <td>
+                                @appointment.TrainerName
+                                <div class="small text-muted">@appointment.ProfessionalType.GetDisplayName()</div>
+                            </td>
+                            <td>
+                                @appointment.AppointmentType.GetDisplayName()
+                                <div class="small text-muted">@appointment.Mode.GetDisplayName()</div>
+                            </td>
+                            <td><span class="badge @StatusBadges.For(appointment.Status)">@appointment.Status.GetDisplayName()</span></td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                    <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@appointment.AppointmentId">Open</a>
+                                    @if (appointment.CanCancel)
+                                    {
+                                        <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post"
+                                              data-confirm="Cancel your @appointment.AppointmentType.GetDisplayName().ToLowerInvariant() on @appointment.StartDateTime.ToString("dd MMM yyyy") at @appointment.StartDateTime.ToString("HH:mm")?">
+                                            <input type="hidden" name="RowVersion" value="@appointment.RowVersion" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="small text-muted px-3 py-2 mb-0">You can cancel until 2 hours before the start.</p>
+    }
+</section>
+
+<section class="card shadow-sm">
+    <div class="card-body pb-0">
+        <h2 class="h5">Past and closed</h2>
+    </div>
+    @if (Model.Past.TotalCount == 0)
+    {
+        <p class="text-muted px-3 pb-3 mb-0">No past appointments yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">When</th>
+                        <th scope="col">With</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="visually-hidden">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var appointment in Model.Past.Items)
+                    {
+                        <tr>
+                            <td class="text-nowrap">
+                                @appointment.StartDateTime.ToString("ddd dd MMM yyyy")
+                                <div class="small text-muted">@appointment.StartDateTime.ToString("HH:mm")</div>
+                            </td>
+                            <td>@appointment.TrainerName</td>
+                            <td>@appointment.AppointmentType.GetDisplayName()</td>
+                            <td><span class="badge @StatusBadges.For(appointment.Status)">@appointment.Status.GetDisplayName()</span></td>
+                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@appointment.AppointmentId">Open</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<partial name="_Pager" model="pager" />

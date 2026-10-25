@@ -166,3 +166,18 @@ html {
 [data-chart-table] table {
     font-variant-numeric: tabular-nums;
 }
+
+/* Free text the user typed with line breaks, such as consultation notes. */
+.text-prewrap {
+    white-space: pre-wrap;
+}
+
+/* Booking: the professional cards are labels for their radio buttons; the chosen one is outlined. */
+.professional-option {
+    cursor: pointer;
+}
+
+.professional-option:has(input:checked) {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 1px var(--bs-primary);
+}

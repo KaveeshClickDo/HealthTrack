@@ -1,0 +1,130 @@
+@model BookAppointmentViewModel
+@{
+    ViewData["Title"] = "Book an appointment";
+}
+
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <p><a asp-action="Index">&larr; Appointments</a></p>
+        <h1 class="h2 mb-1">Book an appointment</h1>
+        <p class="text-muted mb-4">Choose who you'd like to see, then a day and one of their free times. The request is confirmed when they approve it.</p>
+
+        @if (Model.Professionals.Count == 0)
+        {
+            <div class="alert alert-info">No professionals are taking bookings at the moment. Please try again later.</div>
+        }
+        else
+        {
+            @* wwwroot/js/appointment-book.js fetches the free times when the professional, day or length changes. *@
+            <form asp-action="Book" method="post" id="book-form" data-slots-url="@Url.Action("AvailableSlots")">
+                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                <fieldset class="card shadow-sm mb-3">
+                    <div class="card-body">
+                        <legend class="h5">1. Who</legend>
+                        <div class="row g-2">
+                            @foreach (var professional in Model.Professionals)
+                            {
+                                <div class="col-md-6">
+                                    <label class="card h-100 professional-option">
+                                        <span class="card-body d-flex gap-2">
+                                            <input type="radio" class="form-check-input mt-1" name="TrainerId" value="@professional.TrainerId"
+                                                   checked="@(professional.TrainerId == Model.TrainerId)" data-suggested-type="@((int)professional.SuggestedType)" required />
+                                            <span>
+                                                <strong>@professional.Name</strong>
+                                                @if (professional.IsMyTrainer)
+                                                {
+                                                    <span class="badge text-bg-primary ms-1">Your trainer</span>
+                                                }
+                                                <span class="d-block small text-muted">
+                                                    @professional.ProfessionalType.GetDisplayName() &middot; @professional.Specialization &middot;
+                                                    @professional.YearsOfExperience @(professional.YearsOfExperience == 1 ? "year" : "years")
+                                                </span>
+                                                @if (!string.IsNullOrWhiteSpace(professional.Bio))
+                                                {
+                                                    <span class="d-block small mt-1">@professional.Bio</span>
+                                                }
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="TrainerId" class="text-danger small"></span>
+                    </div>
+                </fieldset>
+
+                <fieldset class="card shadow-sm mb-3">
+                    <div class="card-body row g-3">
+                        <legend class="h5 col-12 mb-0">2. What</legend>
+                        <div class="col-md-6">
+                            <label asp-for="AppointmentType" class="form-label"></label>
+                            <select asp-for="AppointmentType" asp-items="Html.GetEnumSelectList<AppointmentType>()" class="form-select">
+                                <option value="">Choose…</option>
+                            </select>
+                            <span asp-validation-for="AppointmentType" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Mode" class="form-label"></label>
+                            <select asp-for="Mode" asp-items="Html.GetEnumSelectList<AppointmentMode>()" class="form-select"></select>
+                            <span asp-validation-for="Mode" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="ClientReason" class="form-label"></label> <span class="text-muted small">(optional, stored encrypted)</span>
+                            <textarea asp-for="ClientReason" class="form-control" rows="2" placeholder="What you'd like to work on or ask about"></textarea>
+                            <span asp-validation-for="ClientReason" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="card shadow-sm mb-3">
+                    <div class="card-body row g-3">
+                        <legend class="h5 col-12 mb-0">3. When</legend>
+                        <div class="col-md-4">
+                            <label asp-for="Date" class="form-label"></label>
+                            <input asp-for="Date" class="form-control" min="@Model.EarliestDate.ToString("yyyy-MM-dd")" max="@Model.LatestDate.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Date" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="DurationMinutes" class="form-label"></label>
+                            <select asp-for="DurationMinutes" class="form-select">
+                                @foreach (var length in HealthTrack.Models.Entities.Appointment.AllowedDurations)
+                                {
+                                    <option value="@length">@length minutes</option>
+                                }
+                            </select>
+                            <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="StartTime" class="form-label">Free times</label>
+                            @* A plain select that appointment-book.js refills; the tag helper would compare "09:15" with "09:15:00". *@
+                            <select id="StartTime" name="StartTime" class="form-select" required data-val="true" data-val-required="Choose one of the free times.">
+                                @if (Model.Slots.Count == 0)
+                                {
+                                    <option value="">Choose a professional and a day first</option>
+                                }
+                                else
+                                {
+                                    <option value="">Choose a time…</option>
+                                    @foreach (var slot in Model.Slots)
+                                    {
+                                        <option value="@slot.ToString("hh\\:mm")" selected="@(slot == Model.StartTime)">@slot.ToString("hh\\:mm")</option>
+                                    }
+                                }
+                            </select>
+                            <span class="text-danger small" data-valmsg-for="StartTime" data-valmsg-replace="true"></span>
+                            <div class="form-text" id="slot-help">Times are 2 hours to 60 days ahead and leave out anything already booked.</div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <button type="submit" class="btn btn-primary">Send the request</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/appointment-book.js" asp-append-version="true"></script>
+}

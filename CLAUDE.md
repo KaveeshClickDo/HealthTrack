@@ -96,7 +96,8 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - Rows that a page script adds and removes (`Entries[i]`, as in workout-log.js) are renumbered by the script. Checkboxes in such rows are plain HTML (`value="true"`), not tag helpers (their hidden "false" inputs sit at the end of the form), and the view model's bool must default to false: an unticked box posts nothing, so binding keeps the default.
 - Forms show validation messages next to fields and a summary at the top. Enum dropdowns use `Html.GetEnumSelectList<T>()` with the enums' `[Display]` names.
 - Dates `dd MMM yyyy`, times `HH:mm`; weight and BMI 1 dp, kcal 0 dp. The app always runs in the `en-GB` culture (`UseRequestLocalization` in Program.cs), so decimals bind with a dot and month names are English on every machine.
-- No `style="..."` attributes either (the Phase 9 CSP blocks them): a progress bar takes `data-progress-width="40"` and healthtrack.js sets the width.
+- No `style="..."` attributes either (the Phase 9 CSP blocks them): a progress bar takes `data-progress-width="40"` and healthtrack.js sets the width. A GET-form field with `data-auto-submit` sends its form when it changes (no onchange attributes).
+- Appointment forms post the RowVersion they were shown (a plain hidden `RowVersion` input, base64); controllers catch `DbUpdateConcurrencyException` and show `AppointmentService.ConcurrencyMessage`.
 - Charts (Chart.js, wwwroot/js/progress-charts.js): one y-axis per chart, so measures in different units get separate charts; series colours `#2a78d6`, `#eb6834`, `#1baf7a` in that order; targets are a grey dashed line; a legend for two series or more; and a data table under every chart.
 - Role names come from `AppRoles` (`[Authorize(Roles = AppRoles.Client)]`, `User.IsInRole(AppRoles.Admin)`); enum labels in code and views come from `value.GetDisplayName()`.
 

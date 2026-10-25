@@ -16,6 +16,18 @@
         }
     });
 
+    // A field with data-auto-submit sends its GET form as soon as it changes, for example the reschedule page's day.
+    document.addEventListener('change', function (event) {
+        var field = event.target;
+        if (field instanceof HTMLElement && field.hasAttribute('data-auto-submit') && field.form) {
+            if (field.form.requestSubmit) {
+                field.form.requestSubmit();
+            } else {
+                field.form.submit();
+            }
+        }
+    });
+
     // Progress bars: data-progress-width="40" sets the width to 40%. Set through the style property rather than a
     // style attribute in the markup, which a Content-Security-Policy without 'unsafe-inline' styles would block.
     document.addEventListener('DOMContentLoaded', function () {

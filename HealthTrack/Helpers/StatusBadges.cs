@@ -34,6 +34,21 @@ namespace HealthTrack.Helpers
         };
 
         /// <summary>
+        /// The badge class for an appointment status, in the lifecycle diagram's colours: Completed green, No-show amber,
+        /// Rejected and both cancellations red, the open states blue (confirmed) or grey (pending).
+        /// </summary>
+        /// <param name="status">The appointment status.</param>
+        /// <returns>A Bootstrap text-bg-* class.</returns>
+        public static string For(AppointmentStatus status) => status switch
+        {
+            AppointmentStatus.Completed => "text-bg-success",
+            AppointmentStatus.NoShow => "text-bg-warning",
+            AppointmentStatus.Rejected or AppointmentStatus.CancelledByClient or AppointmentStatus.CancelledByTrainer => "text-bg-danger",
+            AppointmentStatus.Approved or AppointmentStatus.Rescheduled => "text-bg-primary",
+            _ => "text-bg-secondary"
+        };
+
+        /// <summary>
         /// The badge class for a BMI category: normal green, under- and overweight amber, obese red.
         /// </summary>
         /// <param name="category">The BMI category.</param>

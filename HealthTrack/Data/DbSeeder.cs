@@ -47,6 +47,41 @@ namespace HealthTrack.Data
 
             // 3. Routine templates by trainer@
             await SeedTemplatesAsync(db, logger, cancellationToken);
+
+            // 4. Weekday availability for the two approved professionals
+            await SeedAvailabilityAsync(db, logger, cancellationToken);
+        }
+
+        private static async Task SeedAvailabilityAsync(ApplicationDbContext db, ILogger logger, CancellationToken cancellationToken)
+        {
+            if (await db.TrainerAvailabilities.AnyAsync(cancellationToken))
+            {
+                return;
+            }
+
+            var professionals = await db.TrainerProfiles
+                .Where(t => t.User.Email == "trainer@healthtrack.test" || t.User.Email == "nutritionist@healthtrack.test")
+                .ToListAsync(cancellationToken);
+            DayOfWeek[] weekdays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+
+            // Mornings 09:00–12:00 and afternoons 14:00–17:00, with lunch free.
+            foreach (var professional in professionals)
+            {
+                foreach (var day in weekdays)
+                {
+                    db.TrainerAvailabilities.Add(new TrainerAvailability
+                    {
+                        TrainerId = professional.TrainerId, DayOfWeek = day, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(12, 0, 0)
+                    });
+                    db.TrainerAvailabilities.Add(new TrainerAvailability
+                    {
+                        TrainerId = professional.TrainerId, DayOfWeek = day, StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(17, 0, 0)
+                    });
+                }
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Seeded {Count} availability windows.", professionals.Count * weekdays.Length * 2);
         }
 
         private static async Task SeedTemplatesAsync(ApplicationDbContext db, ILogger logger, CancellationToken cancellationToken)

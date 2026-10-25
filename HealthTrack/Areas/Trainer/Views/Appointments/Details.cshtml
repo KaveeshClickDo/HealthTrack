@@ -1,0 +1,121 @@
+@model AppointmentDetailsViewModel
+@{
+    var appointment = Model.Appointment;
+    ViewData["Title"] = "Appointment with " + appointment.ClientName;
+    var summaryData = new ViewDataDictionary(ViewData) { ["ShowClient"] = true };
+}
+
+<p><a asp-action="Index">&larr; Appointments</a></p>
+<h1 class="h2 mb-3">@appointment.AppointmentType.GetDisplayName() with @appointment.ClientName</h1>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <partial name="_AppointmentSummary" model="appointment" view-data="summaryData" />
+                @if (Model.ProfessionalNotes is not null)
+                {
+                    <hr />
+                    <h2 class="h6">Your consultation notes</h2>
+                    <p class="mb-0 text-prewrap">@Model.ProfessionalNotes</p>
+                }
+                <p class="small text-muted mt-3 mb-0">
+                    Requested @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                    @if (Model.UpdatedAt is { } updated)
+                    {
+                        <span>&middot; last changed @updated.ToString("dd MMM yyyy HH:mm")</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        @if (Model.CanDecide)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5">Approve</h2>
+                    <form asp-action="Approve" asp-route-id="@appointment.AppointmentId" method="post">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <label for="approve-location" class="form-label">@(appointment.Mode == AppointmentMode.Online ? "Meeting link" : "Room") <span class="text-muted small">(optional)</span></label>
+                        <input id="approve-location" name="Location" class="form-control mb-2" maxlength="200"
+                               placeholder="@(appointment.Mode == AppointmentMode.Online ? "https://meet.example.com/…" : "For example, Studio 2")" />
+                        <button type="submit" class="btn btn-success">Approve</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5">Decline</h2>
+                    <form asp-action="Reject" asp-route-id="@appointment.AppointmentId" method="post"
+                          data-confirm="Decline this request? @appointment.ClientName will be told your reason.">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <label for="reject-reason" class="form-label">Reason</label>
+                        <textarea id="reject-reason" name="Reason" class="form-control mb-2" rows="2" maxlength="500" required
+                                  placeholder="For example, I'm away that week"></textarea>
+                        <button type="submit" class="btn btn-outline-danger">Decline</button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (Model.CanReschedule)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h2 class="h5 mb-1">Move it</h2>
+                        <p class="small text-muted mb-0">Pick another free time; the client is told.</p>
+                    </div>
+                    <a class="btn btn-outline-primary" asp-action="Reschedule" asp-route-id="@appointment.AppointmentId">Reschedule</a>
+                </div>
+            </div>
+        }
+
+        @if (Model.CanRecordOutcome)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5">Record the outcome</h2>
+                    <form asp-action="Complete" asp-route-id="@appointment.AppointmentId" method="post" class="mb-3">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <label for="complete-notes" class="form-label">Consultation notes <span class="text-muted small">(optional, stored encrypted)</span></label>
+                        <textarea id="complete-notes" name="Notes" class="form-control mb-2" rows="4" maxlength="4000"></textarea>
+                        <button type="submit" class="btn btn-success">Mark as completed</button>
+                    </form>
+                    <form asp-action="NoShow" asp-route-id="@appointment.AppointmentId" method="post"
+                          data-confirm="Record that @appointment.ClientName didn't attend?">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <button type="submit" class="btn btn-outline-warning">Client didn't attend</button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (appointment.CanCancel)
+        {
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <h2 class="h5">Cancel</h2>
+                    <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post"
+                          data-confirm="Cancel this appointment? @appointment.ClientName will be told your reason.">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <label for="cancel-reason" class="form-label">Reason</label>
+                        <textarea id="cancel-reason" name="Reason" class="form-control mb-2" rows="2" maxlength="500" required></textarea>
+                        <button type="submit" class="btn btn-outline-danger">Cancel appointment</button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (!appointment.IsOpen)
+        {
+            <div class="alert alert-secondary">This appointment is @appointment.Status.GetDisplayName().ToLowerInvariant() and can no longer change.</div>
+        }
+        else if (!Model.CanDecide && !Model.CanReschedule && !Model.CanRecordOutcome && !appointment.CanCancel)
+        {
+            <div class="alert alert-secondary">Nothing to do until the appointment starts.</div>
+        }
+    </div>
+</div>

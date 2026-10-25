@@ -1,0 +1,58 @@
+@model AppointmentDetailsViewModel
+@{
+    var appointment = Model.Appointment;
+    ViewData["Title"] = "Appointment with " + appointment.TrainerName;
+}
+
+<p><a asp-action="Index">&larr; Appointments</a></p>
+<h1 class="h2 mb-3">@appointment.AppointmentType.GetDisplayName() with @appointment.TrainerName</h1>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <partial name="_AppointmentSummary" model="appointment" />
+                @if (Model.ProfessionalNotes is not null)
+                {
+                    <hr />
+                    <h2 class="h6">Notes from @appointment.TrainerName</h2>
+                    <p class="mb-0 text-prewrap">@Model.ProfessionalNotes</p>
+                }
+                <p class="small text-muted mt-3 mb-0">
+                    Booked @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                    @if (Model.UpdatedAt is { } updated)
+                    {
+                        <span>&middot; last changed @updated.ToString("dd MMM yyyy HH:mm")</span>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        @if (appointment.CanCancel)
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5">Cancel</h2>
+                    <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post"
+                          data-confirm="Cancel this appointment? @appointment.TrainerName will be told.">
+                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                        <label for="cancel-reason" class="form-label">Reason <span class="text-muted small">(optional)</span></label>
+                        <textarea id="cancel-reason" name="Reason" class="form-control mb-2" rows="2" maxlength="500"></textarea>
+                        <button type="submit" class="btn btn-outline-danger">Cancel appointment</button>
+                    </form>
+                </div>
+            </div>
+        }
+        else if (appointment.IsOpen)
+        {
+            <div class="alert alert-secondary">
+                This appointment starts in less than 2 hours, so it can no longer be cancelled here. Contact @appointment.TrainerName if you can't make it.
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary">This appointment is @appointment.Status.GetDisplayName().ToLowerInvariant() and can no longer change.</div>
+        }
+    </div>
+</div>
