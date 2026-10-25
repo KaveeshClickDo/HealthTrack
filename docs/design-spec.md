@@ -290,6 +290,12 @@ ClientProfile and TrainerProfile are the hubs: every plan, log, appointment and 
 
 The physical ERD shows every column with its SQL Server type; badges mark primary, foreign and unique keys, encrypted columns and nullable columns.
 
+![HealthTrack ERD in Chen notation](diagrams/08-erd-chen.png)
+
+*Diagram file: `docs/diagrams/08-erd-chen.png` (text-readable copy: `08-erd-chen.svg`)*
+
+The Chen-notation ERD draws the same model with entities as rectangles, relationships as diamonds and attributes as ovals. AspNetUserRoles becomes the M:N relationship *has role*, and TrainerAssignment, WorkoutPlanExercise, WorkoutLogEntry and MealLogItem become associative entities. NotificationPreference is a weak entity, because its key is its owner's UserId. Double lines mark total participation, where the foreign key is required (or, for R18 and R25, at least one child row is). Dashed ovals mark derived values (Age, Bmi, EndDateTime, IsActive and the session and meal totals).
+
 ### 2.3 Identity tables
 
 Key: PK primary key, FK foreign key, UQ unique. Null = whether the column allows NULL.
