@@ -28,7 +28,8 @@ administrator approves them.
 
 ### Creating an account
 
-1. On the home page choose **Register**, then **Create a client account** or **Register as a professional**.
+1. Choose **Register** at the top right, then **Register as a client** or **Register as a professional** (the home page also
+   has **Create a free account**).
    [Screenshot: Choose an account type]
 2. Fill in the form. Clients give their height, weight, goal and activity level; professionals give their profession,
    qualifications and, unless they are a fitness trainer, a licence number. Everyone must be 16 or over and accept the
@@ -179,7 +180,7 @@ has chosen to share them.
 
 ### Workout plans
 
-1. **Workout plans → New plan** (or **New plan** on a client's row): choose the client, a title, difficulty and start date,
+1. **Workout plans → New client plan** (or **New plan** on a client's row under Clients): choose the client, a title, difficulty and start date,
    then **Create and add exercises**.
    [Screenshot: New workout plan]
 2. Add exercises day by day with sets and reps or minutes, then **Activate**. A client has one active plan: activating a new
