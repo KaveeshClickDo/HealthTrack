@@ -223,57 +223,9 @@ namespace HealthTrack.Services
         }
 
         /// <inheritdoc />
-        public async Task<AdherenceViewModel> GetAdherenceAsync(int clientId, DateTime from, DateTime to)
-        {
-            var first = from.Date;
-            // Days still to come aren't missed yet.
-            var last = to.Date > _clock.Today ? _clock.Today : to.Date;
-            if (last < first)
-            {
-                return new AdherenceViewModel();
-            }
-
-            // Plans that were followed: a newer plan takes over from its start date (BR-09).
-            var plans = await _db.WorkoutPlans.AsNoTracking()
-                .Where(p => p.ClientId == clientId && !p.IsTemplate && p.StartDate != null
-                    && (p.Status == PlanStatus.Active || p.Status == PlanStatus.Completed))
-                .Select(p => new
-                {
-                    p.WorkoutPlanId,
-                    StartDate = p.StartDate!.Value,
-                    p.EndDate,
-                    Days = p.Exercises.Select(e => e.DayOfWeek).Distinct().ToList()
-                })
-                .ToListAsync();
-            var loggedDays = (await _db.WorkoutLogs.AsNoTracking()
-                    .Where(l => l.ClientId == clientId && l.WorkoutDate >= first && l.WorkoutDate <= last)
-                    .Select(l => l.WorkoutDate)
-                    .ToListAsync())
-                .ToHashSet();
-
-            var scheduled = 0;
-            var completed = 0;
-            for (var day = first; day <= last; day = day.AddDays(1))
-            {
-                var plan = plans
-                    .Where(p => p.StartDate <= day && (p.EndDate == null || p.EndDate >= day))
-                    .OrderByDescending(p => p.StartDate)
-                    .ThenByDescending(p => p.WorkoutPlanId)
-                    .FirstOrDefault();
-                if (plan is null || !plan.Days.Contains(day.DayOfWeek))
-                {
-                    continue;
-                }
-
-                scheduled++;
-                if (loggedDays.Contains(day))
-                {
-                    completed++;
-                }
-            }
-
-            return new AdherenceViewModel { ScheduledDays = scheduled, CompletedDays = completed };
-        }
+        public async Task<AdherenceViewModel> GetAdherenceAsync(int clientId, DateTime from, DateTime to) =>
+            // Spec 1.10; days still to come aren't missed yet, and a newer plan takes over from its start date (BR-09).
+            (await WorkoutAdherence.ForClientsAsync(_db, [clientId], from, to, _clock.Today))[clientId];
 
         /// <inheritdoc />
         public async Task<int?> SuggestCalorieTargetAsync(int clientId)

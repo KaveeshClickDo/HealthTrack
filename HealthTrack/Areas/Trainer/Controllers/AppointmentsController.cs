@@ -147,14 +147,15 @@ namespace HealthTrack.Areas.Trainer.Controllers
             RunAsync(id, model, () => _appointments.MarkNoShowAsync(id, CurrentUserId, model.RowVersion),
                 "The appointment is recorded as a no-show.");
 
-        // Runs one lifecycle action and shows its outcome on the appointment's page. A broken rule or a clashing change
-        // becomes the error message; an appointment that isn't the trainer's is 404.
+        // Runs one lifecycle action and shows its outcome on the appointment's page, or back where the form came from (the
+        // dashboard). A broken rule or a clashing change becomes the error message; an appointment that isn't the
+        // trainer's is 404.
         private async Task<IActionResult> RunAsync(int id, AppointmentActionViewModel model, Func<Task<bool>> action, string success)
         {
             if (!ModelState.IsValid)
             {
                 SetError(string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Distinct()));
-                return RedirectToAction(nameof(Details), new { id });
+                return Back(id, model);
             }
 
             try
@@ -175,7 +176,11 @@ namespace HealthTrack.Areas.Trainer.Controllers
                 SetError(AppointmentService.ConcurrencyMessage);
             }
 
-            return RedirectToAction(nameof(Details), new { id });
+            return Back(id, model);
         }
+
+        // Only a local return URL is followed, so the form can't be used to send the trainer to another site.
+        private IActionResult Back(int id, AppointmentActionViewModel model) =>
+            Url.IsLocalUrl(model.ReturnUrl) ? LocalRedirect(model.ReturnUrl!) : RedirectToAction(nameof(Details), new { id });
     }
 }

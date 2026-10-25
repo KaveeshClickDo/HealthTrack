@@ -200,3 +200,42 @@ html {
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 1px var(--bs-primary);
 }
+
+/* Reports: the load bar needs room to show its percentage. */
+.report-load {
+    min-width: 8rem;
+}
+
+/* Print view of reports (the Print button): only the report itself, without navigation, forms or buttons. */
+@media print {
+    header,
+    footer,
+    .d-print-none,
+    #notification-toasts,
+    [data-chart-table] {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff;
+    }
+
+    main {
+        padding: 0 !important;
+    }
+
+    .card {
+        border: 0;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .chart-box {
+        height: 220px;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+}

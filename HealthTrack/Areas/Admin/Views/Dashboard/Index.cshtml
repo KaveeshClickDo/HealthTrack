@@ -1,18 +1,205 @@
-@model AccountSummaryViewModel
+@model AdminDashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
+    var loginsChart = new ChartCardViewModel
+    {
+        Title = "Logins per day, last 14 days", Series = Model.LoginsPerDay, EmptyText = "No logins in the last 14 days."
+    };
+    var appointmentsChart = new ChartCardViewModel
+    {
+        Title = "Appointments by status", Series = Model.AppointmentsByStatus, LabelHeader = "Status", EmptyText = "No appointments yet."
+    };
 }
 
-<h1 class="h2 mb-1">Welcome, @Model.FullName</h1>
-<p class="text-muted mb-4">The platform at a glance.</p>
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Welcome back, @Model.FirstName</h1>
+        <p class="text-muted mb-0">Users, approvals, assignments and usage across HealthTrack.</p>
+    </div>
+    <a class="btn btn-outline-primary" asp-controller="Reports" asp-action="Engagement">Engagement report</a>
+</div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h2 class="h5">Getting started</h2>
-        <p class="text-muted mb-3">
-            This page will show users by role and status, trainers awaiting approval, unassigned clients, trainer
-            workload, logins per day and recent audit events. For now you can keep your account details up to date.
-        </p>
-        <a class="btn btn-outline-primary" asp-area="" asp-controller="Manage" asp-action="Index">Manage account</a>
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Users</div>
+            <div class="fs-3 fw-semibold">@Model.TotalUsers</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">New this month</div>
+            <div class="fs-3 fw-semibold">@Model.NewRegistrationsThisMonth</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Signed in, last 7 days</div>
+            <div class="fs-3 fw-semibold">@Model.ActiveUsersLast7Days</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Awaiting approval</div>
+            <div class="fs-3 fw-semibold @(Model.TrainersAwaitingApproval > 0 ? "text-warning" : string.Empty)">@Model.TrainersAwaitingApproval</div>
+            @if (Model.TrainersAwaitingApproval > 0)
+            {
+                <a class="small" asp-controller="TrainerApprovals" asp-action="Index">Review applications</a>
+            }
+        </div></div>
     </div>
 </div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <partial name="_ChartCard" model="loginsChart" />
+    </div>
+    <div class="col-lg-6">
+        <partial name="_ChartCard" model="appointmentsChart" />
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Users by role and status</h2>
+                    <a class="small" asp-controller="Users" asp-action="Index">All users</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Role</th>
+                                <th scope="col" class="text-end">Active</th>
+                                <th scope="col" class="text-end">Pending</th>
+                                <th scope="col" class="text-end">Suspended</th>
+                                <th scope="col" class="text-end">Deactivated</th>
+                                <th scope="col" class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.UsersByRole)
+                            {
+                                <tr>
+                                    <th scope="row">@row.Role</th>
+                                    <td class="text-end">@row.Active</td>
+                                    <td class="text-end">@row.PendingApproval</td>
+                                    <td class="text-end">@row.Suspended</td>
+                                    <td class="text-end">@row.Deactivated</td>
+                                    <td class="text-end fw-semibold">@row.Total</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-6">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Unassigned clients</h2>
+                    <a class="small" asp-controller="Assignments" asp-action="Index">Assignments</a>
+                </div>
+                @if (Model.UnassignedClients.Count == 0)
+                {
+                    <p class="text-muted mb-0">Every active client has a trainer.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var client in Model.UnassignedClients)
+                        {
+                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                                <div>
+                                    @client.FullName
+                                    <div class="small text-muted">@client.Email · joined @client.JoinedAt.ToString("dd MMM yyyy")</div>
+                                </div>
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="Assignments" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign</a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h5">Trainer workload</h2>
+                @if (Model.TrainerLoad.Count == 0)
+                {
+                    <p class="text-muted mb-0">No approved professionals yet.</p>
+                }
+                else
+                {
+                    @foreach (var trainer in Model.TrainerLoad)
+                    {
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>@trainer.FullName <span class="text-muted">· @trainer.ProfessionalType.GetDisplayName()</span></span>
+                                <span>@trainer.ActiveClients of @trainer.MaxClients</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="@trainer.FullName's load" aria-valuenow="@trainer.LoadPercent" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar @(trainer.HasCapacity ? string.Empty : "bg-danger")" data-progress-width="@trainer.LoadPercent"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-7">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Latest audit events</h2>
+                    <a class="small" asp-controller="AuditLog" asp-action="Index">Audit log</a>
+                </div>
+                @if (Model.RecentAuditEvents.Count == 0)
+                {
+                    <p class="text-muted mb-0">Nothing recorded yet.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">When</th>
+                                    <th scope="col">Who</th>
+                                    <th scope="col">What</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.RecentAuditEvents)
+                                {
+                                    <tr>
+                                        <td class="text-nowrap small">@item.Timestamp.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td class="small">@(item.UserName ?? item.UserEmail ?? "Unknown")</td>
+                                        <td class="small">
+                                            <span class="badge text-bg-light border">@item.Action.GetDisplayName()</span>
+                                            @item.Details
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+    <script src="~/js/dashboard-charts.js" asp-append-version="true"></script>
+}

@@ -55,19 +55,20 @@ namespace HealthTrack.Services
                 .ToListAsync();
 
         /// <inheritdoc />
-        public async Task<IReadOnlyList<TrainerClientViewModel>> GetTrainerClientsAsync(string trainerUserId) =>
-            await _db.TrainerAssignments.AsNoTracking()
+        public async Task<IReadOnlyList<TrainerClientViewModel>> GetTrainerClientsAsync(string trainerUserId)
+        {
+            var clients = await _db.TrainerAssignments.AsNoTracking()
                 .Where(a => a.Trainer.UserId == trainerUserId && a.EndDate == null)
                 .OrderBy(a => a.Client.User.FirstName)
                 .ThenBy(a => a.Client.User.LastName)
-                .Select(a => new TrainerClientViewModel
+                .Select(a => new
                 {
-                    ClientId = a.ClientId,
+                    a.ClientId,
                     FullName = a.Client.User.FirstName + " " + a.Client.User.LastName,
                     Email = a.Client.User.Email ?? string.Empty,
-                    FitnessGoal = a.Client.FitnessGoal,
-                    ActivityLevel = a.Client.ActivityLevel,
-                    AssignedSince = a.StartDate,
+                    a.Client.FitnessGoal,
+                    a.Client.ActivityLevel,
+                    a.StartDate,
                     LastWorkoutDate = a.Client.WorkoutLogs.Max(w => (DateTime?)w.WorkoutDate),
                     ActivePlanTitle = a.Client.WorkoutPlans
                         .Where(p => p.Status == PlanStatus.Active)
@@ -75,6 +76,36 @@ namespace HealthTrack.Services
                         .FirstOrDefault()
                 })
                 .ToListAsync();
+
+            var today = _clock.Today;
+            var ids = clients.Select(c => c.ClientId).ToList();
+            var lastActive = await ClientActivity.LastActiveDaysAsync(_db, ids);
+            var adherence = await WorkoutAdherence.ForClientsAsync(_db, ids, today.AddDays(-6), today, today);
+            var weightChanges = await ClientActivity.WeightChangesAsync(_db, ids);
+
+            return clients.Select(c =>
+            {
+                // Spec 1.4: inactive after 7 days without a log or measurement, counted from the assignment if never active.
+                var since = lastActive.TryGetValue(c.ClientId, out var day) ? day : c.StartDate.Date;
+                var daysInactive = Math.Max(0, (today - since).Days);
+                return new TrainerClientViewModel
+                {
+                    ClientId = c.ClientId,
+                    FullName = c.FullName,
+                    Email = c.Email,
+                    FitnessGoal = c.FitnessGoal,
+                    ActivityLevel = c.ActivityLevel,
+                    AssignedSince = c.StartDate,
+                    LastWorkoutDate = c.LastWorkoutDate,
+                    ActivePlanTitle = c.ActivePlanTitle,
+                    LastActiveDay = lastActive.TryGetValue(c.ClientId, out var active) ? active : null,
+                    AdherencePercent = adherence[c.ClientId].Percent,
+                    WeightChangeKg = weightChanges.TryGetValue(c.ClientId, out var change) ? change : null,
+                    DaysInactive = daysInactive,
+                    IsInactive = daysInactive >= ClientActivity.InactiveAfterDays
+                };
+            }).ToList();
+        }
 
         /// <inheritdoc />
         public async Task<bool> AssignTrainerAsync(int clientId, int trainerId, DateTime startDate, string? notes, string actingAdminId)

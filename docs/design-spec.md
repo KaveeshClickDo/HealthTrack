@@ -69,7 +69,7 @@ Permissions (Own = the signed-in user's records only; Assigned = clients with an
 | Trainer | Assigned clients with last activity, weekly adherence % and weight change; clients inactive 7+ days flagged; pending appointment requests; today's schedule; quick actions (create plan, assign routine, give feedback) | TrainerAssignment, WorkoutLog, MealLog, HealthMeasurement, Appointment |
 | Administrator | Users by role and status; new registrations this month; active users in the last 7 days; trainers awaiting approval; unassigned clients; trainer workload vs capacity; logins per day for 14 days; appointments by status; recent audit events | AspNetUsers, TrainerProfile, TrainerAssignment, Appointment, AuditLog |
 
-DashboardService builds one view model per role with read-only (AsNoTracking) queries, so each dashboard loads in a single request.
+DashboardService builds one view model per role with read-only (AsNoTracking) queries, so each dashboard loads in a single request. A client counts as inactive after 7 days without a logged workout, meal or measurement (counted from the assignment for a client who never logged anything); the trainer dashboard's adherence covers the last 7 days.
 
 ### 1.5 Task 5 – Workout and diet management
 
@@ -118,10 +118,10 @@ Only Pending, Approved and Rescheduled appointments can still change; the five c
 - Clients see line charts of weight and BMI (target weight as a reference line), weekly bars of calories burned and calories eaten vs target, and heart-rate and blood-pressure trends. Ranges: 4 weeks, 3 months or custom. Heart rate (bpm) and blood pressure (mmHg) are drawn as two charts so that each chart has one y-axis. The weekly target is the daily calorie target added up over the days a diet plan applied that week.
 - Charts use Chart.js fed by JSON actions on ProgressController, which return date–value pairs from ProgressService.
 - Trainers open the same progress page for any assigned client, plus adherence figures. Their page embeds the chart data in the HTML instead of calling the JSON actions, so changing the range reloads the page. The medical details and measurement notes show only when the client shares them.
-- Three reports, each with a date range, on-screen table and chart, CSV export and print view. Trainers see their assigned clients; admins see everyone.
-  - Client performance: start vs latest weight and BMI, workouts completed, workout adherence %, average daily calories vs target, calories burned, appointments attended.
-  - Popular routines: templates ranked by clients assigned, active plans and average adherence; top 10 exercises by times logged; share of each exercise category.
-  - Engagement: active clients (any log in the last 7 days), logs per client per week, logins per day, appointments by status, registrations per month; admins also get trainer workload.
+- Three reports, each with a date range (the last 30 days by default), on-screen table and chart, CSV export and print view. Trainers see their actively assigned clients and their own appointments; admins see everyone. The CSV export holds the main table (client rows, routine templates, engagement weeks or trainer rows) as UTF-8 with a byte-order mark; text starting with =, +, -, @, tab or carriage return gets a leading apostrophe against formula injection; every export is audited.
+  - Client performance: start vs latest weight and BMI (start is the last weigh-in before the range, or the first inside it), workouts completed, workout adherence %, average daily calories on days with logged meals vs the diet target on those days, calories burned, appointments attended (Completed).
+  - Popular routines: templates ranked by clients assigned (clients whose plan in effect during the range was a copy of the template), active plans and adherence on those days; top 10 exercises by times logged; share of each exercise category.
+  - Engagement: active clients (any log in the last 7 days of the range), logs per client per week (workouts, meals and measurements), logins per day, appointments by status, registrations per month; admins also get trainer workload (active clients against capacity, appointments, plans created and feedback given in the range).
 
 ### 1.8 Task 8 – Notifications and reminders
 
@@ -903,7 +903,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | FeedbackService | Trainer feedback | GetFeedbackForm, GiveFeedback, GetForClient |
 | NotificationService | In-app notifications, their email copies and preferences | Notify (with an optional ReminderKey; marks the email copy pending for active users with EmailEnabled), SendPendingEmails(now) (sends pending copies after the commit, 100 a run), GetUnread, GetUnreadCount, GetPage, MarkAsRead, MarkAllAsRead, GetPreferences, FillPreferencesDisplay, SavePreferences |
 | ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now); both return the number created. Keys are checked first and a unique-index violation from a simultaneous run is caught (BR-19) |
-| ReportService | The three reports and trainer workload | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload |
+| ReportService | The three reports, trainer workload and CSV export | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload, ExportCsv |
 | DashboardService | One view model per role | GetClientDashboard, GetTrainerDashboard, GetAdminDashboard |
 | LibraryService | Exercise and food libraries | GetExercises, GetExercise, SaveExercise, SetExerciseActive, GetFoods, GetFood, SaveFood, SetFoodActive, GetActiveExercises, GetActiveFoods |
 | HealthCalculator (static) | Pure health formulas, unit-tested | CalculateBmi, GetBmiCategory, CalculateAge, CalculateBmr, CalculateTdee, SuggestCalorieTarget, CaloriesBurned |
@@ -927,7 +927,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | AuditService : IAuditService | Writes and queries AuditLog |
 | EmailService : IEmailService | Sends plain-text email via SMTP (settings in the "Smtp" section, SmtpOptions), or writes .eml files to the pickup folder App_Data/mail |
 | IClock, SystemClock | Supplies the current time, so tests can fix it |
-| CsvExporter (static) | Turns report rows into CSV |
+| CsvExporter (static) | Turns report rows into CSV (RFC 4180, formula-injection guard, invariant numbers, ISO dates) |
 | MinimumAgeAttribute, NotInFutureAttribute | Custom validation attributes with client-side adapters |
 | MustBeTrueAttribute | Server-side check that the privacy-consent checkbox is ticked (the browser uses the implicit required rule) |
 | SecurityHeadersMiddleware | Adds Content-Security-Policy, X-Frame-Options, X-Content-Type-Options and Referrer-Policy headers |

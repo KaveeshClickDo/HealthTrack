@@ -1,0 +1,142 @@
+@model PopularRoutinesReportViewModel
+@* Popular routines (UC27), shared by the Trainer and Admin areas' ReportsController. *@
+@{
+    ViewData["Title"] = "Popular routines";
+    var toolbar = new ReportToolbarViewModel { Range = Model.Range, ReportKey = HealthTrack.Services.ReportService.PopularRoutines };
+    var chart = new ChartCardViewModel
+    {
+        Title = "Top exercises by times logged", Series = Model.Chart, LabelHeader = "Exercise",
+        EmptyText = "No exercises were logged in this period."
+    };
+}
+
+<h1 class="h2 mb-1">Popular routines</h1>
+<p class="text-muted mb-3">
+    @(Model.AllClients ? "Every client" : "Your assigned clients"), @Model.Range.Text: routine templates by the clients
+    following them, the exercises logged most and each category's share.
+</p>
+
+<partial name="_ReportToolbar" model="toolbar" />
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body pb-0">
+        <h2 class="h5">Routine templates</h2>
+    </div>
+    @if (Model.Routines.Count == 0)
+    {
+        <div class="card-body pt-0 text-muted">
+            No routine templates yet. Trainers create them under Templates and assign copies to clients.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Template</th>
+                        <th scope="col">Difficulty</th>
+                        <th scope="col" class="text-end">Clients assigned</th>
+                        <th scope="col" class="text-end">Active plans</th>
+                        <th scope="col" class="text-end">Adherence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var routine in Model.Routines)
+                    {
+                        <tr>
+                            <th scope="row" class="fw-normal">
+                                @routine.Title
+                                <div class="small text-muted">by @routine.AuthorName</div>
+                            </th>
+                            <td>@routine.Difficulty.GetDisplayName()</td>
+                            <td class="text-end">@routine.ClientsAssigned</td>
+                            <td class="text-end">@routine.ActivePlans</td>
+                            <td class="text-end">@(routine.AdherencePercent is { } adherence ? adherence + "%" : "–")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <partial name="_ChartCard" model="chart" />
+    </div>
+    <div class="col-lg-5">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">Share of each exercise category</h2>
+                @if (Model.Categories.Count == 0)
+                {
+                    <p class="text-muted small mb-0">Nothing logged in this period.</p>
+                }
+                else
+                {
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Category</th>
+                                <th scope="col" class="text-end">Times logged</th>
+                                <th scope="col" class="text-end">Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <tr>
+                                    <th scope="row" class="fw-normal">@category.Label</th>
+                                    <td class="text-end">@category.Count</td>
+                                    <td class="text-end">@category.Percent.ToString("0.0")%</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </section>
+    </div>
+    @if (Model.TopExercises.Count > 0)
+    {
+        <div class="col-12">
+            <section class="card shadow-sm">
+                <div class="card-body pb-0">
+                    <h2 class="h6">Top 10 exercises</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">Exercise</th>
+                                <th scope="col">Category</th>
+                                <th scope="col" class="text-end">Times logged</th>
+                                <th scope="col" class="text-end">Minutes</th>
+                                <th scope="col" class="text-end">kcal burned</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var exercise in Model.TopExercises)
+                            {
+                                <tr>
+                                    <th scope="row" class="fw-normal">@exercise.ExerciseName</th>
+                                    <td>@exercise.Category.GetDisplayName()</td>
+                                    <td class="text-end">@exercise.TimesLogged</td>
+                                    <td class="text-end">@exercise.TotalMinutes.ToString("N0")</td>
+                                    <td class="text-end">@exercise.CaloriesBurned.ToString("N0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+    <script src="~/js/reports.js" asp-append-version="true"></script>
+}

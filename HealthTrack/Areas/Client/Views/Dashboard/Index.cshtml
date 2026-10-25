@@ -1,18 +1,251 @@
-@model AccountSummaryViewModel
+@model ClientDashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
+    var change = Model.WeightChangeKg;
 }
 
-<h1 class="h2 mb-1">Welcome, @Model.FullName</h1>
-<p class="text-muted mb-4">Your health at a glance.</p>
-
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h2 class="h5">Getting started</h2>
-        <p class="text-muted mb-3">
-            This page will show your latest weight and BMI, today's workout and meals, your next appointments and your
-            trainer's feedback. For now you can keep your account details up to date.
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Welcome back, @Model.FirstName</h1>
+        <p class="text-muted mb-0">
+            Your health at a glance@(Model.TrainerName is { } trainer ? $" · Your trainer is {trainer}" : string.Empty).
         </p>
-        <a class="btn btn-outline-primary" asp-area="" asp-controller="Manage" asp-action="Index">Manage account</a>
+    </div>
+    <a class="btn btn-outline-primary" asp-controller="Measurements" asp-action="Create">Add a measurement</a>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Latest weight</div>
+                @if (Model.LatestWeightKg is { } weight)
+                {
+                    <div class="fs-3 fw-semibold">@weight.ToString("0.0") <span class="fs-6 fw-normal">kg</span></div>
+                    <div class="small text-muted">@Model.LatestMeasuredAt?.ToString("dd MMM yyyy")@(Model.TargetWeightKg is { } goal ? $" · target {goal:0.0} kg" : string.Empty)</div>
+                }
+                else
+                {
+                    <div class="fs-5">No weigh-ins yet</div>
+                    <a class="small" asp-controller="Measurements" asp-action="Create">Record your first measurement</a>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">BMI</div>
+                @if (Model.LatestBmi is { } bmi)
+                {
+                    <div class="fs-3 fw-semibold">@bmi.ToString("0.0")</div>
+                    <span class="badge @(Model.BmiCategory == BmiCategory.Normal ? "text-bg-success" : "text-bg-warning")">@Model.BmiCategory?.GetDisplayName()</span>
+                }
+                else
+                {
+                    <div class="fs-5">–</div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Change since first measurement</div>
+                @if (change is { } kg)
+                {
+                    <div class="fs-3 fw-semibold">@(kg > 0 ? "+" : string.Empty)@kg.ToString("0.0") <span class="fs-6 fw-normal">kg</span></div>
+                    <div class="small text-muted">since @Model.FirstMeasuredAt?.ToString("dd MMM yyyy")</div>
+                }
+                else
+                {
+                    <div class="fs-5">–</div>
+                    <div class="small text-muted">Shows after your second weigh-in.</div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="small text-muted">Burned this week</div>
+                <div class="fs-3 fw-semibold">@Model.CaloriesBurnedThisWeek.ToString("N0") <span class="fs-6 fw-normal">kcal</span></div>
+                <div class="small text-muted">@Model.WorkoutsThisWeek workout@(Model.WorkoutsThisWeek == 1 ? string.Empty : "s") since Monday</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Today's workout</h2>
+                    <a class="small" asp-controller="Workouts" asp-action="MyPlan">My plan</a>
+                </div>
+                @{ var workout = Model.TodaysWorkout; }
+                @if (!workout.HasPlan)
+                {
+                    <p class="text-muted">You have no active workout plan. Your trainer will set one up; meanwhile you can log any workout.</p>
+                    <a class="btn btn-outline-primary" asp-controller="Workouts" asp-action="Log">Log a workout</a>
+                }
+                else if (workout.IsRestDay)
+                {
+                    <p class="mb-1"><strong>Rest day</strong> in @workout.PlanTitle.</p>
+                    <p class="text-muted mb-0">Recovery is part of the plan. Fancy a walk anyway? <a asp-controller="Workouts" asp-action="Log">Log it</a>.</p>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">@workout.PlanTitle</p>
+                    <ul class="list-unstyled mb-3">
+                        @foreach (var exercise in workout.Exercises)
+                        {
+                            <li class="mb-1">@exercise</li>
+                        }
+                    </ul>
+                    @if (workout.LoggedToday)
+                    {
+                        <span class="badge text-bg-success">Done today</span>
+                        <a class="small ms-2" asp-controller="Workouts" asp-action="History">See your history</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary" asp-controller="Workouts" asp-action="Today">Start</a>
+                    }
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-6">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Today's meals</h2>
+                    <a class="small" asp-controller="Diet" asp-action="MyPlan">My diet plan</a>
+                </div>
+                <partial name="_NutritionBars" model="Model.Nutrition" />
+                @if (Model.TodaysMeals.Count == 0)
+                {
+                    <p class="text-muted mt-3 mb-2">No meals are planned for today. You can still log what you eat.</p>
+                    <a class="btn btn-outline-primary" asp-controller="Diet" asp-action="LogMeal">Log a meal</a>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush mt-2">
+                        @foreach (var meal in Model.TodaysMeals)
+                        {
+                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                                <div>
+                                    <span class="text-muted small">@meal.ScheduledTime.ToString("hh\\:mm")</span>
+                                    <strong class="ms-1">@meal.MealType.GetDisplayName()</strong>
+                                    <div class="small text-muted">@meal.MealDescription · @meal.TargetCalories kcal</div>
+                                </div>
+                                @if (meal.IsLogged)
+                                {
+                                    <span class="badge text-bg-success">@meal.LoggedCalories?.ToString("N0") kcal logged</span>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="Diet" asp-action="LogMeal" asp-route-dietPlanMealId="@meal.DietPlanMealId">Log</a>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-4">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Next appointments</h2>
+                    <a class="small" asp-controller="Appointments" asp-action="Index">All</a>
+                </div>
+                @if (Model.UpcomingAppointments.Count == 0)
+                {
+                    <p class="text-muted">Nothing booked.</p>
+                    <a class="btn btn-outline-primary" asp-controller="Appointments" asp-action="Book">Book an appointment</a>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var appointment in Model.UpcomingAppointments)
+                        {
+                            <li class="mb-3">
+                                <a asp-controller="Appointments" asp-action="Details" asp-route-id="@appointment.AppointmentId">
+                                    @appointment.StartDateTime.ToString("ddd dd MMM yyyy") at @appointment.StartDateTime.ToString("HH:mm")
+                                </a>
+                                <span class="badge @StatusBadges.For(appointment.Status) ms-1">@appointment.Status.GetDisplayName()</span>
+                                <div class="small text-muted">@appointment.AppointmentType.GetDisplayName() with @appointment.TrainerName</div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-4">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Latest feedback</h2>
+                    <a class="small" asp-controller="Feedback" asp-action="Index">All</a>
+                </div>
+                @if (Model.LatestFeedback is { } feedback)
+                {
+                    <div class="small text-muted mb-1">
+                        @feedback.TrainerName · @feedback.Category.GetDisplayName() · @feedback.CreatedAt.ToString("dd MMM yyyy")
+                    </div>
+                    @if (feedback.Rating is { } rating)
+                    {
+                        <span class="rating" aria-label="Progress rating @rating of 5">@(new string('★', rating))@(new string('☆', 5 - rating))</span>
+                    }
+                    <p class="mb-0 mt-1 text-prewrap">@feedback.Message</p>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No feedback yet. Your trainer's comments on your workouts and progress appear here.</p>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="col-lg-4">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-baseline">
+                    <h2 class="h5">Notifications @if (Model.UnreadCount > 0) { <span class="badge bg-danger">@Model.UnreadCount</span> }</h2>
+                    <a class="small" asp-area="" asp-controller="Notifications" asp-action="Index">All</a>
+                </div>
+                @if (Model.UnreadNotifications.Count == 0)
+                {
+                    <p class="text-muted mb-0">You're all caught up.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var notification in Model.UnreadNotifications)
+                        {
+                            <li class="mb-2">
+                                @if (notification.LinkUrl is { } link)
+                                {
+                                    <a href="@link">@notification.Title</a>
+                                }
+                                else
+                                {
+                                    <strong>@notification.Title</strong>
+                                }
+                                <div class="small text-muted">@notification.CreatedAt.ToString("dd MMM yyyy HH:mm")</div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </section>
     </div>
 </div>

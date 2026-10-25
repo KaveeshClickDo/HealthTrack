@@ -1,0 +1,147 @@
+@model EngagementReportViewModel
+@* Engagement (UC27), shared by the Trainer and Admin areas' ReportsController; administrators also get the trainer workload. *@
+@{
+    ViewData["Title"] = "Engagement";
+    var toolbar = new ReportToolbarViewModel { Range = Model.Range, ReportKey = HealthTrack.Services.ReportService.Engagement };
+    var chart = new ChartCardViewModel
+    {
+        Title = Model.AllClients ? "Logins per day" : "Your clients' logins per day", Series = Model.Chart,
+        EmptyText = "No logins in this period."
+    };
+}
+
+<h1 class="h2 mb-1">Engagement</h1>
+<p class="text-muted mb-3">
+    @(Model.AllClients ? "Everyone" : "Your assigned clients"), @Model.Range.Text: how actively clients log their workouts,
+    meals and measurements, how often people sign in, and how appointments went.
+</p>
+
+<partial name="_ReportToolbar" model="toolbar" />
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Clients</div>
+            <div class="fs-3 fw-semibold">@Model.ClientsInScope</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Active in the last 7 days</div>
+            <div class="fs-3 fw-semibold">@Model.ActiveClients</div>
+            <div class="small text-muted">any log up to @Model.Range.To.ToString("dd MMM yyyy")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Logins</div>
+            <div class="fs-3 fw-semibold">@Model.Weeks.Sum(w => w.Logins)</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm h-100"><div class="card-body">
+            <div class="small text-muted">Appointments</div>
+            <div class="fs-3 fw-semibold">@Model.AppointmentsByStatus.Sum(a => a.Count)</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body pb-0">
+        <h2 class="h5">Week by week</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">Week of</th>
+                    <th scope="col" class="text-end">Active clients</th>
+                    <th scope="col" class="text-end">Workouts</th>
+                    <th scope="col" class="text-end">Meals</th>
+                    <th scope="col" class="text-end">Measurements</th>
+                    <th scope="col" class="text-end">Logs per client</th>
+                    <th scope="col" class="text-end">Logins</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var week in Model.Weeks)
+                {
+                    <tr>
+                        <th scope="row" class="fw-normal text-nowrap">@week.WeekStart.ToString("dd MMM yyyy")</th>
+                        <td class="text-end">@week.ActiveClients</td>
+                        <td class="text-end">@week.WorkoutLogs</td>
+                        <td class="text-end">@week.MealLogs</td>
+                        <td class="text-end">@week.Measurements</td>
+                        <td class="text-end">@week.LogsPerClient.ToString("0.0")</td>
+                        <td class="text-end">@week.Logins</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <partial name="_ChartCard" model="chart" />
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">Appointments by status</h2>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        @foreach (var status in Model.AppointmentsByStatus)
+                        {
+                            <tr>
+                                <th scope="row" class="fw-normal">@status.Label</th>
+                                <td class="text-end">@status.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <section class="card shadow-sm h-100">
+            <div class="card-body">
+                <h2 class="h6">@(Model.AllClients ? "Registrations" : "Your clients' registrations") by month</h2>
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        @foreach (var month in Model.RegistrationsByMonth)
+                        {
+                            <tr>
+                                <th scope="row" class="fw-normal">@month.Label</th>
+                                <td class="text-end">@month.Count</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+@if (Model.AllClients)
+{
+    <section class="card shadow-sm">
+        <div class="card-body pb-0">
+            <h2 class="h5">Trainer workload</h2>
+        </div>
+        @if (Model.TrainerWorkload.Count == 0)
+        {
+            <div class="card-body pt-0 text-muted">No approved professionals yet.</div>
+        }
+        else
+        {
+            <partial name="_TrainerWorkloadTable" model="Model.TrainerWorkload" />
+        }
+    </section>
+}
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+    <script src="~/js/reports.js" asp-append-version="true"></script>
+}

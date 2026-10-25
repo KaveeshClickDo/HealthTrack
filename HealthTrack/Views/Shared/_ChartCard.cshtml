@@ -1,0 +1,18 @@
+@using System.Text.Json
+@model ChartCardViewModel
+@* A chart drawn by wwwroot/js/charts.js from the series embedded in data-series, with the numbers as a table too. *@
+<section class="card shadow-sm h-100" data-chart-card>
+    <div class="card-body">
+        <h2 class="h6 mb-2">@Model.Title</h2>
+        <div class="chart-box">
+            <canvas role="img" aria-label="@Model.Title chart; the data is also in the table below" data-chart
+                    data-series="@JsonSerializer.Serialize(Model.Series, JsonSerializerOptions.Web)"
+                    data-decimals="@Model.Decimals" data-label-header="@Model.LabelHeader"></canvas>
+        </div>
+        <p class="text-muted small mb-0" data-chart-empty hidden>@Model.EmptyText</p>
+        <details class="mt-2 small" data-chart-table>
+            <summary>Show the data as a table</summary>
+            <div class="table-responsive mt-2"></div>
+        </details>
+    </div>
+</section>

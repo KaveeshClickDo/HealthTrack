@@ -14,8 +14,7 @@ namespace HealthTrack.Data
     public static class DbSeeder
     {
         /// <summary>
-        /// Migrates the database, then runs the seed steps in order. Later phases add users, templates,
-        /// availability and demo history after the libraries.
+        /// Migrates the database, then runs the seed steps in order: libraries, users, templates, availability and history.
         /// </summary>
         /// <param name="services">The application's root service provider.</param>
         /// <param name="cancellationToken">Cancels the operation.</param>
@@ -50,6 +49,9 @@ namespace HealthTrack.Data
 
             // 4. Weekday availability for the two approved professionals
             await SeedAvailabilityAsync(db, logger, cancellationToken);
+
+            // 5. Eight weeks of demo history, only into a database without workout logs
+            await DemoHistorySeeder.SeedAsync(db, scope.ServiceProvider.GetRequiredService<IClock>(), logger, cancellationToken);
         }
 
         private static async Task SeedAvailabilityAsync(ApplicationDbContext db, ILogger logger, CancellationToken cancellationToken)

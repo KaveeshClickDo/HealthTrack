@@ -4,7 +4,7 @@
 }
 
 <h1 class="h2 mb-1">My clients</h1>
-<p class="text-muted mb-3">The clients an administrator has assigned to you.</p>
+<p class="text-muted mb-3">The clients an administrator has assigned to you. Adherence covers the last 7 days; clients with nothing logged for 7 days or more are flagged.</p>
 
 @if (Model.Count == 0)
 {
@@ -25,7 +25,8 @@ else
                         <th scope="col">Client</th>
                         <th scope="col">Goal</th>
                         <th scope="col">Assigned since</th>
-                        <th scope="col">Last workout</th>
+                        <th scope="col">Last activity</th>
+                        <th scope="col">Adherence (7 days)</th>
                         <th scope="col">Workout plan</th>
                         <th scope="col"><span class="visually-hidden">Actions</span></th>
                     </tr>
@@ -43,7 +44,15 @@ else
                                 <div class="small text-muted">@client.ActivityLevel.GetDisplayName()</div>
                             </td>
                             <td class="text-nowrap">@client.AssignedSince.ToString("dd MMM yyyy")</td>
-                            <td class="text-nowrap">@(client.LastWorkoutDate?.ToString("dd MMM yyyy") ?? "None yet")</td>
+                            <td class="text-nowrap">
+                                @(client.LastActiveDay?.ToString("dd MMM yyyy") ?? "Nothing logged")
+                                @if (client.IsInactive)
+                                {
+                                    <div><span class="badge text-bg-danger">Inactive @client.DaysInactive days</span></div>
+                                }
+                                <div class="small text-muted">Last workout: @(client.LastWorkoutDate?.ToString("dd MMM yyyy") ?? "none yet")</div>
+                            </td>
+                            <td>@(client.AdherencePercent is { } adherence ? adherence + "%" : "Nothing scheduled")</td>
                             <td>@(client.ActivePlanTitle ?? "No active plan")</td>
                             <td class="text-end">
                                 <div class="d-flex flex-wrap gap-1 justify-content-end">

@@ -27,5 +27,12 @@ namespace HealthTrack.Models.ViewModels
         [StringLength(4000)]
         [Display(Name = "Consultation notes")]
         public string? Notes { get; set; }
+
+        /// <summary>
+        /// Where to go afterwards, for a form outside the appointment's page (the trainer's dashboard). Followed only when it
+        /// is a local URL; otherwise the appointment's page.
+        /// </summary>
+        [StringLength(200)]
+        public string? ReturnUrl { get; set; }
     }
 }
