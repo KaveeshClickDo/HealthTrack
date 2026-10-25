@@ -56,7 +56,7 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - **Business rule failures** throw `BusinessRuleException(ruleId, message)` (it derives from InvalidOperationException); controllers catch it and show the message in ModelState or TempData["Error"].
 - **Async EF Core** everywhere; `AsNoTracking()` for read-only queries; an explicit transaction for multi-table writes; a serializable transaction when booking or rescheduling an appointment (a lost deadlock, `SqlErrors.IsDeadlock`, runs again; see `AppointmentService.SaveInFreeSlotAsync`).
 - **Time.** The app runs in one time zone and stores local times. Services get the time from `IClock.Now` and entity methods take a `now` parameter – never `DateTime.Now` in business code, so tests can fix the clock.
-- **Notifications** are raised through `INotificationService.NotifyAsync` by the service that makes the change.
+- **Notifications** are raised through `INotificationService.NotifyAsync` by the service that makes the change. Email copies are never sent inside a request: NotifyAsync marks them `EmailPending` and ReminderBackgroundService sends them after the commit.
 
 ## Database rules (EF Core)
 

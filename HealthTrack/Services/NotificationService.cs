@@ -13,6 +13,12 @@ namespace HealthTrack.Services
     /// </summary>
     public class NotificationService : INotificationService
     {
+        // Copies sent per background run; a backlog carries on at the next run.
+        private const int EmailBatchSize = 100;
+
+        // A copy that still can't be sent after a day is no longer useful.
+        private static readonly TimeSpan EmailGiveUpAfter = TimeSpan.FromHours(24);
+
         private readonly ApplicationDbContext _db;
         private readonly IEmailService _email;
         private readonly IClock _clock;
@@ -51,14 +57,71 @@ namespace HealthTrack.Services
                 Message = message.Truncate(500)!,
                 LinkUrl = linkUrl,
                 ReminderKey = reminderKey,
+                // Spec 1.8: whether a copy is wanted is decided now, so switching copies on later never emails older
+                // notifications. The copy itself goes out from the background service once this change has committed.
+                EmailPending = await WantsEmailCopiesAsync(userId),
                 CreatedAt = _clock.Now
             };
 
             _db.Notifications.Add(notification);
             await _db.SaveChangesAsync();
-
-            await SendEmailCopyAsync(notification);
             return notification;
+        }
+
+        /// <inheritdoc />
+        public async Task<int> SendPendingEmailsAsync(DateTime now)
+        {
+            // Only committed rows are read here (the background service has its own scope and connection): a notification
+            // whose transaction rolled back never appears, and one still being written is read once it commits.
+            var pending = await _db.Notifications
+                .Include(n => n.User).ThenInclude(u => u.NotificationPreference)
+                .Where(n => n.EmailPending)
+                .OrderBy(n => n.NotificationId)
+                .Take(EmailBatchSize)
+                .ToListAsync();
+
+            var sent = 0;
+            foreach (var notification in pending)
+            {
+                if (notification.CreatedAt < now - EmailGiveUpAfter)
+                {
+                    notification.EmailPending = false;
+                    _logger.LogWarning("Gave up on the email copy of notification {NotificationId}: it could not be sent for 24 hours.",
+                        notification.NotificationId);
+                }
+                else if (!WantsEmailCopies(notification.User))
+                {
+                    // Copies were switched off, or the account suspended, before the copy went out.
+                    notification.EmailPending = false;
+                }
+                else
+                {
+                    try
+                    {
+                        await _email.SendAsync(notification.User.Email!, "HealthTrack: " + notification.Title,
+                            EmailBody(notification.User.FirstName, notification));
+                    }
+                    catch (Exception ex)
+                    {
+                        // Any failure of the mail system (no server, refused address, unwritable folder, time-out): the
+                        // rest stay pending for the next run, and one warning is enough. Never the message itself in the
+                        // log, as it can mention appointments.
+                        _logger.LogWarning(ex, "Email copy of notification {NotificationId} could not be sent; {Count} copies wait for the next run.",
+                            notification.NotificationId, pending.Count - sent);
+                        await _db.SaveChangesAsync();
+                        return sent;
+                    }
+
+                    notification.EmailPending = false;
+                    notification.EmailSentAt = now;
+                    sent++;
+                }
+
+                // Saved one by one, so a copy that has gone out is never sent twice if a later one fails.
+                await _db.SaveChangesAsync();
+            }
+
+            return sent;
         }
 
         /// <inheritdoc />
@@ -187,40 +250,16 @@ namespace HealthTrack.Services
             return true;
         }
 
-        // Spec 1.8: an email copy goes to active accounts that switched email copies on. The in-app notification is
-        // already saved, so a mail failure is only logged (never the message, which can mention appointments).
-        private async Task SendEmailCopyAsync(Notification notification)
-        {
-            var recipient = await _db.Users.AsNoTracking()
-                .Where(u => u.Id == notification.UserId)
-                .Select(u => new
-                {
-                    u.Email,
-                    u.FirstName,
-                    u.AccountStatus,
-                    EmailEnabled = u.NotificationPreference != null && u.NotificationPreference.EmailEnabled
-                })
-                .FirstOrDefaultAsync();
-            if (recipient is not { EmailEnabled: true, AccountStatus: AccountStatus.Active, Email: { Length: > 0 } address })
-            {
-                return;
-            }
+        // Spec 1.8: email copies go to active accounts that switched them on and have an address.
+        private Task<bool> WantsEmailCopiesAsync(string userId) =>
+            _db.Users.AsNoTracking()
+                .AnyAsync(u => u.Id == userId
+                    && u.AccountStatus == AccountStatus.Active
+                    && u.Email != null && u.Email != string.Empty
+                    && u.NotificationPreference != null && u.NotificationPreference.EmailEnabled);
 
-            try
-            {
-                await _email.SendAsync(address, "HealthTrack: " + notification.Title, EmailBody(recipient.FirstName, notification));
-            }
-            catch (Exception ex)
-            {
-                // Any failure of the mail system (no server, refused address, unwritable folder, time-out) is caught here:
-                // the action that raised the notification has already succeeded and must not fail because of email.
-                _logger.LogWarning(ex, "The email copy of notification {NotificationId} could not be sent.", notification.NotificationId);
-                return;
-            }
-
-            notification.EmailSentAt = _clock.Now;
-            await _db.SaveChangesAsync();
-        }
+        private static bool WantsEmailCopies(ApplicationUser user) =>
+            user is { AccountStatus: AccountStatus.Active, Email.Length: > 0, NotificationPreference.EmailEnabled: true };
 
         private static string EmailBody(string firstName, Notification notification)
         {

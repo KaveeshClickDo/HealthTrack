@@ -356,6 +356,9 @@ namespace HealthTrack.Data
 
                 // BR-19: each reminder is created once; ordinary notifications have no key.
                 entity.HasIndex(n => n.ReminderKey).IsUnique().HasFilter("[ReminderKey] IS NOT NULL");
+
+                // The background service looks for copies still to email every minute; only those rows are indexed.
+                entity.HasIndex(n => n.EmailPending).HasFilter("[EmailPending] = 1");
             });
 
             builder.Entity<NotificationPreference>(entity =>

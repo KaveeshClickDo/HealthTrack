@@ -11,8 +11,9 @@ namespace HealthTrack.Services
     public interface INotificationService
     {
         /// <summary>
-        /// Saves a notification for a user and, when the user has email copies on, emails it too. An email failure is
-        /// logged and never breaks the action that raised the notification.
+        /// Saves a notification for a user. When the user has email copies on, the notification is marked EmailPending and
+        /// <see cref="SendPendingEmailsAsync"/> emails it after the change commits; mail never runs inside the caller's
+        /// transaction and a mail failure never breaks the action that raised the notification.
         /// </summary>
         /// <param name="userId">The recipient.</param>
         /// <param name="type">The kind of notification.</param>
@@ -24,6 +25,15 @@ namespace HealthTrack.Services
         /// <exception cref="ArgumentException"><paramref name="linkUrl"/> is not a local path of up to 200 characters.</exception>
         Task<Notification> NotifyAsync(string userId, NotificationType type, string title, string message, string? linkUrl = null,
             string? reminderKey = null);
+
+        /// <summary>
+        /// Emails the pending copies (run by <see cref="ReminderBackgroundService"/> every minute): up to 100 a run, oldest
+        /// first. A copy whose recipient has since switched copies off or been suspended is dropped; when the mail system
+        /// fails, the rest wait for the next run; a copy still unsent after 24 hours is given up.
+        /// </summary>
+        /// <param name="now">The current time.</param>
+        /// <returns>How many copies were sent.</returns>
+        Task<int> SendPendingEmailsAsync(DateTime now);
 
         /// <summary>
         /// The user's newest unread notifications, for the bell.

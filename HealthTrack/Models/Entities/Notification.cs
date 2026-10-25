@@ -46,6 +46,13 @@ namespace HealthTrack.Models.Entities
         /// <summary>When an email copy was sent.</summary>
         public DateTime? EmailSentAt { get; set; }
 
+        /// <summary>
+        /// Whether an email copy is still to be sent. Set when the notification is created for a user with email copies on,
+        /// so switching copies on later never emails older notifications; ReminderBackgroundService sends the copy after
+        /// the commit and clears it.
+        /// </summary>
+        public bool EmailPending { get; set; }
+
         /// <summary>The recipient (R6).</summary>
         public virtual ApplicationUser User { get; set; } = null!;
 

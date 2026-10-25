@@ -79,28 +79,34 @@ public sealed class NotificationServiceTests
         Assert.IsNull((await host.Db.Notifications.SingleAsync()).LinkUrl);
     }
 
-    /// <summary>Spec 1.8: with email copies on, the notification is emailed too and EmailSentAt is set.</summary>
+    private static async Task<string> EmailUserAsync(TestHost host, string email = "client@example.test")
+    {
+        var user = await host.CreateUserAsync(email, AppRoles.Client);
+        await host.SetPreferencesAsync(user.Id, p => p.EmailEnabled = true);
+        return user.Id;
+    }
+
+    /// <summary>
+    /// Spec 1.8: with email copies on, NotifyAsync only marks the copy pending; nothing is mailed inside the caller's
+    /// request (or transaction).
+    /// </summary>
     [TestMethod]
-    public async Task NotifyAsync_EmailCopiesOn_SendsEmailAndSetsEmailSentAt()
+    public async Task NotifyAsync_EmailCopiesOn_MarksPendingWithoutSending()
     {
         await using var host = await TestHost.CreateAsync();
-        var user = await host.CreateUserAsync("client@example.test", AppRoles.Client);
-        await host.SetPreferencesAsync(user.Id, p => p.EmailEnabled = true);
+        var userId = await EmailUserAsync(host);
 
-        var notification = await host.Get<INotificationService>().NotifyAsync(user.Id, NotificationType.NewFeedback,
-            "New feedback", "Great squats today.");
+        await host.Get<INotificationService>().NotifyAsync(userId, NotificationType.NewFeedback, "New feedback", "Great squats today.");
 
-        var (to, subject, body) = host.Email.Sent.Single();
-        Assert.AreEqual("client@example.test", to);
-        Assert.AreEqual("HealthTrack: New feedback", subject);
-        Assert.Contains("Great squats today.", body);
-        var saved = await host.Db.Notifications.AsNoTracking().SingleAsync(n => n.NotificationId == notification.NotificationId);
-        Assert.AreEqual(host.Clock.Now, saved.EmailSentAt);
+        var saved = await host.Db.Notifications.SingleAsync();
+        Assert.IsTrue(saved.EmailPending);
+        Assert.IsNull(saved.EmailSentAt);
+        Assert.IsEmpty(host.Email.Sent);
     }
 
     /// <summary>Email copies are off by default, and suspended accounts never get them.</summary>
     [TestMethod]
-    public async Task NotifyAsync_EmailOffOrAccountSuspended_NoEmail()
+    public async Task NotifyAsync_EmailOffOrAccountSuspended_NotPending()
     {
         await using var host = await TestHost.CreateAsync();
         var defaults = await host.CreateUserAsync("client@example.test", AppRoles.Client);
@@ -112,22 +118,85 @@ public sealed class NotificationServiceTests
         await notifications.NotifyAsync(defaults.Id, NotificationType.System, "Hello", "Message");
         await notifications.NotifyAsync(suspended.Id, NotificationType.System, "Hello", "Message");
 
+        Assert.IsFalse(await host.Db.Notifications.AnyAsync(n => n.EmailPending));
+        Assert.AreEqual(0, await notifications.SendPendingEmailsAsync(host.Clock.Now));
         Assert.IsEmpty(host.Email.Sent);
-        Assert.IsTrue(await host.Db.Notifications.AllAsync(n => n.EmailSentAt == null));
     }
 
-    /// <summary>A mail failure is logged, never thrown: the notification is still saved, without EmailSentAt.</summary>
+    /// <summary>The background run emails a pending copy once, sets EmailSentAt and clears the flag.</summary>
     [TestMethod]
-    public async Task NotifyAsync_EmailFails_StillSavesNotification()
+    public async Task SendPendingEmailsAsync_PendingCopy_SendsItOnce()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var userId = await EmailUserAsync(host);
+        var notifications = host.Get<INotificationService>();
+        await notifications.NotifyAsync(userId, NotificationType.NewFeedback, "New feedback", "Great squats today.");
+        var later = host.Clock.Now.AddMinutes(1);
+
+        Assert.AreEqual(1, await notifications.SendPendingEmailsAsync(later));
+        Assert.AreEqual(0, await notifications.SendPendingEmailsAsync(later.AddMinutes(1)));
+
+        var (to, subject, body) = host.Email.Sent.Single();
+        Assert.AreEqual("client@example.test", to);
+        Assert.AreEqual("HealthTrack: New feedback", subject);
+        Assert.Contains("Great squats today.", body);
+        var saved = await host.Db.Notifications.AsNoTracking().SingleAsync();
+        Assert.AreEqual(later, saved.EmailSentAt);
+        Assert.IsFalse(saved.EmailPending);
+    }
+
+    /// <summary>Switching email copies on later never emails the notifications created while they were off.</summary>
+    [TestMethod]
+    public async Task SendPendingEmailsAsync_CopiesSwitchedOnLater_OnlyNewNotificationsEmailed()
     {
         await using var host = await TestHost.CreateAsync();
         var user = await host.CreateUserAsync("client@example.test", AppRoles.Client);
+        await host.SetPreferencesAsync(user.Id, _ => { });
+        var notifications = host.Get<INotificationService>();
+        await notifications.NotifyAsync(user.Id, NotificationType.System, "Before", "Created while copies were off.");
+
         await host.SetPreferencesAsync(user.Id, p => p.EmailEnabled = true);
+        await notifications.NotifyAsync(user.Id, NotificationType.System, "After", "Created with copies on.");
+
+        Assert.AreEqual(1, await notifications.SendPendingEmailsAsync(host.Clock.Now));
+        Assert.AreEqual("HealthTrack: After", host.Email.Sent.Single().Subject);
+    }
+
+    /// <summary>A mail failure is logged, never thrown: the copies stay pending and go out at the next run.</summary>
+    [TestMethod]
+    public async Task SendPendingEmailsAsync_MailFails_RetriedAtNextRun()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var userId = await EmailUserAsync(host);
+        var notifications = host.Get<INotificationService>();
+        await notifications.NotifyAsync(userId, NotificationType.System, "One", "Message");
+        await notifications.NotifyAsync(userId, NotificationType.System, "Two", "Message");
         host.Email.Fail = true;
 
-        await host.Get<INotificationService>().NotifyAsync(user.Id, NotificationType.System, "Hello", "Message");
+        Assert.AreEqual(0, await notifications.SendPendingEmailsAsync(host.Clock.Now));
+        Assert.AreEqual(2, await host.Db.Notifications.CountAsync(n => n.EmailPending));
 
-        Assert.IsNull((await host.Db.Notifications.SingleAsync()).EmailSentAt);
+        host.Email.Fail = false;
+        Assert.AreEqual(2, await notifications.SendPendingEmailsAsync(host.Clock.Now.AddMinutes(1)));
+        Assert.IsFalse(await host.Db.Notifications.AnyAsync(n => n.EmailPending || n.EmailSentAt == null));
+    }
+
+    /// <summary>Copies switched off before the run are dropped; a copy still unsent after 24 hours is given up.</summary>
+    [TestMethod]
+    public async Task SendPendingEmailsAsync_SwitchedOffOrTooOld_Dropped()
+    {
+        await using var host = await TestHost.CreateAsync();
+        var switchedOff = await EmailUserAsync(host);
+        var stale = await EmailUserAsync(host, "stale@example.test");
+        var notifications = host.Get<INotificationService>();
+        await notifications.NotifyAsync(switchedOff, NotificationType.System, "Hello", "Message");
+        await notifications.NotifyAsync(stale, NotificationType.System, "Hello", "Message");
+        await host.SetPreferencesAsync(switchedOff, p => p.EmailEnabled = false);
+
+        Assert.AreEqual(0, await notifications.SendPendingEmailsAsync(host.Clock.Now.AddHours(25)));
+
+        Assert.IsEmpty(host.Email.Sent);
+        Assert.IsFalse(await host.Db.Notifications.AnyAsync(n => n.EmailPending || n.EmailSentAt != null));
     }
 
     /// <summary>The bell gets the newest unread notifications only, and the count of all unread ones.</summary>

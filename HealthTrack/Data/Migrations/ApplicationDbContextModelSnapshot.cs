@@ -658,6 +658,9 @@ namespace HealthTrack.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("EmailPending")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("EmailSentAt")
                         .HasColumnType("datetime2");
 
@@ -694,6 +697,9 @@ namespace HealthTrack.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("NotificationId");
+
+                    b.HasIndex("EmailPending")
+                        .HasFilter("[EmailPending] = 1");
 
                     b.HasIndex("ReminderKey")
                         .IsUnique()

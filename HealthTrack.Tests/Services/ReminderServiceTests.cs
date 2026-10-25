@@ -251,9 +251,9 @@ public sealed class ReminderServiceTests
         CollectionAssert.AreEqual(new[] { $"APPT-{appointment.AppointmentId}-T-202610260800" }, await KeysAsync(host));
     }
 
-    /// <summary>Reminders go through NotifyAsync, so a user with email copies on gets the reminder by email too.</summary>
+    /// <summary>Reminders go through NotifyAsync, so for a user with email copies on the reminder is queued and then emailed.</summary>
     [TestMethod]
-    public async Task GenerateDueRemindersAsync_EmailCopiesOn_EmailsTheReminder()
+    public async Task GenerateDueRemindersAsync_EmailCopiesOn_QueuesTheEmailCopy()
     {
         var (host, trainer, client) = await ArrangeAsync();
         await using var _ = host;
@@ -262,8 +262,10 @@ public sealed class ReminderServiceTests
 
         await host.Get<IReminderService>().GenerateDueRemindersAsync(client.UserId, host.Clock.Now);
 
+        Assert.IsTrue((await host.Db.Notifications.SingleAsync()).EmailPending);
+        Assert.AreEqual(1, await host.Get<INotificationService>().SendPendingEmailsAsync(host.Clock.Now));
         Assert.AreEqual("client@example.test", host.Email.Sent.Single().To);
-        Assert.IsNotNull((await host.Db.Notifications.SingleAsync()).EmailSentAt);
+        Assert.IsNotNull((await host.Db.Notifications.AsNoTracking().SingleAsync()).EmailSentAt);
     }
 
     /// <summary>

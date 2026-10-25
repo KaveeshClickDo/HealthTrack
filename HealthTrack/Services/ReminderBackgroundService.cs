@@ -5,7 +5,9 @@ namespace HealthTrack.Services
 {
     /// <summary>
     /// The Timer actor of UC34: every Reminders:IntervalSeconds (60 by default) it creates the reminders due for every
-    /// user, so reminders and their email copies go out even when nobody is signed in (spec 1.8).
+    /// user and then sends the pending email copies of all notifications, so both go out even when nobody is signed in
+    /// (spec 1.8). Sending here, rather than in the request that raised the notification, means a copy only ever goes
+    /// out for a change that committed.
     /// </summary>
     public class ReminderBackgroundService : BackgroundService
     {
@@ -60,22 +62,40 @@ namespace HealthTrack.Services
 
         private async Task RunOnceAsync()
         {
-            try
+            // Reminders come first, so their email copies go out in the same run.
+            await RunStepAsync("reminder", async services =>
             {
-                // A new scope each tick: a DbContext is meant for one unit of work, not for the app's lifetime.
-                await using var scope = _scopes.CreateAsyncScope();
-                var reminders = scope.ServiceProvider.GetRequiredService<IReminderService>();
-                var created = await reminders.GenerateAllDueRemindersAsync(_clock.Now);
+                var created = await services.GetRequiredService<IReminderService>().GenerateAllDueRemindersAsync(_clock.Now);
                 if (created > 0)
                 {
                     _logger.LogInformation("Created {Count} reminder(s).", created);
                 }
+            });
+            await RunStepAsync("email", async services =>
+            {
+                var sent = await services.GetRequiredService<INotificationService>().SendPendingEmailsAsync(_clock.Now);
+                if (sent > 0)
+                {
+                    _logger.LogInformation("Sent {Count} email copies.", sent);
+                }
+            });
+        }
+
+        // Each step gets a new scope, so a fresh DbContext: a context is meant for one unit of work, and one left with
+        // unsaved rows by a failed step must not carry them into the next.
+        private async Task RunStepAsync(string name, Func<IServiceProvider, Task> step)
+        {
+            try
+            {
+                await using var scope = _scopes.CreateAsyncScope();
+                await step(scope.ServiceProvider);
             }
             catch (Exception ex)
             {
-                // Anything that goes wrong in one run (the database briefly unavailable, say) is logged, and the next tick
-                // tries again; an exception escaping ExecuteAsync would stop the whole app.
-                _logger.LogError(ex, "The reminder run failed; it will run again at the next tick.");
+                // Anything that goes wrong in one step (the database briefly unavailable, say) is logged and the next tick
+                // tries again; an exception escaping ExecuteAsync would stop the whole app, and one step failing mustn't
+                // skip the other.
+                _logger.LogError(ex, "The {Step} run failed; it will run again at the next tick.", name);
             }
         }
     }

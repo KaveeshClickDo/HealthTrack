@@ -100,6 +100,20 @@ public sealed class ApplicationDbContextModelTests
         Assert.AreEqual("[ReminderKey] IS NOT NULL", index.GetFilter());
     }
 
+    /// <summary>Spec 2.11: only the email copies still to send are indexed, for the background service's scan.</summary>
+    [TestMethod]
+    public void OnModelCreating_EmailPendingIndex_IsFiltered()
+    {
+        var notification = DesignTimeModel.Value.FindEntityType(typeof(Notification))!;
+        var index = notification.GetIndexes()
+            .Single(i => i.Properties.Select(p => p.Name).SequenceEqual(new[] { nameof(Notification.EmailPending) }));
+
+        Assert.IsFalse(index.IsUnique);
+        Assert.AreEqual("[EmailPending] = 1", index.GetFilter());
+        // No database default in the model (CLAUDE.md): EF Core always writes the value, so false can be inserted.
+        Assert.IsNull(notification.FindProperty(nameof(Notification.EmailPending))!.FindAnnotation(RelationalAnnotationNames.DefaultValue));
+    }
+
     /// <summary>Appointment has a rowversion concurrency token.</summary>
     [TestMethod]
     public void OnModelCreating_AppointmentRowVersion_IsConcurrencyToken()

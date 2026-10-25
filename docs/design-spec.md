@@ -131,10 +131,10 @@ Only Pending, Approved and Rescheduled appointments can still change; the five c
   - Meal: a planned meal starts within the lead time (default 15 minutes) and is not logged yet.
   - Appointment: an approved or rescheduled appointment starts within the lead time (default 24 hours); both client and trainer are reminded.
 - Each reminder carries a ReminderKey such as MEAL-42-20261025 with a unique index, so it is created once however often the check runs.
-- ReminderBackgroundService, a hosted service, calls ReminderService.GenerateAllDueReminders(now) every 60 seconds, so reminders and email copies go out even when nobody is signed in.
+- ReminderBackgroundService, a hosted service, calls ReminderService.GenerateAllDueReminders(now) and then NotificationService.SendPendingEmails(now) every 60 seconds, so reminders and email copies go out even when nobody is signed in.
 - The bell icon in the layout polls /Notifications/Poll by AJAX every 60 seconds for the unread count and newest items, shown as a toast; the poll also runs GenerateDueReminders(userId, now) for the signed-in user, and so do the three dashboards when they open. Clicking a toast marks it read and opens its page. The poll does not count as activity, so it never keeps an idle session alive.
 - Reminders are created only for active accounts. Meal lead times are counted in whole minutes, so a lead time of 0 reminds during the meal's own minute.
-- Users switch each reminder type on or off and set times, lead times and email copies (workout and meal reminders apply to clients only). Email uses the SMTP settings in appsettings.json; in development it writes .eml files to a pickup folder, so the demo works offline. Email copies go to active accounts with email copies on; a mail failure is logged and never breaks the action that raised the notification.
+- Users switch each reminder type on or off and set times, lead times and email copies (workout and meal reminders apply to clients only). Email uses the SMTP settings in appsettings.json; in development it writes .eml files to a pickup folder, so the demo works offline. Whether a notification gets an email copy is decided when it is created (Notification.EmailPending: an active account with copies on), so switching copies on later never emails older notifications. The copy is sent by ReminderBackgroundService within a minute, after the change that raised it has committed, so nothing is mailed for a change that rolled back and no request waits for the mail server. A mail failure is logged and retried at the next run; a copy still unsent after 24 hours, or whose recipient has switched copies off or been suspended since, is dropped.
 
 ### 1.9 Security and data protection
 
@@ -617,6 +617,7 @@ BMI and BMI category are computed properties of the class, not columns.
 | CreatedAt | datetime2 |  | No |  |
 | ReadAt | datetime2 |  | Yes |  |
 | EmailSentAt | datetime2 |  | Yes | Set when an email copy is sent |
+| EmailPending | bit |  | No | Default 0; set when the notification is created for a user with email copies on, cleared when the copy is sent (or given up after 24 hours). Filtered index (EmailPending = 1) |
 
 **NotificationPreference** (shares its key with the user, 1:1)
 
@@ -715,7 +716,7 @@ DayOfWeek columns use .NET's System.DayOfWeek (0 Sunday to 6 Saturday).
 ### 2.11 Keys, indexes and normalisation
 
 - Unique keys: AspNetUsers.NormalizedUserName, AspNetRoles.NormalizedName, ClientProfile.UserId, TrainerProfile.UserId, Exercise.Name, FoodItem.Name, TrainerAvailability (TrainerId, DayOfWeek, StartTime) and Notification.ReminderKey (filtered WHERE ReminderKey IS NOT NULL, configured with HasFilter).
-- Extra indexes besides the automatic foreign-key ones: WorkoutLog (ClientId, WorkoutDate), MealLog (ClientId, MealDate), HealthMeasurement (ClientId, MeasuredAt), Appointment (TrainerId, StartDateTime) and (ClientId, StartDateTime), Notification (UserId, IsRead), AuditLog (Timestamp).
+- Extra indexes besides the automatic foreign-key ones: WorkoutLog (ClientId, WorkoutDate), MealLog (ClientId, MealDate), HealthMeasurement (ClientId, MeasuredAt), Appointment (TrainerId, StartDateTime) and (ClientId, StartDateTime), Notification (UserId, IsRead) and the filtered (EmailPending = 1), AuditLog (Timestamp).
 - Check constraints, configured with HasCheckConstraint: the WorkoutPlan template rule, EndTime > StartTime, EndDate ≥ StartDate and DiastolicBp < SystolicBp.
 - Delete rules: of the ERD's 32 links only 9 cascade, the 7 compositions in the class diagram plus Identity's two user-role links (Identity's unused claim, login and token tables also cascade). Every other foreign key is NO ACTION (DeleteBehavior.Restrict), which also avoids SQL Server's multiple-cascade-path error.
 - Conventions: OnModelCreating maps each entity with ToTable(class name), so table names equal class names; DateTime maps to datetime2 by default and date-only fields to date; decimals get explicit precision with \[Precision\].
@@ -900,7 +901,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | ProgressService | Measurements, trends and adherence | GetMeasurementForm, AddMeasurement, GetLatestMeasurement, GetMeasurements, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget, GetClientProgress, GetTrainerClientProgress |
 | AppointmentService | Availability, slots, booking and the status workflow | GetAvailability, AddAvailability, RemoveAvailability, GetAvailableSlots, GetBookForm, Book, Approve, Reject, GetRescheduleForm, Reschedule, Cancel, Complete, MarkNoShow, GetUpcoming, GetForClient, GetForTrainer, GetDetails |
 | FeedbackService | Trainer feedback | GetFeedbackForm, GiveFeedback, GetForClient |
-| NotificationService | In-app notifications, their email copies and preferences | Notify (with an optional ReminderKey; emails a copy to active users with EmailEnabled, logging any mail failure), GetUnread, GetUnreadCount, GetPage, MarkAsRead, MarkAllAsRead, GetPreferences, FillPreferencesDisplay, SavePreferences |
+| NotificationService | In-app notifications, their email copies and preferences | Notify (with an optional ReminderKey; marks the email copy pending for active users with EmailEnabled), SendPendingEmails(now) (sends pending copies after the commit, 100 a run), GetUnread, GetUnreadCount, GetPage, MarkAsRead, MarkAllAsRead, GetPreferences, FillPreferencesDisplay, SavePreferences |
 | ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now); both return the number created. Keys are checked first and a unique-index violation from a simultaneous run is caught (BR-19) |
 | ReportService | The three reports and trainer workload | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload |
 | DashboardService | One view model per role | GetClientDashboard, GetTrainerDashboard, GetAdminDashboard |
@@ -922,7 +923,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | DbSeeder | Applies migrations at startup; seeds roles, an admin, sample trainers and clients, both libraries and 8 weeks of demo data |
 | UserManager, SignInManager (built in) | Identity managers configured in Program.cs: password policy, lockout, unique email, sign-in |
 | EncryptionService : IEncryptionService | Encrypt and Decrypt through an IDataProtector for the six sensitive text columns |
-| ReminderBackgroundService : BackgroundService | Runs ReminderService for all users every Reminders:IntervalSeconds (60), in a new DI scope each tick; a failed run is logged and the next tick tries again; off when Reminders:Enabled is false |
+| ReminderBackgroundService : BackgroundService | Every Reminders:IntervalSeconds (60) creates due reminders for all users and then sends pending email copies, each step in its own DI scope; a failed step is logged and the next tick tries again; off (no reminders and no email copies) when Reminders:Enabled is false |
 | AuditService : IAuditService | Writes and queries AuditLog |
 | EmailService : IEmailService | Sends plain-text email via SMTP (settings in the "Smtp" section, SmtpOptions), or writes .eml files to the pickup folder App_Data/mail |
 | IClock, SystemClock | Supplies the current time, so tests can fix it |
