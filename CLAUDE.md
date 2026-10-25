@@ -135,6 +135,7 @@ dotnet ef database drop --force --project HealthTrack     (development reset; th
 ```
 
 - If a build fails because files in `bin/` are locked, the app is still running in Visual Studio – ask me to stop it.
+- The web project sets `<UseAppHost>false</UseAppHost>`, so there is no HealthTrack.exe: the app always runs as `dotnet HealthTrack.dll`. Windows Smart App Control blocks freshly built unsigned .exe files ("An Application Control policy has blocked this file"); keep the setting.
 - You may start the app in the background for about 20 seconds to check startup (migrations, seeding, no exceptions in the log), then stop it. For UI checks, give me a short list of things to click; I run it in Visual Studio.
 
 ## Working agreement

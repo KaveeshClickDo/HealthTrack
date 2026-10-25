@@ -4,6 +4,10 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Run as "dotnet HealthTrack.dll" instead of a HealthTrack.exe launcher: Windows Smart App Control blocks
+         freshly built, unsigned .exe files ("An Application Control policy has blocked this file"), while dotnet.exe
+         is signed by Microsoft. Visual Studio and dotnet run both start the app through dotnet this way. -->
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
