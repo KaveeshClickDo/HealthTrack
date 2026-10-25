@@ -8,6 +8,8 @@
          freshly built, unsigned .exe files ("An Application Control policy has blocked this file"), while dotnet.exe
          is signed by Microsoft. Visual Studio and dotnet run both start the app through dotnet this way. -->
     <UseAppHost>false</UseAppHost>
+    <!-- Every public member has an XML comment (a marked convention); generating the file makes a missing one a CS1591 warning. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

@@ -68,7 +68,9 @@ public sealed class FeedbackServiceTests
 
         Assert.IsNull(await host.Get<IFeedbackService>().GiveFeedbackAsync(stranger.UserId, new FeedbackViewModel
         {
-            ClientId = client.ClientId, Category = FeedbackCategory.General, Message = "Hello"
+            ClientId = client.ClientId,
+            Category = FeedbackCategory.General,
+            Message = "Hello"
         }));
         Assert.IsFalse(await host.Db.Feedback.AnyAsync());
     }
@@ -86,7 +88,10 @@ public sealed class FeedbackServiceTests
 
         Assert.IsNull(await feedback.GiveFeedbackAsync(trainer.UserId, new FeedbackViewModel
         {
-            ClientId = client.ClientId, WorkoutLogId = othersLog.WorkoutLogId, Category = FeedbackCategory.Workout, Message = "Hi"
+            ClientId = client.ClientId,
+            WorkoutLogId = othersLog.WorkoutLogId,
+            Category = FeedbackCategory.Workout,
+            Message = "Hi"
         }));
         Assert.IsNull(await feedback.GetFeedbackFormAsync(trainer.UserId, client.ClientId, othersLog.WorkoutLogId));
     }

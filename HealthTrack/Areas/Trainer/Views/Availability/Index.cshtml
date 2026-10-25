@@ -25,32 +25,34 @@
                 }
                 else
                 {
-                    <table class="table align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Day</th>
-                                <th scope="col">From</th>
-                                <th scope="col">To</th>
-                                <th scope="col"><span class="visually-hidden">Remove</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var window in Model.Windows)
-                            {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <td>@window.DayOfWeek</td>
-                                    <td>@window.StartTime.ToString("hh\\:mm")</td>
-                                    <td>@window.EndTime.ToString("hh\\:mm")</td>
-                                    <td class="text-end">
-                                        <form asp-action="Delete" asp-route-id="@window.AvailabilityId" method="post"
-                                              data-confirm="Remove the @window.DayOfWeek window? Appointments already booked in it are kept.">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                                        </form>
-                                    </td>
+                                    <th scope="col">Day</th>
+                                    <th scope="col">From</th>
+                                    <th scope="col">To</th>
+                                    <th scope="col"><span class="visually-hidden">Remove</span></th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var window in Model.Windows)
+                                {
+                                    <tr>
+                                        <td>@window.DayOfWeek</td>
+                                        <td>@window.StartTime.ToString("hh\\:mm")</td>
+                                        <td>@window.EndTime.ToString("hh\\:mm")</td>
+                                        <td class="text-end">
+                                            <form asp-action="Delete" asp-route-id="@window.AvailabilityId" method="post"
+                                                  data-confirm="Remove the @window.DayOfWeek window? Appointments already booked in it are kept.">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </div>

@@ -11,14 +11,28 @@ public sealed class MealLogTests
 {
     private static FoodItem Oats() => new()
     {
-        FoodItemId = 1, Name = "Rolled oats", Category = FoodCategory.Grains, ServingSize = 40m, ServingUnit = "g",
-        CaloriesPerServing = 152m, ProteinG = 5.3m, CarbsG = 27.1m, FatG = 2.6m
+        FoodItemId = 1,
+        Name = "Rolled oats",
+        Category = FoodCategory.Grains,
+        ServingSize = 40m,
+        ServingUnit = "g",
+        CaloriesPerServing = 152m,
+        ProteinG = 5.3m,
+        CarbsG = 27.1m,
+        FatG = 2.6m
     };
 
     private static FoodItem Banana() => new()
     {
-        FoodItemId = 2, Name = "Banana", Category = FoodCategory.Fruits, ServingSize = 1m, ServingUnit = "piece",
-        CaloriesPerServing = 105m, ProteinG = 1.3m, CarbsG = 27.0m, FatG = 0.4m
+        FoodItemId = 2,
+        Name = "Banana",
+        Category = FoodCategory.Fruits,
+        ServingSize = 1m,
+        ServingUnit = "piece",
+        CaloriesPerServing = 105m,
+        ProteinG = 1.3m,
+        CarbsG = 27.0m,
+        FatG = 0.4m
     };
 
     /// <summary>1.5 servings store 1.5 × each per-serving value.</summary>

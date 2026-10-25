@@ -70,7 +70,7 @@
                     {
                         <tr class="item-row">
                             <td class="entry-exercise">
-                                <select asp-for="Items[i].FoodItemId" class="form-select form-select-sm" data-food-select>
+                                <select asp-for="Items[i].FoodItemId" class="form-select form-select-sm" aria-label="Food" data-food-select>
                                     <option value="">Choose a food…</option>
                                     @foreach (var group in Model.FoodOptions.GroupBy(o => o.Category))
                                     {
@@ -85,7 +85,7 @@
                                 <span asp-validation-for="Items[i].FoodItemId" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Items[i].Quantity" type="number" min="0.25" max="20" step="0.25" class="form-control form-control-sm" data-quantity />
+                                <input asp-for="Items[i].Quantity" aria-label="Servings" type="number" min="0.25" max="20" step="0.25" class="form-control form-control-sm" data-quantity />
                                 <span asp-validation-for="Items[i].Quantity" class="text-danger small"></span>
                             </td>
                             <td class="text-end text-nowrap" data-row-kcal>&ndash;</td>

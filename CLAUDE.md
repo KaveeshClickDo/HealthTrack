@@ -22,7 +22,8 @@ HealthTrack.slnx
 CLAUDE.md
 .gitignore
 .config/dotnet-tools.json local tool manifest (dotnet-ef)
-docs/                     design-spec.md, build-prompts.md, security-review.md (Phase 9), diagrams/
+README.md
+docs/                     design-spec.md, build-prompts.md, security-review.md, installation-guide.md, user-manual.md, manual-tests.md, diagrams/
 HealthTrack/              the web project (HealthTrack.csproj)
   Program.cs              DI registrations, Identity options, middleware pipeline, startup migration + seed
   appsettings.json        ConnectionStrings:DefaultConnection, Smtp, Reminders

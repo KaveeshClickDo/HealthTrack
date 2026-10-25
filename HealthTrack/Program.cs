@@ -14,7 +14,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Services: the database, Data Protection, Identity, MVC and the HealthTrack services (spec 5.3).
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options
@@ -132,11 +132,11 @@ var app = builder.Build();
 // Apply migrations and seed before the first request, so a fresh clone only needs F5.
 await DbSeeder.SeedAsync(app.Services);
 
-// Configure the HTTP request pipeline.
+// The request pipeline, in the order of CLAUDE.md: errors, HSTS, HTTPS, security headers, routing, sign-in, endpoints.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error/ServerError");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    // HSTS (30 days, the default) tells browsers to use HTTPS only; never sent to localhost, so it is off in Development.
     app.UseHsts();
 }
 

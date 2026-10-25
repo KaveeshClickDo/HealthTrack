@@ -73,11 +73,17 @@ namespace HealthTrack.Data
                 {
                     db.TrainerAvailabilities.Add(new TrainerAvailability
                     {
-                        TrainerId = professional.TrainerId, DayOfWeek = day, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(12, 0, 0)
+                        TrainerId = professional.TrainerId,
+                        DayOfWeek = day,
+                        StartTime = new TimeSpan(9, 0, 0),
+                        EndTime = new TimeSpan(12, 0, 0)
                     });
                     db.TrainerAvailabilities.Add(new TrainerAvailability
                     {
-                        TrainerId = professional.TrainerId, DayOfWeek = day, StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(17, 0, 0)
+                        TrainerId = professional.TrainerId,
+                        DayOfWeek = day,
+                        StartTime = new TimeSpan(14, 0, 0),
+                        EndTime = new TimeSpan(17, 0, 0)
                     });
                 }
             }

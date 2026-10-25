@@ -666,21 +666,39 @@ namespace HealthTrack.Services
                 ExportedAt = now,
                 Account = new
                 {
-                    user.FirstName, user.LastName, user.Email, user.PhoneNumber, user.DateOfBirth, user.Gender,
-                    user.CreatedAt, user.PrivacyConsentAt, user.LastLoginAt
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    user.PhoneNumber,
+                    user.DateOfBirth,
+                    user.Gender,
+                    user.CreatedAt,
+                    user.PrivacyConsentAt,
+                    user.LastLoginAt
                 },
                 HealthProfile = new
                 {
-                    client.FitnessGoal, client.ActivityLevel, client.TargetWeightKg,
-                    client.MedicalConditions, client.Allergies, client.CurrentMedications,
-                    client.EmergencyContactName, client.EmergencyContactPhone, client.ShareMedicalInfoWithTrainer
+                    client.FitnessGoal,
+                    client.ActivityLevel,
+                    client.TargetWeightKg,
+                    client.MedicalConditions,
+                    client.Allergies,
+                    client.CurrentMedications,
+                    client.EmergencyContactName,
+                    client.EmergencyContactPhone,
+                    client.ShareMedicalInfoWithTrainer
                 },
                 NotificationSettings = await _db.NotificationPreferences.AsNoTracking()
                     .Where(p => p.UserId == userId)
                     .Select(p => new
                     {
-                        p.WorkoutRemindersEnabled, p.WorkoutReminderTime, p.MealRemindersEnabled, p.MealReminderLeadMinutes,
-                        p.AppointmentRemindersEnabled, p.AppointmentReminderLeadHours, p.EmailEnabled
+                        p.WorkoutRemindersEnabled,
+                        p.WorkoutReminderTime,
+                        p.MealRemindersEnabled,
+                        p.MealReminderLeadMinutes,
+                        p.AppointmentRemindersEnabled,
+                        p.AppointmentReminderLeadHours,
+                        p.EmailEnabled
                     })
                     .FirstOrDefaultAsync(),
                 TrainerAssignments = await _db.TrainerAssignments.AsNoTracking()
@@ -693,8 +711,16 @@ namespace HealthTrack.Services
                     .OrderBy(m => m.MeasuredAt)
                     .Select(m => new
                     {
-                        m.MeasuredAt, m.WeightKg, m.HeightCm, m.BodyFatPercent, m.WaistCm, m.RestingHeartRate,
-                        m.SystolicBp, m.DiastolicBp, m.BloodGlucose, m.Notes
+                        m.MeasuredAt,
+                        m.WeightKg,
+                        m.HeightCm,
+                        m.BodyFatPercent,
+                        m.WaistCm,
+                        m.RestingHeartRate,
+                        m.SystolicBp,
+                        m.DiastolicBp,
+                        m.BloodGlucose,
+                        m.Notes
                     })
                     .ToListAsync(),
                 WorkoutPlans = await _db.WorkoutPlans.AsNoTracking()
@@ -702,11 +728,22 @@ namespace HealthTrack.Services
                     .OrderBy(p => p.StartDate)
                     .Select(p => new
                     {
-                        p.Title, p.Description, p.Difficulty, p.Status, p.StartDate, p.EndDate,
+                        p.Title,
+                        p.Description,
+                        p.Difficulty,
+                        p.Status,
+                        p.StartDate,
+                        p.EndDate,
                         Trainer = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
                         Exercises = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => new
                         {
-                            e.DayOfWeek, Exercise = e.Exercise.Name, e.Sets, e.Reps, e.DurationMinutes, e.RestSeconds, e.Notes
+                            e.DayOfWeek,
+                            Exercise = e.Exercise.Name,
+                            e.Sets,
+                            e.Reps,
+                            e.DurationMinutes,
+                            e.RestSeconds,
+                            e.Notes
                         }).ToList()
                     })
                     .ToListAsync(),
@@ -715,12 +752,23 @@ namespace HealthTrack.Services
                     .OrderBy(p => p.StartDate)
                     .Select(p => new
                     {
-                        p.Title, p.Description, p.Status, p.StartDate, p.EndDate, p.DailyCalorieTarget, p.ProteinTargetG,
-                        p.CarbsTargetG, p.FatTargetG,
+                        p.Title,
+                        p.Description,
+                        p.Status,
+                        p.StartDate,
+                        p.EndDate,
+                        p.DailyCalorieTarget,
+                        p.ProteinTargetG,
+                        p.CarbsTargetG,
+                        p.FatTargetG,
                         Trainer = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
                         Meals = p.Meals.OrderBy(m => m.ScheduledTime).Select(m => new
                         {
-                            m.DayOfWeek, m.MealType, m.ScheduledTime, m.MealDescription, m.TargetCalories
+                            m.DayOfWeek,
+                            m.MealType,
+                            m.ScheduledTime,
+                            m.MealDescription,
+                            m.TargetCalories
                         }).ToList()
                     })
                     .ToListAsync(),
@@ -729,10 +777,18 @@ namespace HealthTrack.Services
                     .OrderBy(l => l.WorkoutDate)
                     .Select(l => new
                     {
-                        l.WorkoutDate, Plan = l.WorkoutPlan != null ? l.WorkoutPlan.Title : null, l.PerceivedEffort, l.Notes,
+                        l.WorkoutDate,
+                        Plan = l.WorkoutPlan != null ? l.WorkoutPlan.Title : null,
+                        l.PerceivedEffort,
+                        l.Notes,
                         Entries = l.Entries.Select(e => new
                         {
-                            Exercise = e.Exercise.Name, e.SetsCompleted, e.RepsCompleted, e.WeightKg, e.DurationMinutes, e.DistanceKm,
+                            Exercise = e.Exercise.Name,
+                            e.SetsCompleted,
+                            e.RepsCompleted,
+                            e.WeightKg,
+                            e.DurationMinutes,
+                            e.DistanceKm,
                             e.CaloriesBurned
                         }).ToList()
                     })
@@ -743,7 +799,9 @@ namespace HealthTrack.Services
                     .ThenBy(l => l.MealType)
                     .Select(l => new
                     {
-                        l.MealDate, l.MealType, l.Notes,
+                        l.MealDate,
+                        l.MealType,
+                        l.Notes,
                         Items = l.Items.Select(i => new { Food = i.FoodItem.Name, i.Quantity, i.Calories, i.ProteinG, i.CarbsG, i.FatG }).ToList()
                     })
                     .ToListAsync(),
@@ -753,8 +811,16 @@ namespace HealthTrack.Services
                     .Select(a => new
                     {
                         Professional = a.Trainer.User.FirstName + " " + a.Trainer.User.LastName,
-                        a.AppointmentType, a.Mode, a.StartDateTime, a.DurationMinutes, a.Status, a.Location,
-                        a.ClientReason, a.ProfessionalNotes, a.CancellationReason, a.CreatedAt
+                        a.AppointmentType,
+                        a.Mode,
+                        a.StartDateTime,
+                        a.DurationMinutes,
+                        a.Status,
+                        a.Location,
+                        a.ClientReason,
+                        a.ProfessionalNotes,
+                        a.CancellationReason,
+                        a.CreatedAt
                     })
                     .ToListAsync(),
                 Feedback = await _db.Feedback.AsNoTracking()

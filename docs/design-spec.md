@@ -210,7 +210,7 @@ Food: item calories = quantity × CaloriesPerServing, and the same for protein, 
 - Performance: lists paged at 20 rows; foreign keys and date columns indexed; read queries use AsNoTracking; dashboards load in one request.
 - Reliability: multi-table writes run in transactions; optimistic concurrency on appointments; global error handling with friendly pages.
 - Maintainability: controllers → services → DbContext layering, service interfaces, consistent naming, XML comments on public methods, MSTest unit tests.
-- Portability: .NET 8 (LTS) and LocalDB, so it opens and runs in a standard Visual Studio 2022 (17.8 or later) or 2026 install; migrations and seeding run on first start.
+- Portability: .NET 10 (LTS) and LocalDB, so it opens and runs in a standard Visual Studio 2026 install (Visual Studio 2022 can't build .NET 10); migrations and seeding run on first start.
 
 ### 1.13 Technology stack and solution structure
 
@@ -992,8 +992,8 @@ Everyone writes seed data and unit tests for their own module, captures user-man
 
 ### 6.3 Installation outline
 
-1. Install Visual Studio 2022 (17.8 or later) or 2026 with the ASP.NET and web development workload, which includes the .NET 8 SDK and SQL Server Express LocalDB.
-2. Open HealthTrack.sln; NuGet packages restore on the first build.
+1. Install Visual Studio 2026 with the ASP.NET and web development workload, which includes the .NET 10 SDK and SQL Server Express LocalDB.
+2. Open HealthTrack.slnx; NuGet packages restore on the first build.
 3. Press F5. On first start the app applies the EF Core migrations, creates HealthTrackDb and seeds the demo data.
 4. Accept the HTTPS development certificate when Visual Studio asks (or run dotnet dev-certs https --trust once).
 5. Sign in with the seeded demo accounts, one per role (for example admin@healthtrack.test), listed with passwords in the installation guide.

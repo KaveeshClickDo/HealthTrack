@@ -129,4 +129,33 @@ public sealed class DbSeederTests
             await host.Db.AuditLogs.CountAsync(), await host.Db.Notifications.CountAsync());
         Assert.AreEqual(before, after);
     }
+
+    /// <summary>
+    /// Every seeded value keeps the ranges of spec section 2, the same ones the forms enforce (this caught blood glucose
+    /// seeded in mmol/L instead of mg/dL).
+    /// </summary>
+    [TestMethod]
+    public async Task SeedAsync_SeededValues_WithinTheSpecRanges()
+    {
+        await using var host = await SeededAsync();
+        var db = host.Db;
+
+        var readings = await db.HealthMeasurements.AsNoTracking().ToListAsync();
+        Assert.IsTrue(readings.All(m => m.WeightKg is >= 20m and <= 350m && m.HeightCm is >= 50m and <= 250m));
+        Assert.IsTrue(readings.All(m => m.BodyFatPercent is null or (>= 2m and <= 70m) && m.WaistCm is null or (>= 30m and <= 250m)));
+        Assert.IsTrue(readings.All(m => m.RestingHeartRate is null or (>= 30 and <= 220)));
+        Assert.IsTrue(readings.All(m => m.SystolicBp is null or (>= 70 and <= 250) && m.DiastolicBp is null or (>= 40 and <= 150)));
+        Assert.IsTrue(readings.All(m => m.DiastolicBp is null || m.SystolicBp is null || m.DiastolicBp < m.SystolicBp));
+        Assert.IsTrue(readings.Where(m => m.BloodGlucose is not null).All(m => m.BloodGlucose is >= 20m and <= 600m));
+        Assert.IsTrue(readings.Any(m => m.BloodGlucose is not null));
+
+        Assert.IsTrue(await db.WorkoutLogEntries.AllAsync(e => e.DurationMinutes >= 1 && e.DurationMinutes <= 300
+            && (e.SetsCompleted == null || (e.SetsCompleted >= 1 && e.SetsCompleted <= 20))
+            && (e.RepsCompleted == null || (e.RepsCompleted >= 1 && e.RepsCompleted <= 100))));
+        Assert.IsTrue(await db.WorkoutLogs.AllAsync(l => l.PerceivedEffort == null || (l.PerceivedEffort >= 1 && l.PerceivedEffort <= 10)));
+        Assert.IsTrue(await db.MealLogItems.AllAsync(i => i.Quantity >= 0.25m && i.Quantity <= 20m));
+        Assert.IsTrue(await db.DietPlans.AllAsync(p => p.DailyCalorieTarget >= 1200 && p.DailyCalorieTarget <= 5000));
+        Assert.IsTrue(await db.DietPlanMeals.AllAsync(m => m.TargetCalories >= 50 && m.TargetCalories <= 2000));
+        Assert.IsTrue(await db.Feedback.AllAsync(f => f.Rating == null || (f.Rating >= 1 && f.Rating <= 5)));
+    }
 }

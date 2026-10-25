@@ -91,32 +91,34 @@
                 }
                 else
                 {
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Date</th>
-                                <th scope="col">Session</th>
-                                <th scope="col" class="text-end">Minutes</th>
-                                <th scope="col" class="text-end">kcal</th>
-                                <th scope="col"><span class="visually-hidden">Feedback</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var workout in Model.RecentWorkouts)
-                            {
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <td class="text-nowrap">@workout.WorkoutDate.ToString("dd MMM yyyy")</td>
-                                    <td>@(workout.PlanTitle ?? "Free workout") <span class="text-muted small">&middot; @workout.Exercises ex.</span></td>
-                                    <td class="text-end">@workout.Minutes</td>
-                                    <td class="text-end">@workout.Calories.ToString("N0")</td>
-                                    <td class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create"
-                                           asp-route-clientId="@Model.ClientId" asp-route-workoutLogId="@workout.WorkoutLogId">Feedback</a>
-                                    </td>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Session</th>
+                                    <th scope="col" class="text-end">Minutes</th>
+                                    <th scope="col" class="text-end">kcal</th>
+                                    <th scope="col"><span class="visually-hidden">Feedback</span></th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var workout in Model.RecentWorkouts)
+                                {
+                                    <tr>
+                                        <td class="text-nowrap">@workout.WorkoutDate.ToString("dd MMM yyyy")</td>
+                                        <td>@(workout.PlanTitle ?? "Free workout") <span class="text-muted small">&middot; @workout.Exercises ex.</span></td>
+                                        <td class="text-end">@workout.Minutes</td>
+                                        <td class="text-end">@workout.Calories.ToString("N0")</td>
+                                        <td class="text-end">
+                                            <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create"
+                                               asp-route-clientId="@Model.ClientId" asp-route-workoutLogId="@workout.WorkoutLogId">Feedback</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </section>

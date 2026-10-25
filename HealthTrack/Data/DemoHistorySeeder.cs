@@ -305,7 +305,8 @@ namespace HealthTrack.Data
             {
                 var day = start.AddDays(week * 7);
                 AddMeasurement(client, day.AddHours(7).AddMinutes(30), Weight(day) + Noise(0.2m), 172.0m, bodyFat: null, waist: 102.0m - 0.6m * week,
-                    heartRate: 78 - week / 2, systolic: 138 - week, diastolic: 88 - week / 2, notes: null, glucose: 7.8m - 0.2m * week);
+                    heartRate: 78 - week / 2, systolic: 138 - week, diastolic: 88 - week / 2, notes: null,
+                    glucose: 140m - 4m * week); // mg/dL (spec 2.6: 20–600), fasting, coming down with the diet
             }
 
             return plan;
@@ -533,7 +534,10 @@ namespace HealthTrack.Data
             // A mistyped password now and then.
             _audit.Add(new AuditLog
             {
-                UserId = amaya.Id, Action = AuditAction.LoginFailed, Details = "Wrong password.", IpAddress = "127.0.0.1",
+                UserId = amaya.Id,
+                Action = AuditAction.LoginFailed,
+                Details = "Wrong password.",
+                IpAddress = "127.0.0.1",
                 Timestamp = _today.AddDays(-3).AddHours(7).AddMinutes(58)
             });
         }

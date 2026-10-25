@@ -57,7 +57,7 @@
                                        checked="@Model.Entries[i].Include" aria-label="Done" />
                             </td>
                             <td class="entry-exercise">
-                                <select asp-for="Entries[i].ExerciseId" class="form-select form-select-sm">
+                                <select asp-for="Entries[i].ExerciseId" class="form-select form-select-sm" aria-label="Exercise">
                                     <option value="">Choose an exercise…</option>
                                     @foreach (var group in Model.ExerciseOptions.GroupBy(o => o.Group))
                                     {
@@ -77,23 +77,23 @@
                                 <span asp-validation-for="Entries[i].ExerciseId" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Entries[i].DurationMinutes" type="number" min="1" max="300" class="form-control form-control-sm" />
+                                <input asp-for="Entries[i].DurationMinutes" aria-label="Minutes" type="number" min="1" max="300" class="form-control form-control-sm" />
                                 <span asp-validation-for="Entries[i].DurationMinutes" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Entries[i].Sets" type="number" min="1" max="20" class="form-control form-control-sm" />
+                                <input asp-for="Entries[i].Sets" aria-label="Sets" type="number" min="1" max="20" class="form-control form-control-sm" />
                                 <span asp-validation-for="Entries[i].Sets" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Entries[i].Reps" type="number" min="1" max="100" class="form-control form-control-sm" />
+                                <input asp-for="Entries[i].Reps" aria-label="Reps" type="number" min="1" max="100" class="form-control form-control-sm" />
                                 <span asp-validation-for="Entries[i].Reps" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Entries[i].LoadKg" type="number" min="0" max="500" step="0.5" class="form-control form-control-sm" />
+                                <input asp-for="Entries[i].LoadKg" aria-label="Load (kg)" type="number" min="0" max="500" step="0.5" class="form-control form-control-sm" />
                                 <span asp-validation-for="Entries[i].LoadKg" class="text-danger small"></span>
                             </td>
                             <td>
-                                <input asp-for="Entries[i].DistanceKm" type="number" min="0" max="100" step="0.1" class="form-control form-control-sm" />
+                                <input asp-for="Entries[i].DistanceKm" aria-label="Distance (km)" type="number" min="0" max="100" step="0.1" class="form-control form-control-sm" />
                                 <span asp-validation-for="Entries[i].DistanceKm" class="text-danger small"></span>
                             </td>
                             <td class="text-end">
