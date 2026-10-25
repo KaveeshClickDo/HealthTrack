@@ -17,6 +17,12 @@ namespace HealthTrack.Services
         /// <summary>What a stale form or a clashing simultaneous change is told (spec 1.6, RowVersion).</summary>
         public const string ConcurrencyMessage = "This appointment was changed by someone else. Reload and try again.";
 
+        /// <summary>What a booking or reschedule is told when another appointment of the professional took the time first (BR-15).</summary>
+        public const string SlotTakenMessage = "That time has just been taken – please pick another.";
+
+        // How often a booking that lost a deadlock runs again before giving up with SlotTakenMessage.
+        private const int SlotSaveAttempts = 3;
+
         // BR-15: start times every 15 minutes, 2 hours to 60 days ahead.
         private const int MaximumDaysAhead = 60;
         private static readonly TimeSpan SlotStep = TimeSpan.FromMinutes(15);
@@ -251,17 +257,8 @@ namespace HealthTrack.Services
                 CreatedAt = _clock.Now
             };
 
-            // BR-15: the slot is checked again inside a serializable transaction, so two clients can't take it at once.
-            await using (var transaction = await _db.BeginSerializableTransactionAsync())
-            {
-                await EnsureSlotAsync(trainer.TrainerId, trainer.User.FullName, client.ClientId, start, minutes, null, byClient: true);
-                _db.Appointments.Add(appointment);
-                await _db.SaveChangesAsync();
-                if (transaction is not null)
-                {
-                    await transaction.CommitAsync();
-                }
-            }
+            _db.Appointments.Add(appointment);
+            await SaveInFreeSlotAsync(appointment, trainer.User.FullName, excludeAppointmentId: null, byClient: true);
 
             await NotifyAsync(trainer.UserId, toTrainer: true, appointment.AppointmentId, "New appointment request",
                 $"{client.User.FullName} asked for {Describe(appointment)}, {minutes} minutes.");
@@ -322,19 +319,11 @@ namespace HealthTrack.Services
             EnsureFresh(appointment, rowVersion);
             var oldStart = appointment.StartDateTime;
 
-            await using (var transaction = await _db.BeginSerializableTransactionAsync())
-            {
-                // The entity checks the lifecycle (BR-16) and the length; then the new slot must pass BR-15, leaving out
-                // the appointment's own current slot.
-                appointment.Reschedule(newStart, minutes);
-                await EnsureSlotAsync(appointment.TrainerId, appointment.Trainer.User.FullName, appointment.ClientId, newStart, minutes,
-                    appointment.AppointmentId, byClient: false);
-                await SaveAsync(appointment);
-                if (transaction is not null)
-                {
-                    await transaction.CommitAsync();
-                }
-            }
+            // The entity checks the lifecycle (BR-16) and the length; then the new slot must pass BR-15, leaving out the
+            // appointment's own current slot.
+            appointment.Reschedule(newStart, minutes);
+            appointment.UpdatedAt = _clock.Now;
+            await SaveInFreeSlotAsync(appointment, appointment.Trainer.User.FullName, appointment.AppointmentId, byClient: false);
 
             await NotifyAsync(appointment.Client.UserId, toTrainer: false, appointmentId, "Appointment moved",
                 $"{appointment.Trainer.User.FullName} moved your appointment from {When(oldStart)} to {When(newStart)} ({minutes} minutes).");
@@ -599,10 +588,50 @@ namespace HealthTrack.Services
             if (clash is not null)
             {
                 throw new BusinessRuleException("BR-15", clash.TrainerId == trainerId
-                    ? "That time has just been taken. Choose another free time."
+                    ? SlotTakenMessage
                     : byClient
                         ? "You already have another appointment at that time."
                         : "The client already has another appointment at that time.");
+            }
+        }
+
+        // BR-15: the slot is checked again and the booking or move saved inside one serializable transaction, so two people
+        // can't take the same time. When two run at the same moment, both read the free range, both try to write, and
+        // SQL Server breaks the deadlock by rolling one back (error 1205) instead of letting both through. That one runs
+        // again: the fresh check then finds the time taken and says so, or saves when the two didn't actually clash.
+        private async Task SaveInFreeSlotAsync(Appointment appointment, string trainerName, int? excludeAppointmentId, bool byClient)
+        {
+            try
+            {
+                for (var attempt = 1; ; attempt++)
+                {
+                    try
+                    {
+                        await using var transaction = await _db.BeginSerializableTransactionAsync();
+                        await EnsureSlotAsync(appointment.TrainerId, trainerName, appointment.ClientId, appointment.StartDateTime,
+                            appointment.DurationMinutes, excludeAppointmentId, byClient);
+                        await _db.SaveChangesAsync();
+                        if (transaction is not null)
+                        {
+                            await transaction.CommitAsync();
+                        }
+
+                        return;
+                    }
+                    catch (Exception ex) when (SqlErrors.IsDeadlock(ex))
+                    {
+                        if (attempt == SlotSaveAttempts)
+                        {
+                            throw new BusinessRuleException("BR-15", SlotTakenMessage);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Nothing was saved: forget the change, so no later SaveChanges in this request can save it by accident.
+                _db.Entry(appointment).State = EntityState.Detached;
+                throw;
             }
         }
 

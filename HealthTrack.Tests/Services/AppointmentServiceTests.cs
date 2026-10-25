@@ -4,6 +4,8 @@ using HealthTrack.Models.ViewModels;
 using HealthTrack.Services;
 using HealthTrack.Tests.TestSupport;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace HealthTrack.Tests.Services;
 
@@ -16,9 +18,9 @@ public sealed class AppointmentServiceTests
 {
     private static readonly DateTime Monday = new(2026, 10, 26);
 
-    private static async Task<(TestHost Host, TrainerProfile Trainer, ClientProfile Client)> ArrangeAsync()
+    private static async Task<(TestHost Host, TrainerProfile Trainer, ClientProfile Client)> ArrangeAsync(IInterceptor? interceptor = null)
     {
-        var host = await TestHost.CreateAsync();
+        var host = await TestHost.CreateAsync(interceptor: interceptor);
         var trainer = await host.CreateTrainerAsync("trainer@example.test", firstName: "Chris");
         var client = await host.CreateClientAsync("client@example.test", firstName: "Amaya");
         await host.AddAvailabilityAsync(trainer, DayOfWeek.Monday, 9, 12);
@@ -454,5 +456,79 @@ public sealed class AppointmentServiceTests
         Assert.IsFalse(await appointments.RemoveAvailabilityAsync(window.AvailabilityId, other.UserId));
         Assert.IsTrue(await appointments.RemoveAvailabilityAsync(window.AvailabilityId, trainer.UserId));
         Assert.IsFalse(await host.Db.TrainerAvailabilities.AnyAsync());
+    }
+
+    /// <summary>
+    /// BR-15: another client books 10:00 at the same moment. SQL Server lets that booking through and rolls this one
+    /// back to break the deadlock; the retry finds the time taken and says so, and nothing of this booking is left behind.
+    /// </summary>
+    [TestMethod]
+    public async Task BookAsync_LosesDeadlockToSameTime_ThrowsSlotTakenMessage()
+    {
+        var deadlock = new SqlErrorInterceptor<Appointment>(1205);
+        var (host, trainer, client) = await ArrangeAsync(deadlock);
+        await using var _ = host;
+        var other = await host.CreateClientAsync("other@example.test");
+        deadlock.FailuresLeft = 1;
+        deadlock.OtherRequest = async () =>
+        {
+            await using var scope = host.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<IAppointmentService>().BookAsync(other.UserId, Booking(trainer, Monday.AddHours(10)));
+        };
+
+        var error = await RuleAssert.BrokenAsync("BR-15", () => host.Get<IAppointmentService>().BookAsync(client.UserId, Booking(trainer, Monday.AddHours(10))));
+
+        Assert.AreEqual(AppointmentService.SlotTakenMessage, error.Message);
+        Assert.AreEqual(other.ClientId, (await host.Db.Appointments.AsNoTracking().SingleAsync()).ClientId);
+        Assert.IsFalse(host.Db.ChangeTracker.Entries<Appointment>().Any());
+    }
+
+    /// <summary>A lost deadlock against a booking that didn't clash (another time) just runs again and books.</summary>
+    [TestMethod]
+    public async Task BookAsync_LosesDeadlockWithoutClash_RetriesAndBooks()
+    {
+        var deadlock = new SqlErrorInterceptor<Appointment>(1205);
+        var (host, trainer, client) = await ArrangeAsync(deadlock);
+        await using var _ = host;
+        deadlock.FailuresLeft = 1;
+
+        var id = await host.Get<IAppointmentService>().BookAsync(client.UserId, Booking(trainer, Monday.AddHours(10)));
+
+        Assert.AreEqual(1, deadlock.Failures);
+        Assert.AreEqual(id, (await host.Db.Appointments.AsNoTracking().SingleAsync()).AppointmentId);
+    }
+
+    /// <summary>After three lost deadlocks in a row the booking gives up with the friendly message, not the error page.</summary>
+    [TestMethod]
+    public async Task BookAsync_DeadlockEveryTime_GivesUpWithSlotTakenMessage()
+    {
+        var deadlock = new SqlErrorInterceptor<Appointment>(1205);
+        var (host, trainer, client) = await ArrangeAsync(deadlock);
+        await using var _ = host;
+        deadlock.FailuresLeft = int.MaxValue;
+
+        var error = await RuleAssert.BrokenAsync("BR-15", () => host.Get<IAppointmentService>().BookAsync(client.UserId, Booking(trainer, Monday.AddHours(10))));
+
+        Assert.AreEqual(AppointmentService.SlotTakenMessage, error.Message);
+        Assert.AreEqual(3, deadlock.Failures);
+        Assert.IsFalse(await host.Db.Appointments.AnyAsync());
+        Assert.IsFalse(await host.Db.Notifications.AnyAsync());
+    }
+
+    /// <summary>Rescheduling takes the same path: a lost deadlock runs again and moves the appointment.</summary>
+    [TestMethod]
+    public async Task RescheduleAsync_LosesDeadlockOnce_RetriesAndMoves()
+    {
+        var deadlock = new SqlErrorInterceptor<Appointment>(1205);
+        var (host, trainer, client) = await ArrangeAsync(deadlock);
+        await using var _ = host;
+        var appointment = await host.AddAppointmentAsync(client, trainer, Monday.AddHours(9));
+        deadlock.FailuresLeft = 1;
+
+        Assert.IsTrue(await host.Get<IAppointmentService>().RescheduleAsync(appointment.AppointmentId, trainer.UserId, Monday.AddHours(11), 60,
+            await VersionAsync(host, appointment.AppointmentId)));
+
+        Assert.AreEqual(1, deadlock.Failures);
+        Assert.AreEqual(Monday.AddHours(11), (await host.Db.Appointments.AsNoTracking().SingleAsync()).StartDateTime);
     }
 }

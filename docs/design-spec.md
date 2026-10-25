@@ -132,8 +132,9 @@ Only Pending, Approved and Rescheduled appointments can still change; the five c
   - Appointment: an approved or rescheduled appointment starts within the lead time (default 24 hours); both client and trainer are reminded.
 - Each reminder carries a ReminderKey such as MEAL-42-20261025 with a unique index, so it is created once however often the check runs.
 - ReminderBackgroundService, a hosted service, calls ReminderService.GenerateAllDueReminders(now) every 60 seconds, so reminders and email copies go out even when nobody is signed in.
-- The bell icon in the layout polls /Notifications/Poll by AJAX every 60 seconds for the unread count and newest items, shown as a toast; the poll also runs GenerateDueReminders(userId, now) for the signed-in user.
-- Users switch each reminder type on or off and set times, lead times and email copies. Email uses the SMTP settings in appsettings.json; in development it writes .eml files to a pickup folder, so the demo works offline.
+- The bell icon in the layout polls /Notifications/Poll by AJAX every 60 seconds for the unread count and newest items, shown as a toast; the poll also runs GenerateDueReminders(userId, now) for the signed-in user, and so do the three dashboards when they open. Clicking a toast marks it read and opens its page. The poll does not count as activity, so it never keeps an idle session alive.
+- Reminders are created only for active accounts. Meal lead times are counted in whole minutes, so a lead time of 0 reminds during the meal's own minute.
+- Users switch each reminder type on or off and set times, lead times and email copies (workout and meal reminders apply to clients only). Email uses the SMTP settings in appsettings.json; in development it writes .eml files to a pickup folder, so the demo works offline. Email copies go to active accounts with email copies on; a mail failure is logged and never breaks the action that raised the notification.
 
 ### 1.9 Security and data protection
 
@@ -142,7 +143,7 @@ Only Pending, Approved and Rescheduled appointments can still change; the five c
 | Stolen passwords | ASP.NET Core Identity's built-in hasher: PBKDF2 with HMAC-SHA512, 100,000 iterations and a random salt; strong password policy |
 | Password guessing | Lockout for 15 minutes after 5 failed attempts; failed logins audited |
 | Unauthorised access | A fallback policy requires sign-in on every page; role-based \[Authorize\] on each area's base controller; ownership checks in services (clients see only their data, trainers only assigned clients) |
-| Data in transit | HTTPS redirection and HSTS middleware; Secure, HttpOnly, SameSite auth cookie with 30-minute sliding expiry |
+| Data in transit | HTTPS redirection and HSTS middleware; Secure, HttpOnly, SameSite auth cookie with 30-minute sliding expiry (the notification bell's background poll does not renew it, so an open tab still times out) |
 | Data at rest | EncryptionService (ASP.NET Core Data Protection: AES-256-CBC with HMAC-SHA256, keys stored in App\_Data/keys) encrypts health conditions, allergies, medications, measurement notes, appointment reasons and consultation notes through an EF Core value converter |
 | SQL injection and XSS | EF Core LINQ (parameterised SQL); Razor HTML encoding; no Html.Raw on user input; Content-Security-Policy header |
 | CSRF and over-posting | Global AutoValidateAntiforgeryToken filter checks every POST, including AJAX (token sent as a header); view models instead of entities in forms |
@@ -753,7 +754,7 @@ Requests pass down through the layers and back; the red numbers 1–9 match the 
 3. Routing selects Client/AppointmentsController.Book; the area's Client role check and the global anti-forgery filter run.
 4. Model binding fills BookAppointmentViewModel and data annotations validate it into ModelState.
 5. The controller calls AppointmentService.Book, taking the client ID from the signed-in user, never from the form.
-6. The service checks the business rules, opens a serializable transaction, re-checks overlaps and saves; EncryptionService encrypts the reason.
+6. The service checks the business rules, opens a serializable transaction, re-checks overlaps and saves; EncryptionService encrypts the reason. When two bookings arrive at the same moment, SQL Server breaks the resulting deadlock by rolling one back (error 1205); that one runs again with a fresh check (up to 3 attempts), so it either books a time that is still free or shows "That time has just been taken – please pick another."
 7. Entity Framework sends parameterised SQL to LocalDB and the transaction commits.
 8. NotificationService alerts the trainer and AuditService records the booking.
 9. The controller redirects to the appointment list with a success message (Post/Redirect/Get).
@@ -899,8 +900,8 @@ Every service implements an interface of the same name with an I prefix (for exa
 | ProgressService | Measurements, trends and adherence | GetMeasurementForm, AddMeasurement, GetLatestMeasurement, GetMeasurements, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget, GetClientProgress, GetTrainerClientProgress |
 | AppointmentService | Availability, slots, booking and the status workflow | GetAvailability, AddAvailability, RemoveAvailability, GetAvailableSlots, GetBookForm, Book, Approve, Reject, GetRescheduleForm, Reschedule, Cancel, Complete, MarkNoShow, GetUpcoming, GetForClient, GetForTrainer, GetDetails |
 | FeedbackService | Trainer feedback | GetFeedbackForm, GiveFeedback, GetForClient |
-| NotificationService | In-app notifications and preferences | Notify, GetUnread, GetUnreadCount, MarkAsRead, MarkAllAsRead, GetPreferences, SavePreferences |
-| ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now) |
+| NotificationService | In-app notifications, their email copies and preferences | Notify (with an optional ReminderKey; emails a copy to active users with EmailEnabled, logging any mail failure), GetUnread, GetUnreadCount, GetPage, MarkAsRead, MarkAllAsRead, GetPreferences, FillPreferencesDisplay, SavePreferences |
+| ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now); both return the number created. Keys are checked first and a unique-index violation from a simultaneous run is caught (BR-19) |
 | ReportService | The three reports and trainer workload | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload |
 | DashboardService | One view model per role | GetClientDashboard, GetTrainerDashboard, GetAdminDashboard |
 | LibraryService | Exercise and food libraries | GetExercises, GetExercise, SaveExercise, SetExerciseActive, GetFoods, GetFood, SaveFood, SetFoodActive, GetActiveExercises, GetActiveFoods |
@@ -921,9 +922,9 @@ Every service implements an interface of the same name with an I prefix (for exa
 | DbSeeder | Applies migrations at startup; seeds roles, an admin, sample trainers and clients, both libraries and 8 weeks of demo data |
 | UserManager, SignInManager (built in) | Identity managers configured in Program.cs: password policy, lockout, unique email, sign-in |
 | EncryptionService : IEncryptionService | Encrypt and Decrypt through an IDataProtector for the six sensitive text columns |
-| ReminderBackgroundService : BackgroundService | Runs ReminderService for all users every 60 seconds |
+| ReminderBackgroundService : BackgroundService | Runs ReminderService for all users every Reminders:IntervalSeconds (60), in a new DI scope each tick; a failed run is logged and the next tick tries again; off when Reminders:Enabled is false |
 | AuditService : IAuditService | Writes and queries AuditLog |
-| EmailService : IEmailService | Sends email via SMTP or the pickup folder |
+| EmailService : IEmailService | Sends plain-text email via SMTP (settings in the "Smtp" section, SmtpOptions), or writes .eml files to the pickup folder App_Data/mail |
 | IClock, SystemClock | Supplies the current time, so tests can fix it |
 | CsvExporter (static) | Turns report rows into CSV |
 | MinimumAgeAttribute, NotInFutureAttribute | Custom validation attributes with client-side adapters |

@@ -48,12 +48,16 @@ public sealed class TestHost : IAsyncDisposable
     /// <summary>The test's database context.</summary>
     public ApplicationDbContext Db => Get<ApplicationDbContext>();
 
+    /// <summary>The email service, which keeps messages instead of sending them.</summary>
+    public FakeEmailService Email => Get<FakeEmailService>();
+
     /// <summary>
     /// Builds the services, creates the three roles and returns the host.
     /// </summary>
     /// <param name="now">The clock's time; <see cref="DefaultNow"/> when omitted.</param>
+    /// <param name="interceptor">An EF Core interceptor for the context, for example a <see cref="SqlErrorInterceptor{TEntity}"/>.</param>
     /// <returns>The host; dispose it at the end of the test.</returns>
-    public static async Task<TestHost> CreateAsync(DateTime? now = null)
+    public static async Task<TestHost> CreateAsync(DateTime? now = null, IInterceptor? interceptor = null)
     {
         var clock = new FixedClock(now ?? DefaultNow);
         var httpContextAccessor = new TestHttpContextAccessor();
@@ -64,9 +68,18 @@ public sealed class TestHost : IAsyncDisposable
         services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
         services.AddSingleton<IClock>(clock);
         services.AddSingleton<IEncryptionService, FakeEncryptionService>();
-        services.AddDbContext<ApplicationDbContext>(options => options
-            .UseInMemoryDatabase(databaseName)
-            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+        services.AddSingleton<FakeEmailService>();
+        services.AddSingleton<IEmailService>(provider => provider.GetRequiredService<FakeEmailService>());
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options
+                .UseInMemoryDatabase(databaseName)
+                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning));
+            if (interceptor is not null)
+            {
+                options.AddInterceptors(interceptor);
+            }
+        });
 
         services.AddDataProtection().UseEphemeralDataProtectionProvider();
         services.AddAuthentication(IdentityConstants.ApplicationScheme).AddCookie(IdentityConstants.ApplicationScheme);
@@ -101,6 +114,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<IProgressService, ProgressService>();
         services.AddScoped<IDietService, DietService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
+        services.AddScoped<IReminderService, ReminderService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 
@@ -119,6 +133,32 @@ public sealed class TestHost : IAsyncDisposable
     /// <typeparam name="T">The service type.</typeparam>
     /// <returns>The service.</returns>
     public T Get<T>() where T : notnull => Services.GetRequiredService<T>();
+
+    /// <summary>
+    /// A second scope on the same database: another request, with its own DbContext.
+    /// </summary>
+    /// <returns>The scope; dispose it when done.</returns>
+    public AsyncServiceScope CreateScope() => _root.CreateAsyncScope();
+
+    /// <summary>
+    /// Changes a user's notification settings, creating them with the spec defaults first if the user has none.
+    /// </summary>
+    /// <param name="userId">The user.</param>
+    /// <param name="change">The change, for example turning email copies on.</param>
+    /// <returns>The saved settings.</returns>
+    public async Task<NotificationPreference> SetPreferencesAsync(string userId, Action<NotificationPreference> change)
+    {
+        var preference = await Db.NotificationPreferences.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (preference is null)
+        {
+            preference = NotificationPreference.CreateDefault(userId);
+            Db.NotificationPreferences.Add(preference);
+        }
+
+        change(preference);
+        await Db.SaveChangesAsync();
+        return preference;
+    }
 
     /// <summary>
     /// Creates a user with <see cref="Password"/> in one role through UserManager, as registration does.

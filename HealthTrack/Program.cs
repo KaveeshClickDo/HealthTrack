@@ -65,6 +65,28 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Lax;
+
+    // The bell polls every minute. That background traffic must not count as activity, or an open tab would keep the
+    // session alive for ever and the 30-minute idle time-out would never apply. Both renewals are switched off for it:
+    // sliding expiration, and the refresh after the security-stamp check (which still runs and still signs out).
+    options.Events.OnCheckSlidingExpiration = context =>
+    {
+        if (IsNotificationPoll(context.Request))
+        {
+            context.ShouldRenew = false;
+        }
+
+        return Task.CompletedTask;
+    };
+    var validatePrincipal = options.Events.OnValidatePrincipal;
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        await validatePrincipal(context);
+        if (IsNotificationPoll(context.Request))
+        {
+            context.ShouldRenew = false;
+        }
+    };
 });
 
 // BR-05: a changed security stamp (suspension, password change) signs old cookies out within a minute.
@@ -83,8 +105,14 @@ builder.Services.AddSingleton<IClock, SystemClock>();
 // Singleton: EF Core caches the model, so the encryption converter keeps the first instance it is given.
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
 
+// Email copies of notifications (SMTP, or .eml files in App_Data/mail) and the reminder timer (spec 1.8).
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection(SmtpOptions.SectionName));
+builder.Services.Configure<ReminderOptions>(builder.Configuration.GetSection(ReminderOptions.SectionName));
+
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IReminderService, ReminderService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
@@ -93,6 +121,9 @@ builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IDietService, DietService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+
+// UC34: creates due reminders for everyone every minute, even when nobody is signed in.
+builder.Services.AddHostedService<ReminderBackgroundService>();
 
 var app = builder.Build();
 
@@ -138,3 +169,7 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.Run();
+
+// The bell's background poll (NotificationsController.Poll).
+static bool IsNotificationPoll(HttpRequest request) =>
+    request.Path.StartsWithSegments("/Notifications/Poll", StringComparison.OrdinalIgnoreCase);

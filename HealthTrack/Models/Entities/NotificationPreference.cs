@@ -7,6 +7,18 @@ namespace HealthTrack.Models.Entities
     /// </summary>
     public class NotificationPreference
     {
+        /// <summary>The shortest meal reminder lead time in minutes (spec 2.8).</summary>
+        public const int MinMealLeadMinutes = 0;
+
+        /// <summary>The longest meal reminder lead time in minutes (spec 2.8).</summary>
+        public const int MaxMealLeadMinutes = 120;
+
+        /// <summary>The shortest appointment reminder lead time in hours (spec 2.8).</summary>
+        public const int MinAppointmentLeadHours = 1;
+
+        /// <summary>The longest appointment reminder lead time in hours (spec 2.8).</summary>
+        public const int MaxAppointmentLeadHours = 72;
+
         /// <summary>Primary key and the user it belongs to (R5).</summary>
         [Key]
         [MaxLength(450)]

@@ -77,6 +77,25 @@ html {
     font-size: 0.65rem;
 }
 
+/* Notifications: unread rows carry a coloured edge; a toast's body is a button that opens the notification. */
+.notification-unread {
+    background-color: var(--ht-primary-soft);
+    box-shadow: inset 4px 0 0 var(--ht-primary);
+}
+
+.notification-toast-body {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: 0;
+    color: inherit;
+}
+
+.notification-toast-body:hover {
+    background-color: var(--ht-primary-soft);
+}
+
 /* Cards */
 .card {
     border-color: #e3ebe9;

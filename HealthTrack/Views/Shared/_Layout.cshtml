@@ -143,7 +143,10 @@
                     {
                         <ul class="navbar-nav align-items-lg-center">
                             <li class="nav-item">
-                                <a class="nav-link position-relative px-lg-3" asp-area="" asp-controller="Notifications" asp-action="Index" aria-label="Notifications">
+                                <a class="nav-link position-relative px-lg-3 @Active("", "Notifications", "Index")" asp-area="" asp-controller="Notifications" asp-action="Index" aria-label="Notifications"
+                                   data-notification-bell
+                                   data-poll-url="@Url.Action("Poll", "Notifications", new { area = "" })"
+                                   data-mark-read-url="@Url.Action("MarkAsRead", "Notifications", new { area = "" })">
                                     <svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -199,6 +202,14 @@
             <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy notice</a>
         </div>
     </footer>
+
+    @if (signedIn)
+    {
+        @* Toasts for new notifications (healthtrack.js); the token signs the toast's mark-as-read POST. *@
+        <div id="notification-toasts" class="toast-container position-fixed bottom-0 end-0 p-3">
+            @Html.AntiForgeryToken()
+        </div>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
