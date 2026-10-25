@@ -1,0 +1,114 @@
+@model LogWorkoutViewModel
+@* The workout log form, shared by today's workout and a free workout. wwwroot/js/workout-log.js adds and removes rows. *@
+<form asp-area="Client" asp-controller="Workouts" asp-action="Log" method="post" id="workout-log-form">
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    <input asp-for="WorkoutPlanId" type="hidden" />
+    <input asp-for="PlanTitle" type="hidden" />
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body row g-3">
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="WorkoutDate" class="form-label"></label>
+                <input asp-for="WorkoutDate" class="form-control" />
+                <span asp-validation-for="WorkoutDate" class="text-danger small"></span>
+            </div>
+            <div class="col-sm-6 col-md-3">
+                <label asp-for="PerceivedEffort" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                <select asp-for="PerceivedEffort" class="form-select">
+                    <option value="">Choose…</option>
+                    @for (var effort = 1; effort <= 10; effort++)
+                    {
+                        <option value="@effort">@(effort + (effort == 1 ? " – very easy" : effort == 10 ? " – maximum" : string.Empty))</option>
+                    }
+                </select>
+                <span asp-validation-for="PerceivedEffort" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Notes" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                <input asp-for="Notes" class="form-control" placeholder="How did it feel?" />
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 entry-table" id="entry-table">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Done</th>
+                        <th scope="col">Exercise</th>
+                        <th scope="col">Minutes</th>
+                        <th scope="col">Sets</th>
+                        <th scope="col">Reps</th>
+                        <th scope="col">Load (kg)</th>
+                        <th scope="col">Distance (km)</th>
+                        <th scope="col"><span class="visually-hidden">Remove</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Entries.Count; i++)
+                    {
+                        <tr class="entry-row">
+                            <td>
+                                @* A plain checkbox: the tag helper's hidden "false" inputs sit at the end of the form and
+                                   would break when workout-log.js re-numbers the rows. *@
+                                <input type="checkbox" class="form-check-input" name="Entries[@i].Include" value="true"
+                                       checked="@Model.Entries[i].Include" aria-label="Done" />
+                            </td>
+                            <td class="entry-exercise">
+                                <select asp-for="Entries[i].ExerciseId" class="form-select form-select-sm">
+                                    <option value="">Choose an exercise…</option>
+                                    @foreach (var group in Model.ExerciseOptions.GroupBy(o => o.Group))
+                                    {
+                                        <optgroup label="@group.Key">
+                                            @foreach (var option in group)
+                                            {
+                                                <option value="@option.Id">@option.Label</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                </select>
+                                <input asp-for="Entries[i].Target" type="hidden" />
+                                @if (!string.IsNullOrEmpty(Model.Entries[i].Target))
+                                {
+                                    <div class="small text-muted" data-planned>Planned: @Model.Entries[i].Target</div>
+                                }
+                                <span asp-validation-for="Entries[i].ExerciseId" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Entries[i].DurationMinutes" type="number" min="1" max="300" class="form-control form-control-sm" />
+                                <span asp-validation-for="Entries[i].DurationMinutes" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Entries[i].Sets" type="number" min="1" max="20" class="form-control form-control-sm" />
+                                <span asp-validation-for="Entries[i].Sets" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Entries[i].Reps" type="number" min="1" max="100" class="form-control form-control-sm" />
+                                <span asp-validation-for="Entries[i].Reps" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Entries[i].LoadKg" type="number" min="0" max="500" step="0.5" class="form-control form-control-sm" />
+                                <span asp-validation-for="Entries[i].LoadKg" class="text-danger small"></span>
+                            </td>
+                            <td>
+                                <input asp-for="Entries[i].DistanceKm" type="number" min="0" max="100" step="0.1" class="form-control form-control-sm" />
+                                <span asp-validation-for="Entries[i].DistanceKm" class="text-danger small"></span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-remove-row aria-label="Remove this row">&times;</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-between">
+        <button type="button" class="btn btn-outline-primary" id="add-entry">Add an exercise</button>
+        <button type="submit" class="btn btn-primary">Save workout</button>
+    </div>
+    <p class="form-text mt-2">Calories are worked out for you from each exercise's MET value, the minutes and your latest weight.</p>
+</form>

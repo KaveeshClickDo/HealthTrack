@@ -55,6 +55,28 @@ namespace HealthTrack.Services
                 .ToListAsync();
 
         /// <inheritdoc />
+        public async Task<IReadOnlyList<TrainerClientViewModel>> GetTrainerClientsAsync(string trainerUserId) =>
+            await _db.TrainerAssignments.AsNoTracking()
+                .Where(a => a.Trainer.UserId == trainerUserId && a.EndDate == null)
+                .OrderBy(a => a.Client.User.FirstName)
+                .ThenBy(a => a.Client.User.LastName)
+                .Select(a => new TrainerClientViewModel
+                {
+                    ClientId = a.ClientId,
+                    FullName = a.Client.User.FirstName + " " + a.Client.User.LastName,
+                    Email = a.Client.User.Email ?? string.Empty,
+                    FitnessGoal = a.Client.FitnessGoal,
+                    ActivityLevel = a.Client.ActivityLevel,
+                    AssignedSince = a.StartDate,
+                    LastWorkoutDate = a.Client.WorkoutLogs.Max(w => (DateTime?)w.WorkoutDate),
+                    ActivePlanTitle = a.Client.WorkoutPlans
+                        .Where(p => p.Status == PlanStatus.Active)
+                        .Select(p => p.Title)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+        /// <inheritdoc />
         public async Task<bool> AssignTrainerAsync(int clientId, int trainerId, DateTime startDate, string? notes, string actingAdminId)
         {
             var client = await _db.ClientProfiles

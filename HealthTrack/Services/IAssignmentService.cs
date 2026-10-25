@@ -30,6 +30,13 @@ namespace HealthTrack.Services
         Task<IReadOnlyList<ClientProfile>> GetUnassignedClientsAsync();
 
         /// <summary>
+        /// The signed-in trainer's actively assigned clients, by name, with their goal, last workout and active plan.
+        /// </summary>
+        /// <param name="trainerUserId">The signed-in trainer.</param>
+        /// <returns>The clients; empty for a user without a trainer profile.</returns>
+        Task<IReadOnlyList<TrainerClientViewModel>> GetTrainerClientsAsync(string trainerUserId);
+
+        /// <summary>
         /// Assigns a trainer to a client (UC31). The trainer must be approved and active with room (BR-07); the client's
         /// current assignment ends the day the new one starts, in the same transaction (BR-06). Client and trainer are told.
         /// </summary>

@@ -88,6 +88,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<ILibraryService, LibraryService>();
+builder.Services.AddScoped<IWorkoutService, WorkoutService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 
 var app = builder.Build();
 

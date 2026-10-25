@@ -105,24 +105,38 @@ namespace HealthTrack.Models.Entities
                 Status = PlanStatus.Draft
             };
 
-            // Only the foreign keys are copied, not the Exercise navigations: attaching library entities loaded
-            // without tracking would make EF Core try to insert them again.
-            foreach (var line in Exercises)
+            CopyLinesTo(copy);
+            return copy;
+        }
+
+        /// <summary>
+        /// Saves this client plan as a new reusable Draft template with the same lines (UC39). The client plan is not
+        /// changed. The caller sets CreatedAt and saves the template.
+        /// </summary>
+        /// <param name="trainerId">The trainer saving it, who becomes the template's author.</param>
+        /// <returns>The new, unsaved template.</returns>
+        /// <exception cref="BusinessRuleException">This plan is already a template.</exception>
+        public WorkoutPlan CreateTemplateCopy(int trainerId)
+        {
+            if (IsTemplate)
             {
-                copy.Exercises.Add(new WorkoutPlanExercise
-                {
-                    ExerciseId = line.ExerciseId,
-                    DayOfWeek = line.DayOfWeek,
-                    SortOrder = line.SortOrder,
-                    Sets = line.Sets,
-                    Reps = line.Reps,
-                    DurationMinutes = line.DurationMinutes,
-                    RestSeconds = line.RestSeconds,
-                    Notes = line.Notes
-                });
+                throw new BusinessRuleException("BR-12", "This plan is already a template.");
             }
 
-            return copy;
+            // A template has no client and no dates (check constraint); its source is left empty because it wasn't copied
+            // from a template.
+            var template = new WorkoutPlan
+            {
+                TrainerId = trainerId,
+                Title = Title,
+                Description = Description,
+                Difficulty = Difficulty,
+                IsTemplate = true,
+                Status = PlanStatus.Draft
+            };
+
+            CopyLinesTo(template);
+            return template;
         }
 
         /// <summary>
@@ -191,6 +205,26 @@ namespace HealthTrack.Models.Entities
             }
 
             Status = PlanStatus.Archived;
+        }
+
+        // Only the foreign keys are copied, not the Exercise navigations: attaching library entities loaded
+        // without tracking would make EF Core try to insert them again.
+        private void CopyLinesTo(WorkoutPlan target)
+        {
+            foreach (var line in Exercises)
+            {
+                target.Exercises.Add(new WorkoutPlanExercise
+                {
+                    ExerciseId = line.ExerciseId,
+                    DayOfWeek = line.DayOfWeek,
+                    SortOrder = line.SortOrder,
+                    Sets = line.Sets,
+                    Reps = line.Reps,
+                    DurationMinutes = line.DurationMinutes,
+                    RestSeconds = line.RestSeconds,
+                    Notes = line.Notes
+                });
+            }
         }
     }
 }

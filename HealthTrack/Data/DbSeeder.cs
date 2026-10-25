@@ -44,7 +44,101 @@ namespace HealthTrack.Data
             await SeedRolesAsync(scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>());
             await SeedUsersAsync(db, scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
                 scope.ServiceProvider.GetRequiredService<IClock>(), logger, cancellationToken);
+
+            // 3. Routine templates by trainer@
+            await SeedTemplatesAsync(db, logger, cancellationToken);
         }
+
+        private static async Task SeedTemplatesAsync(ApplicationDbContext db, ILogger logger, CancellationToken cancellationToken)
+        {
+            if (await db.WorkoutPlans.AnyAsync(p => p.IsTemplate, cancellationToken))
+            {
+                return;
+            }
+
+            var trainer = await db.TrainerProfiles.Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.User.Email == "trainer@healthtrack.test", cancellationToken);
+            if (trainer is null)
+            {
+                return;
+            }
+
+            var exercises = await db.Exercises.ToDictionaryAsync(e => e.Name, e => e.ExerciseId, cancellationToken);
+            var createdAt = trainer.CreatedAt.AddDays(5);
+
+            WorkoutPlan[] templates =
+            [
+                NewTemplate(trainer, createdAt, "Beginner full body", DifficultyLevel.Beginner,
+                    "Three short sessions a week that build a base of strength and fitness. Rest at least a day between sessions.",
+                    Line(exercises, DayOfWeek.Monday, 1, "Brisk walking", minutes: 10, notes: "Warm-up at an easy pace"),
+                    Line(exercises, DayOfWeek.Monday, 2, "Push-up", sets: 3, reps: 8, rest: 60, notes: "Drop to your knees if needed"),
+                    Line(exercises, DayOfWeek.Monday, 3, "Walking lunge", sets: 3, reps: 10, rest: 60),
+                    Line(exercises, DayOfWeek.Wednesday, 1, "Stationary cycling", minutes: 15),
+                    Line(exercises, DayOfWeek.Wednesday, 2, "Seated cable row", sets: 3, reps: 12, rest: 60),
+                    Line(exercises, DayOfWeek.Friday, 1, "Elliptical trainer", minutes: 15),
+                    Line(exercises, DayOfWeek.Friday, 2, "Leg press", sets: 3, reps: 12, rest: 90),
+                    Line(exercises, DayOfWeek.Friday, 3, "Plank", minutes: 3, notes: "Three holds of up to a minute")),
+
+                NewTemplate(trainer, createdAt, "5K runner", DifficultyLevel.Intermediate,
+                    "Three runs a week building to a comfortable 5K, with strength and mobility to keep you injury-free.",
+                    Line(exercises, DayOfWeek.Tuesday, 1, "Running (8 km/h)", minutes: 25, notes: "Easy, conversational pace"),
+                    Line(exercises, DayOfWeek.Tuesday, 2, "Walking lunge", sets: 2, reps: 12, rest: 60),
+                    Line(exercises, DayOfWeek.Thursday, 1, "Running (10 km/h)", minutes: 15, notes: "Steady tempo after a 5-minute warm-up"),
+                    Line(exercises, DayOfWeek.Thursday, 2, "Plank", minutes: 3),
+                    Line(exercises, DayOfWeek.Saturday, 1, "Running (8 km/h)", minutes: 35, notes: "Long, slow run"),
+                    Line(exercises, DayOfWeek.Saturday, 2, "Full-body stretching", minutes: 10)),
+
+                NewTemplate(trainer, createdAt, "Strength split", DifficultyLevel.Advanced,
+                    "A three-day split for experienced lifters: legs, push and pull. Warm up well and keep two reps in reserve.",
+                    Line(exercises, DayOfWeek.Monday, 1, "Barbell back squat", sets: 5, reps: 5, rest: 180),
+                    Line(exercises, DayOfWeek.Monday, 2, "Deadlift", sets: 3, reps: 5, rest: 180),
+                    Line(exercises, DayOfWeek.Wednesday, 1, "Bench press", sets: 5, reps: 5, rest: 150),
+                    Line(exercises, DayOfWeek.Wednesday, 2, "Dumbbell shoulder press", sets: 3, reps: 10, rest: 90),
+                    Line(exercises, DayOfWeek.Wednesday, 3, "Triceps dip", sets: 3, reps: 10, rest: 90),
+                    Line(exercises, DayOfWeek.Friday, 1, "Pull-up", sets: 4, reps: 6, rest: 120),
+                    Line(exercises, DayOfWeek.Friday, 2, "Lat pulldown", sets: 3, reps: 10, rest: 90),
+                    Line(exercises, DayOfWeek.Friday, 3, "Dumbbell biceps curl", sets: 3, reps: 12, rest: 60))
+            ];
+
+            db.WorkoutPlans.AddRange(templates);
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Seeded {Count} routine templates.", templates.Length);
+        }
+
+        private static WorkoutPlan NewTemplate(TrainerProfile trainer, DateTime createdAt, string title, DifficultyLevel difficulty,
+            string description, params WorkoutPlanExercise[] lines)
+        {
+            var template = new WorkoutPlan
+            {
+                TrainerId = trainer.TrainerId,
+                Title = title,
+                Description = description,
+                Difficulty = difficulty,
+                IsTemplate = true,
+                Status = PlanStatus.Draft,
+                CreatedAt = createdAt
+            };
+
+            foreach (var line in lines)
+            {
+                template.Exercises.Add(line);
+            }
+
+            return template;
+        }
+
+        private static WorkoutPlanExercise Line(IReadOnlyDictionary<string, int> exercises, DayOfWeek day, int sortOrder,
+            string exerciseName, int? sets = null, int? reps = null, int? minutes = null, int? rest = null, string? notes = null) => new()
+            {
+                ExerciseId = exercises[exerciseName],
+                DayOfWeek = day,
+                SortOrder = sortOrder,
+                Sets = sets,
+                Reps = reps,
+                DurationMinutes = minutes,
+                RestSeconds = rest,
+                Notes = notes
+            };
 
         // Roles are checked on every start, so a database that has users but lost a role still works.
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)

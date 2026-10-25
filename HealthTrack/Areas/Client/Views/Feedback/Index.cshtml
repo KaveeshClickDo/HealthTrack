@@ -1,0 +1,46 @@
+@model PagedResult<FeedbackItemViewModel>
+@{
+    ViewData["Title"] = "Feedback";
+    var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+}
+
+<h1 class="h2 mb-1">Feedback</h1>
+<p class="text-muted mb-3">Comments from your trainer on your training, diet and progress.</p>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            No feedback yet. Keep logging your workouts and meals; your trainer reviews them and leaves comments here.
+        </div>
+    </div>
+}
+else
+{
+    @foreach (var feedback in Model.Items)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                    <div>
+                        <span class="badge text-bg-light border">@feedback.Category.GetDisplayName()</span>
+                        <span class="text-muted small ms-1">
+                            @feedback.TrainerName &middot; @feedback.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                        </span>
+                    </div>
+                    @if (feedback.Rating is { } rating)
+                    {
+                        <span class="rating" aria-label="Progress rating @rating of 5">@(new string('★', rating))@(new string('☆', 5 - rating))</span>
+                    }
+                </div>
+                <p class="mb-1">@feedback.Message</p>
+                @if (feedback.WorkoutDate is { } date)
+                {
+                    <a class="small" asp-controller="Workouts" asp-action="History">About your workout on @date.ToString("dd MMM yyyy")</a>
+                }
+            </div>
+        </div>
+    }
+}
+
+<partial name="_Pager" model="pager" />

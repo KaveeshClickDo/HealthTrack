@@ -96,6 +96,8 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<ILibraryService, LibraryService>();
+        services.AddScoped<IWorkoutService, WorkoutService>();
+        services.AddScoped<IFeedbackService, FeedbackService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 
@@ -232,6 +234,81 @@ public sealed class TestHost : IAsyncDisposable
         Db.TrainerAssignments.Add(assignment);
         await Db.SaveChangesAsync();
         return assignment;
+    }
+
+    /// <summary>
+    /// Adds an exercise to the library.
+    /// </summary>
+    /// <param name="name">Unique name.</param>
+    /// <param name="metValue">MET value.</param>
+    /// <param name="isActive">Whether it is active.</param>
+    /// <returns>The saved exercise.</returns>
+    public async Task<Exercise> AddExerciseAsync(string name, decimal metValue = 5m, bool isActive = true)
+    {
+        var exercise = new Exercise
+        {
+            Name = name,
+            Category = ExerciseCategory.Strength,
+            MuscleGroup = MuscleGroup.FullBody,
+            MetValue = metValue,
+            IsActive = isActive
+        };
+        Db.Exercises.Add(exercise);
+        await Db.SaveChangesAsync();
+        return exercise;
+    }
+
+    /// <summary>
+    /// Records a measurement for a client.
+    /// </summary>
+    /// <param name="client">The client.</param>
+    /// <param name="weightKg">Weight in kg.</param>
+    /// <param name="measuredAt">When; now by default.</param>
+    /// <returns>The saved measurement.</returns>
+    public async Task<HealthMeasurement> AddMeasurementAsync(ClientProfile client, decimal weightKg, DateTime? measuredAt = null)
+    {
+        var measurement = new HealthMeasurement
+        {
+            ClientId = client.ClientId,
+            WeightKg = weightKg,
+            HeightCm = 170m,
+            MeasuredAt = measuredAt ?? Clock.Now
+        };
+        Db.HealthMeasurements.Add(measurement);
+        await Db.SaveChangesAsync();
+        return measurement;
+    }
+
+    /// <summary>
+    /// Adds a workout plan or template with lines.
+    /// </summary>
+    /// <param name="trainer">The author.</param>
+    /// <param name="client">The client, or null for a template.</param>
+    /// <param name="status">The status.</param>
+    /// <param name="lines">The lines; each needs an ExerciseId and a day.</param>
+    /// <returns>The saved plan, with its lines.</returns>
+    public async Task<WorkoutPlan> AddPlanAsync(TrainerProfile trainer, ClientProfile? client, PlanStatus status = PlanStatus.Draft,
+        params WorkoutPlanExercise[] lines)
+    {
+        var plan = new WorkoutPlan
+        {
+            TrainerId = trainer.TrainerId,
+            ClientId = client?.ClientId,
+            IsTemplate = client is null,
+            Title = client is null ? "Template" : "Plan",
+            Difficulty = DifficultyLevel.Beginner,
+            StartDate = client is null ? null : Clock.Today.AddDays(-7),
+            Status = status,
+            CreatedAt = Clock.Now
+        };
+        foreach (var line in lines)
+        {
+            plan.Exercises.Add(line);
+        }
+
+        Db.WorkoutPlans.Add(plan);
+        await Db.SaveChangesAsync();
+        return plan;
     }
 
     /// <inheritdoc />

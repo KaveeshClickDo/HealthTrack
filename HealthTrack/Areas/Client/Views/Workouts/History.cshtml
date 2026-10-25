@@ -1,0 +1,98 @@
+@model PagedResult<WorkoutHistoryItemViewModel>
+@{
+    ViewData["Title"] = "Workout history";
+    var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h2 mb-0">Workout history</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-action="Today">Today's workout</a>
+        <a class="btn btn-outline-primary" asp-action="Log">Log a free workout</a>
+    </div>
+</div>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            No workouts logged yet. Start with <a asp-action="Today">today's workout</a> or <a asp-action="Log">log a free one</a>.
+        </div>
+    </div>
+}
+else
+{
+    @foreach (var session in Model.Items)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
+                    <div>
+                        <h2 class="h5 mb-0">@session.WorkoutDate.ToString("dddd dd MMM yyyy")</h2>
+                        <span class="text-muted small">@(session.PlanTitle ?? "Free workout")</span>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-semibold">@session.TotalMinutes min &middot; @session.TotalCalories.ToString("0") kcal</div>
+                        @if (session.PerceivedEffort is { } effort)
+                        {
+                            <div class="small text-muted">Effort @effort/10</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-2">
+                        <thead>
+                            <tr>
+                                <th scope="col">Exercise</th>
+                                <th scope="col">Done</th>
+                                <th scope="col" class="text-end">kcal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in session.Entries)
+                            {
+                                <tr>
+                                    <td>@entry.ExerciseName</td>
+                                    <td class="small">
+                                        @WorkoutText.Prescription(entry.SetsCompleted, entry.RepsCompleted, entry.DurationMinutes)
+                                        @if (entry.WeightKg is { } load)
+                                        {
+                                            <span>&middot; @load.ToString("0.#") kg</span>
+                                        }
+                                        @if (entry.DistanceKm is { } distance)
+                                        {
+                                            <span>&middot; @distance.ToString("0.##") km</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">@entry.CaloriesBurned.ToString("0")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (!string.IsNullOrEmpty(session.Notes))
+                {
+                    <p class="small text-muted mb-2">Your notes: @session.Notes</p>
+                }
+
+                @foreach (var feedback in session.Feedback)
+                {
+                    <div class="border-start border-3 border-primary ps-3 mt-2">
+                        <div class="small text-muted">
+                            Feedback from @feedback.TrainerName &middot; @feedback.CreatedAt.ToString("dd MMM yyyy")
+                            @if (feedback.Rating is { } rating)
+                            {
+                                <span class="rating" aria-label="Rating @rating of 5">@(new string('★', rating))@(new string('☆', 5 - rating))</span>
+                            }
+                        </div>
+                        <p class="mb-0">@feedback.Message</p>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+<partial name="_Pager" model="pager" />

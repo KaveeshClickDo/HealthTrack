@@ -580,6 +580,14 @@ namespace HealthTrack.Services
                 })
                 .ToListAsync();
 
+        /// <inheritdoc />
+        public Task<int?> GetClientIdAsync(string userId) =>
+            _db.ClientProfiles.Where(c => c.UserId == userId).Select(c => (int?)c.ClientId).FirstOrDefaultAsync();
+
+        /// <inheritdoc />
+        public Task<int?> GetTrainerIdAsync(string userId) =>
+            _db.TrainerProfiles.Where(t => t.UserId == userId).Select(t => (int?)t.TrainerId).FirstOrDefaultAsync();
+
         // BR-03: only a registration that is still waiting can be approved or rejected.
         private static void EnsurePendingApproval(TrainerProfile trainer)
         {

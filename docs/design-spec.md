@@ -852,7 +852,7 @@ Navigation properties (virtual ICollection or reference properties) are drawn as
 | TrainerAvailability | One weekly time window | Covers(start, minutes) |
 | TrainerAssignment | Client–trainer link with history | IsActive, End(endDate) |
 | Exercise | Exercise library entry with MET value | EstimateCalories(weightKg, minutes) |
-| WorkoutPlan | Client plan or reusable template | CreateCopyForClient(clientId, trainerId, start), GetExercisesFor(day), GetScheduledDays(), Activate(), Complete(), Archive() |
+| WorkoutPlan | Client plan or reusable template | CreateCopyForClient(clientId, trainerId, start), CreateTemplateCopy(trainerId), GetExercisesFor(day), GetScheduledDays(), Activate(), Complete(), Archive() |
 | WorkoutPlanExercise | One prescribed exercise on one weekday | IsValidPrescription() |
 | WorkoutLog | A session the client performed | TotalDurationMinutes, TotalCaloriesBurned, AddEntry(exercise, weightKg, minutes, sets, reps, loadKg, distanceKm) – the last four optional |
 | WorkoutLogEntry | One exercise done in a session | Data only; calories set by WorkoutLog.AddEntry |
@@ -890,13 +890,13 @@ Every service implements an interface of the same name with an I prefix (for exa
 
 | Service | Responsibility | Key methods |
 | --- | --- | --- |
-| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, GetUsersAsync, GetUserDetailsAsync, GetPendingTrainersAsync, ExportPersonalData, DeleteAccountAsync |
-| AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients, GetAssignments, GetTrainerLoad, GetOverview, GetAssignForm |
-| WorkoutService | Plans, templates and workout logging | CreatePlan, AddExercise, SaveAsTemplate, AssignTemplate, ActivatePlan, GetTodaysWorkout, LogWorkout, GetHistory |
+| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, GetUsersAsync, GetUserDetailsAsync, GetPendingTrainersAsync, GetClientIdAsync, GetTrainerIdAsync, ExportPersonalData, DeleteAccountAsync |
+| AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients, GetTrainerClients, GetAssignments, GetTrainerLoad, GetOverview, GetAssignForm |
+| WorkoutService | Plans, templates and workout logging | CreatePlan, GetTrainerPlans, GetPlanForEdit, UpdatePlan, AddExercise, ArchivePlan, SaveAsTemplate, GetTemplates, AssignTemplate, ActivatePlan, GetWeek, GetTodaysWorkout, LogWorkout, GetHistory |
 | DietService | Diet plans and meal logging | CreatePlan, AddMeal, ActivatePlan, GetTodaysMeals, LogMeal, GetDailySummary |
 | ProgressService | Measurements, trends and adherence | AddMeasurement, GetLatestMeasurement, GetWeightTrend, GetBmiTrend, GetCaloriesTrend, GetVitalsTrend, GetAdherence, SuggestCalorieTarget |
 | AppointmentService | Slots, booking and the status workflow | GetAvailableSlots, Book, Approve, Reject, Reschedule, Cancel, Complete, MarkNoShow, GetUpcoming |
-| FeedbackService | Trainer feedback | GiveFeedback, GetForClient |
+| FeedbackService | Trainer feedback | GetFeedbackForm, GiveFeedback, GetForClient |
 | NotificationService | In-app notifications and preferences | Notify, GetUnread, GetUnreadCount, MarkAsRead, MarkAllAsRead, GetPreferences, SavePreferences |
 | ReminderService | Creating due reminders once each | GenerateDueReminders(userId, now), GenerateAllDueReminders(now) |
 | ReportService | The three reports and trainer workload | GetClientPerformance, GetPopularRoutines, GetEngagement, GetTrainerWorkload |
@@ -909,7 +909,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | Base classes | BaseController (CurrentUserId, Audit, SetSuccess, SetError) ← ClientAreaController, TrainerAreaController, AdminAreaController, each with \[Area\] and \[Authorize(Roles)\] |
 | Root | HomeController (Index, Privacy); AccountController (Register, RegisterClient, RegisterTrainer, Login, Logout); ManageController (Index, EditProfile, ChangePassword); NotificationsController (Index, Poll, MarkAsRead, MarkAllAsRead, Preferences); ErrorController (NotFound, Forbidden, ServerError) |
 | Client | Dashboard (Index); Profile (Edit, ExportMyData, DeleteAccount); Workouts (MyPlan, Today, Log, History); Diet (MyPlan, LogMeal, History); Measurements (Index, Create); Progress (Index, WeightData, CaloriesData, VitalsData); Appointments (Index, Book, AvailableSlots, Cancel); Feedback (Index) |
-| Trainer | Dashboard (Index); Clients (Index, Progress); WorkoutPlans (Index, Create, Edit, AddExercise, SaveAsTemplate, Templates, AssignTemplate, Activate); DietPlans (Index, Create, Edit, AddMeal, Activate); Appointments (Index, Approve, Reject, Reschedule, Cancel, Complete, NoShow); Availability (Index, Create, Delete); Feedback (Create); Reports (ClientPerformance, PopularRoutines, Engagement, ExportCsv) |
+| Trainer | Dashboard (Index); Clients (Index, Progress); WorkoutPlans (Index, Create, Edit, AddExercise, SaveAsTemplate, Templates, AssignTemplate, Activate, Archive); DietPlans (Index, Create, Edit, AddMeal, Activate); Appointments (Index, Approve, Reject, Reschedule, Cancel, Complete, NoShow); Availability (Index, Create, Delete); Feedback (Create); Reports (ClientPerformance, PopularRoutines, Engagement, ExportCsv) |
 | Admin | Dashboard (Index); Users (Index, Details, CreateAdmin, Suspend, Reactivate); TrainerApprovals (Index, Approve, Reject); Assignments (Index, Assign, End); Library (Exercises, EditExercise, Foods, EditFood, ToggleActive); Reports (ClientPerformance, PopularRoutines, Engagement, TrainerWorkload, ExportCsv); AuditLog (Index) |
 
 | Infrastructure class | Role |

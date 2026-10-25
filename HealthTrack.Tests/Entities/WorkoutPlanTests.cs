@@ -107,6 +107,36 @@ public sealed class WorkoutPlanTests
         RuleAssert.Broken("BR-12", () => clientPlan.CreateCopyForClient(4, 1, new DateTime(2026, 11, 2)));
     }
 
+    /// <summary>UC39: a client plan saved as a template keeps its lines but loses the client, dates and status.</summary>
+    [TestMethod]
+    public void CreateTemplateCopy_ClientPlan_CopiesLinesAsDraftTemplate()
+    {
+        var clientPlan = NewDraftClientPlan(3);
+        clientPlan.Title = "Autumn block";
+        clientPlan.Status = PlanStatus.Active;
+
+        var template = clientPlan.CreateTemplateCopy(trainerId: 8);
+
+        Assert.IsTrue(template.IsTemplate);
+        Assert.IsNull(template.ClientId);
+        Assert.IsNull(template.StartDate);
+        Assert.IsNull(template.SourceTemplateId);
+        Assert.AreEqual(8, template.TrainerId);
+        Assert.AreEqual(PlanStatus.Draft, template.Status);
+        Assert.AreEqual("Autumn block", template.Title);
+        Assert.HasCount(3, template.Exercises);
+        Assert.AreNotSame(clientPlan.Exercises.First(), template.Exercises.First());
+        Assert.AreEqual(PlanStatus.Active, clientPlan.Status);
+        Assert.HasCount(3, clientPlan.Exercises);
+    }
+
+    /// <summary>A template can't be saved as a template again.</summary>
+    [TestMethod]
+    public void CreateTemplateCopy_Template_ThrowsBr12()
+    {
+        RuleAssert.Broken("BR-12", () => NewTemplate().CreateTemplateCopy(1));
+    }
+
     /// <summary>A day's lines come back in SortOrder; a rest day has none.</summary>
     [TestMethod]
     public void GetExercisesFor_Day_ReturnsThatDaysLinesInOrder()

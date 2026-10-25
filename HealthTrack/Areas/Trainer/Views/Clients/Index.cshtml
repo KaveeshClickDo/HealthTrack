@@ -1,0 +1,61 @@
+@model IReadOnlyList<TrainerClientViewModel>
+@{
+    ViewData["Title"] = "My clients";
+}
+
+<h1 class="h2 mb-1">My clients</h1>
+<p class="text-muted mb-3">The clients an administrator has assigned to you.</p>
+
+@if (Model.Count == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            No clients are assigned to you yet. An administrator assigns clients; you'll get a notification when they do.
+            Meanwhile you can build <a asp-controller="WorkoutPlans" asp-action="Templates">routine templates</a>.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Client</th>
+                        <th scope="col">Goal</th>
+                        <th scope="col">Assigned since</th>
+                        <th scope="col">Last workout</th>
+                        <th scope="col">Workout plan</th>
+                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var client in Model)
+                    {
+                        <tr>
+                            <td>
+                                @client.FullName
+                                <div class="small text-muted">@client.Email</div>
+                            </td>
+                            <td>
+                                @client.FitnessGoal.GetDisplayName()
+                                <div class="small text-muted">@client.ActivityLevel.GetDisplayName()</div>
+                            </td>
+                            <td class="text-nowrap">@client.AssignedSince.ToString("dd MMM yyyy")</td>
+                            <td class="text-nowrap">@(client.LastWorkoutDate?.ToString("dd MMM yyyy") ?? "None yet")</td>
+                            <td>@(client.ActivePlanTitle ?? "No active plan")</td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@client.ClientId">New plan</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Templates" asp-route-clientId="@client.ClientId">Assign template</a>
+                                    <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@client.ClientId">Give feedback</a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

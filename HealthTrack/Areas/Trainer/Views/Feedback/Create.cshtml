@@ -1,0 +1,95 @@
+@model FeedbackViewModel
+@{
+    ViewData["Title"] = "Give feedback";
+    var clients = new SelectList(Model.ClientOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+    var sessions = new SelectList(Model.SessionOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <p><a asp-controller="Clients" asp-action="Index">&larr; My clients</a></p>
+        <h1 class="h2 mb-4">@(Model.ClientName is null ? "Give feedback" : "Give feedback to " + Model.ClientName)</h1>
+
+        @if (Model.ClientName is null)
+        {
+            @* Choose the client first, so their sessions can be listed. *@
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    @if (Model.ClientOptions.Count == 0)
+                    {
+                        <p class="text-muted mb-0">No clients are assigned to you yet, so there is nobody to give feedback to.</p>
+                    }
+                    else
+                    {
+                        <form asp-action="Create" method="get" class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label for="clientId" class="form-label">Client</label>
+                                <select id="clientId" name="clientId" class="form-select" asp-items="clients" required>
+                                    <option value="">Choose a client…</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-grid">
+                                <button type="submit" class="btn btn-primary">Continue</button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                        <input asp-for="ClientId" type="hidden" />
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="WorkoutLogId" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                                <select asp-for="WorkoutLogId" asp-items="sessions" class="form-select">
+                                    <option value="">General feedback, not about one session</option>
+                                </select>
+                                @if (Model.SessionOptions.Count == 0)
+                                {
+                                    <div class="form-text">@Model.ClientName hasn't logged any sessions yet.</div>
+                                }
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Category" class="form-label"></label>
+                                <select asp-for="Category" asp-items="Html.GetEnumSelectList<FeedbackCategory>()" class="form-select"></select>
+                                <span asp-validation-for="Category" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Message" class="form-label"></label>
+                                <textarea asp-for="Message" class="form-control" rows="4"
+                                          placeholder="What went well, and what to focus on next"></textarea>
+                                <span asp-validation-for="Message" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Rating" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                                <select asp-for="Rating" class="form-select">
+                                    <option value="">No rating</option>
+                                    @for (var stars = 5; stars >= 1; stars--)
+                                    {
+                                        <option value="@stars">@(new string('★', stars)) (@stars of 5)</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="Rating" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Send feedback</button>
+                            <a class="btn btn-outline-secondary" asp-controller="Clients" asp-action="Index">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

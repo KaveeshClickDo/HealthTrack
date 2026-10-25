@@ -1,0 +1,61 @@
+@model AssignTemplateViewModel
+@{
+    ViewData["Title"] = "Assign a template";
+    var clients = new SelectList(Model.ClientOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+}
+
+<p><a asp-action="Templates">&larr; Templates</a></p>
+<h1 class="h2 mb-1">Assign “@Model.TemplateTitle”</h1>
+<p class="text-muted mb-4">@Model.Difficulty.GetDisplayName() &middot; by @Model.AuthorName. Your client gets their own copy, which you can then adjust.</p>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="AssignTemplate" asp-route-id="@Model.TemplateId" method="post">
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="ClientId" class="form-label"></label>
+                        @if (Model.ClientOptions.Count == 0)
+                        {
+                            <div class="alert alert-warning mb-0">No clients are assigned to you yet, so there is nobody to assign the template to.</div>
+                        }
+                        else
+                        {
+                            <select asp-for="ClientId" asp-items="clients" class="form-select">
+                                <option value="">Choose a client…</option>
+                            </select>
+                        }
+                        <span asp-validation-for="ClientId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="StartDate" class="form-label"></label>
+                        <input asp-for="StartDate" class="form-control" />
+                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input asp-for="ActivateNow" class="form-check-input" />
+                        <label asp-for="ActivateNow" class="form-check-label"></label>
+                        <div class="form-text">The client's current active workout plan is completed, and they are notified.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" disabled="@(Model.ClientOptions.Count == 0)">Assign</button>
+                        <a class="btn btn-outline-secondary" asp-action="Templates">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <h2 class="h5">What's in it</h2>
+        <partial name="_PlanDays" model="Model.Days" />
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

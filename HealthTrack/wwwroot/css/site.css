@@ -123,3 +123,32 @@ html {
     margin-bottom: 0;
     padding-left: 1.25rem;
 }
+
+/* Workout plans: the week as day cards, seven across on wide screens. */
+.week-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+}
+
+.today-card {
+    border-width: 2px;
+}
+
+.plan-lines li:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Workout log rows: compact inputs that still fit a phone. */
+.entry-table td {
+    min-width: 5.5rem;
+}
+
+.entry-table td.entry-exercise {
+    min-width: 12rem;
+}
+
+.rating {
+    color: #d97706;
+    letter-spacing: 0.1em;
+}

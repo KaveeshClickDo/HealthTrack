@@ -21,6 +21,19 @@ namespace HealthTrack.Helpers
         };
 
         /// <summary>
+        /// The badge class for a plan status: active green, draft grey, completed blue, archived dark.
+        /// </summary>
+        /// <param name="status">The plan status.</param>
+        /// <returns>A Bootstrap text-bg-* class.</returns>
+        public static string For(PlanStatus status) => status switch
+        {
+            PlanStatus.Active => "text-bg-success",
+            PlanStatus.Draft => "text-bg-secondary",
+            PlanStatus.Completed => "text-bg-primary",
+            _ => "text-bg-dark"
+        };
+
+        /// <summary>
         /// The badge class for an audit event: security failures red, approvals and creations green, the rest neutral.
         /// </summary>
         /// <param name="action">The audited action.</param>

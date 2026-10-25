@@ -1,0 +1,46 @@
+@model LogWorkoutViewModel
+@{
+    ViewData["Title"] = "Today's workout";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h2 mb-1">Today's workout</h1>
+        <p class="text-muted mb-0">
+            @Model.WorkoutDate?.ToString("dddd dd MMM yyyy")@(Model.PlanTitle is null ? string.Empty : " · " + Model.PlanTitle)
+        </p>
+    </div>
+    <a class="btn btn-outline-primary" asp-action="MyPlan">My week</a>
+</div>
+
+@if (!Model.HasActivePlan)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            You don't have a workout plan for today. <a asp-action="Log">Log a free workout</a> instead, or check
+            <a asp-action="MyPlan">your plan</a>.
+        </div>
+    </div>
+}
+else if (Model.Entries.Count == 0)
+{
+    <div class="card shadow-sm">
+        <div class="card-body text-center text-muted py-5">
+            Today is a rest day in your plan. Enjoy it, or <a asp-action="Log">log a free workout</a> if you trained anyway.
+        </div>
+    </div>
+}
+else
+{
+    @if (Model.AlreadyLoggedToday)
+    {
+        <div class="alert alert-info">You have already logged a session today. Saving again adds another session.</div>
+    }
+    <p>Tick the exercises you did and adjust the minutes, sets, reps and load to what you actually did.</p>
+    <partial name="_LogWorkoutForm" model="Model" />
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/workout-log.js" asp-append-version="true"></script>
+}

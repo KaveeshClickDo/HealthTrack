@@ -141,5 +141,19 @@ namespace HealthTrack.Services
         /// </summary>
         /// <returns>The pending trainers.</returns>
         Task<IReadOnlyList<PendingTrainerViewModel>> GetPendingTrainersAsync();
+
+        /// <summary>
+        /// The client profile of a user, so "my" data is always found from the signed-in user.
+        /// </summary>
+        /// <param name="userId">The user.</param>
+        /// <returns>The ClientId, or null when the user has no client profile.</returns>
+        Task<int?> GetClientIdAsync(string userId);
+
+        /// <summary>
+        /// The trainer profile of a user.
+        /// </summary>
+        /// <param name="userId">The user.</param>
+        /// <returns>The TrainerId, or null when the user has no trainer profile.</returns>
+        Task<int?> GetTrainerIdAsync(string userId);
     }
 }

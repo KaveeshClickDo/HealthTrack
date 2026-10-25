@@ -1,0 +1,42 @@
+@model IReadOnlyList<PlanDayViewModel>
+@* A plan's weekdays as cards: the client's week grid and the trainer's template preview. *@
+<div class="week-grid">
+    @foreach (var day in Model)
+    {
+        <div class="card shadow-sm h-100 @(day.IsToday ? "border-primary today-card" : string.Empty)">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h3 class="h6 mb-0">@day.DayOfWeek</h3>
+                @if (day.IsToday)
+                {
+                    <span class="badge text-bg-primary">Today</span>
+                }
+            </div>
+            <div class="card-body">
+                @if (day.IsRestDay)
+                {
+                    <p class="text-muted small mb-0">Rest day</p>
+                }
+                else
+                {
+                    <ol class="list-unstyled mb-0 plan-lines">
+                        @foreach (var line in day.Lines)
+                        {
+                            <li class="mb-2">
+                                <div class="fw-semibold">@line.ExerciseName</div>
+                                <div class="small">@line.Prescription</div>
+                                @if (line.Equipment is not null)
+                                {
+                                    <div class="small text-muted">@line.Equipment</div>
+                                }
+                                @if (!string.IsNullOrEmpty(line.Notes))
+                                {
+                                    <div class="small text-muted fst-italic">@line.Notes</div>
+                                }
+                            </li>
+                        }
+                    </ol>
+                }
+            </div>
+        </div>
+    }
+</div>
