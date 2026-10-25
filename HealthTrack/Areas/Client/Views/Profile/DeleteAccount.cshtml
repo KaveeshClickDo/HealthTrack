@@ -1,0 +1,61 @@
+@model DeleteAccountViewModel
+@{
+    ViewData["Title"] = "Delete my account";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h2 mb-1">Delete my account</h1>
+        <p class="text-muted mb-4">This can't be undone. Read what happens, then confirm with your password.</p>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <h2 class="h5">What is deleted</h2>
+                <ul class="mb-3">
+                    <li>Your health profile, including your medical conditions, allergies and medications</li>
+                    <li>All your measurements, workout logs and meal logs</li>
+                    <li>Your workout and diet plans and your trainer's feedback</li>
+                    <li>All your appointments, past and booked (your professional will no longer see them)</li>
+                    <li>Your trainer assignment, notifications and notification settings</li>
+                </ul>
+
+                <h2 class="h5">What is kept, anonymised</h2>
+                <ul class="mb-3">
+                    <li>
+                        Your account record stays only as "Deleted user": your name, email address, phone number, date of birth
+                        and password are removed, and it can never sign in again.
+                    </li>
+                    <li>
+                        The security audit log (for example when the account signed in) is kept, because we must be able to show who
+                        did what; it never contains health values.
+                    </li>
+                </ul>
+
+                <p class="mb-0">
+                    Want a copy first? <a asp-action="Edit" asp-fragment="your-data">Download your data</a> before you delete the account.
+                    You will be signed out straight away.
+                </p>
+            </div>
+        </div>
+
+        <form asp-action="DeleteAccount" method="post" class="card shadow-sm border-danger"
+              data-confirm="Delete your account and all your health records? This can't be undone.">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-danger">Delete my account</button>
+                    <a class="btn btn-outline-secondary" asp-action="Edit">Keep my account</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

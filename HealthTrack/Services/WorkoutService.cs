@@ -38,8 +38,15 @@ namespace HealthTrack.Services
         }
 
         /// <inheritdoc />
-        public async Task<WorkoutPlanViewModel> GetCreatePlanFormAsync(string trainerUserId, int? clientId, bool isTemplate)
+        public async Task<WorkoutPlanViewModel?> GetCreatePlanFormAsync(string trainerUserId, int? clientId, bool isTemplate)
         {
+            // BR-08: a client given in the URL must be one of the trainer's (the diet plan form answers the same way).
+            if (!isTemplate && clientId is { } id
+                && (await TrainerIdAsync(trainerUserId) is not { } trainerId || !await _assignments.IsTrainerAssignedToClientAsync(trainerId, id)))
+            {
+                return null;
+            }
+
             var model = new WorkoutPlanViewModel
             {
                 IsTemplate = isTemplate,

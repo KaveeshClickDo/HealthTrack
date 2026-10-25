@@ -22,7 +22,7 @@ HealthTrack.slnx
 CLAUDE.md
 .gitignore
 .config/dotnet-tools.json local tool manifest (dotnet-ef)
-docs/                     design-spec.md, build-prompts.md, diagrams/
+docs/                     design-spec.md, build-prompts.md, security-review.md (Phase 9), diagrams/
 HealthTrack/              the web project (HealthTrack.csproj)
   Program.cs              DI registrations, Identity options, middleware pipeline, startup migration + seed
   appsettings.json        ConnectionStrings:DefaultConnection, Smtp, Reminders
@@ -81,9 +81,9 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - Fallback authorization policy requires an authenticated user; `[AllowAnonymous]` only on Home, the Account login/register actions and Error.
 - `AutoValidateAntiforgeryTokenAttribute` as a global filter; AJAX sends the token in the `RequestVerificationToken` header (`AddAntiforgery(o => o.HeaderName = "RequestVerificationToken")`).
 - Errors: `UseExceptionHandler("/Error/ServerError")` and `UseHsts()` outside Development, `UseStatusCodePagesWithReExecute("/Error/{0}")` always. ErrorController is `[AllowAnonymous]` and `[IgnoreAntiforgeryToken]` (re-executed requests keep their POST method) and its actions accept any HTTP method.
-- Pipeline order: exception handler → HSTS → HTTPS redirection → security headers (Phase 9) → static files → routing → authentication → authorization → area route `{area:exists}/{controller=Dashboard}/{action=Index}/{id?}` → default route. (This project's .NET 10 template serves static files with `MapStaticAssets()` instead of `UseStaticFiles()`; keep it. Its files are endpoints, so the fallback policy would cover them too: map them with `MapStaticAssets().AllowAnonymous()` so the login page gets its CSS and JS.)
+- Pipeline order: exception handler → HSTS → HTTPS redirection → security headers (`SecurityHeadersMiddleware`) → static files → routing → authentication → authorization → area route `{area:exists}/{controller=Dashboard}/{action=Index}/{id?}` → default route. (This project's .NET 10 template serves static files with `MapStaticAssets()` instead of `UseStaticFiles()`; keep it. Its files are endpoints, so the fallback policy would cover them too: map them with `MapStaticAssets().AllowAnonymous()` so the login page gets its CSS and JS.)
 - Data Protection: `PersistKeysToFileSystem(App_Data/keys)`, `SetApplicationName("HealthTrack")`, and `ProtectKeysWithDpapi()` when `OperatingSystem.IsWindows()`.
-- No inline `<script>` in views (a Content-Security-Policy arrives in Phase 9); page scripts live in `wwwroot/js` and get data from `data-` attributes or JSON actions.
+- No inline `<script>` and no `onclick`-style attributes in views: the Content-Security-Policy (`SecurityHeadersMiddleware`, `script-src 'self'`) blocks them. Page scripts live in `wwwroot/js` and get data from `data-` attributes or JSON actions. In Development the policy also allows localhost for Browser Link and hot reload.
 - Never `Html.Raw` user input. Never log or audit passwords or health values.
 - Audit (`IAuditService.LogAsync`) logins, failed logins, lockouts, logouts, registrations, approvals, assignments, plan and appointment changes, exports and deletions.
 
@@ -96,7 +96,7 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - Rows that a page script adds and removes (`Entries[i]`, as in workout-log.js) are renumbered by the script. Checkboxes in such rows are plain HTML (`value="true"`), not tag helpers (their hidden "false" inputs sit at the end of the form), and the view model's bool must default to false: an unticked box posts nothing, so binding keeps the default.
 - Forms show validation messages next to fields and a summary at the top. Enum dropdowns use `Html.GetEnumSelectList<T>()` with the enums' `[Display]` names.
 - Dates `dd MMM yyyy`, times `HH:mm`; weight and BMI 1 dp, kcal 0 dp. The app always runs in the `en-GB` culture (`UseRequestLocalization` in Program.cs), so decimals bind with a dot and month names are English on every machine.
-- No `style="..."` attributes either (the Phase 9 CSP blocks them): a progress bar takes `data-progress-width="40"` and healthtrack.js sets the width. A GET-form field with `data-auto-submit` sends its form when it changes (no onchange attributes).
+- No `style="..."` attributes either (keep the markup ready for a policy without 'unsafe-inline' styles): a progress bar takes `data-progress-width="40"` and healthtrack.js sets the width. A GET-form field with `data-auto-submit` sends its form when it changes (no onchange attributes).
 - Appointment forms post the RowVersion they were shown (a plain hidden `RowVersion` input, base64); controllers catch `DbUpdateConcurrencyException` and show `AppointmentService.ConcurrencyMessage`. A form outside the appointment page (the trainer dashboard) also posts a `ReturnUrl`, followed only when `Url.IsLocalUrl`.
 - Charts (Chart.js; drawing shared in wwwroot/js/charts.js, used by progress-charts.js, dashboard-charts.js and reports.js; a server-side series goes in the `_ChartCard` partial): one y-axis per chart, so measures in different units get separate charts; series colours `#2a78d6`, `#eb6834`, `#1baf7a` in that order; targets are a grey dashed line; a legend for two series or more; and a data table under every chart.
 - Report pages are shared by the Trainer and Admin areas: `Views/Shared/*Report.cshtml`, rendered with `View("ClientPerformanceReport", model)`; the scope (a trainer's user ID or null for everyone) is decided by the controller.

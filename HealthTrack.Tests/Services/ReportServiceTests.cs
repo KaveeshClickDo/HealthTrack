@@ -133,6 +133,11 @@ public sealed class ReportServiceTests
         Assert.AreEqual(350m, row.CaloriesBurned);
         Assert.AreEqual(1, row.AppointmentsAttended);
         Assert.AreEqual(2, adminRow.AppointmentsAttended);
+        // Spec 1.9: administrators never see measurement values.
+        Assert.IsNull(adminRow.StartWeightKg);
+        Assert.IsNull(adminRow.LatestWeightKg);
+        Assert.IsNull(adminRow.StartBmi);
+        Assert.IsNull(adminRow.LatestBmi);
     }
 
     /// <summary>
@@ -313,5 +318,38 @@ public sealed class ReportServiceTests
         Assert.AreEqual(Today, defaults.To);
         Assert.AreEqual(Today.AddDays(-7), swapped.From);
         Assert.AreEqual(Today, swapped.To);
+    }
+
+    /// <summary>A range lies within the last ten years up to today, so crafted dates can't overflow the reports' date arithmetic.</summary>
+    [TestMethod]
+    public void ReportRangeViewModel_Resolve_ClampsToTheLastTenYears()
+    {
+        var range = ReportRangeViewModel.Resolve(null, DateTime.MaxValue, Today);
+        var allFuture = ReportRangeViewModel.Resolve(Today.AddDays(10), Today.AddDays(20), Today);
+
+        Assert.AreEqual(Today, range.To);
+        Assert.AreEqual(Today.AddDays(-29), range.From);
+        Assert.AreEqual(Today, allFuture.From);
+        Assert.AreEqual(Today, allFuture.To);
+
+        // The other end: a crafted 0001-01-01 becomes ten years ago instead of overflowing.
+        var ancient = ReportRangeViewModel.Resolve(DateTime.MinValue, DateTime.MinValue, Today);
+        Assert.AreEqual(Today.AddYears(-10), ancient.From);
+        Assert.AreEqual(Today.AddYears(-10), ancient.To);
+    }
+
+    /// <summary>Spec 1.9: the administrator's export has no weight or BMI columns; the trainer's has them.</summary>
+    [TestMethod]
+    public async Task ExportCsvAsync_ClientPerformanceForAdmin_LeavesOutMeasurements()
+    {
+        var (host, chris, _, _, _, _) = await ArrangeAsync();
+        await using var _ = host;
+        var reports = host.Get<IReportService>();
+
+        var admin = await reports.ExportCsvAsync(ReportService.ClientPerformance, Last30Days, null, chris.UserId);
+        var trainer = await reports.ExportCsvAsync(ReportService.ClientPerformance, Last30Days, chris.UserId, chris.UserId);
+
+        Assert.StartsWith("﻿Client,Trainer,Workouts completed,", Encoding.UTF8.GetString(admin!.Content));
+        Assert.Contains("Start weight (kg)", Encoding.UTF8.GetString(trainer!.Content));
     }
 }

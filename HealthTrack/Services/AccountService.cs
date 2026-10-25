@@ -1,4 +1,7 @@
 using System.Globalization;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using HealthTrack.Data;
 using HealthTrack.Helpers;
 using HealthTrack.Models.Entities;
@@ -15,6 +18,15 @@ namespace HealthTrack.Services
     /// </summary>
     public class AccountService : IAccountService
     {
+        // The personal data export: readable JSON with enum names rather than numbers. The file is only ever downloaded, never
+        // put into a page, so characters such as + and é can stay as they are instead of HTML-safe \u escapes.
+        private static readonly JsonSerializerOptions ExportJson = new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
         private readonly ApplicationDbContext _db;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
@@ -633,6 +645,210 @@ namespace HealthTrack.Services
             await _audit.LogAsync(userId, AuditAction.Update, nameof(ClientProfile), profile.ClientId.ToString(CultureInfo.InvariantCulture),
                 $"Health profile updated; medical details {(profile.ShareMedicalInfoWithTrainer ? "shared with" : "hidden from")} the trainer.");
             return true;
+        }
+
+        /// <inheritdoc />
+        public async Task<PersonalDataExport?> ExportPersonalDataAsync(string userId)
+        {
+            var user = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            var client = await _db.ClientProfiles.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == userId);
+            if (user is null || client is null)
+            {
+                return null;
+            }
+
+            var clientId = client.ClientId;
+            var now = _clock.Now;
+
+            // BR-22: everything the app holds about the client, the encrypted fields decrypted (they are the client's own).
+            var data = new
+            {
+                ExportedAt = now,
+                Account = new
+                {
+                    user.FirstName, user.LastName, user.Email, user.PhoneNumber, user.DateOfBirth, user.Gender,
+                    user.CreatedAt, user.PrivacyConsentAt, user.LastLoginAt
+                },
+                HealthProfile = new
+                {
+                    client.FitnessGoal, client.ActivityLevel, client.TargetWeightKg,
+                    client.MedicalConditions, client.Allergies, client.CurrentMedications,
+                    client.EmergencyContactName, client.EmergencyContactPhone, client.ShareMedicalInfoWithTrainer
+                },
+                NotificationSettings = await _db.NotificationPreferences.AsNoTracking()
+                    .Where(p => p.UserId == userId)
+                    .Select(p => new
+                    {
+                        p.WorkoutRemindersEnabled, p.WorkoutReminderTime, p.MealRemindersEnabled, p.MealReminderLeadMinutes,
+                        p.AppointmentRemindersEnabled, p.AppointmentReminderLeadHours, p.EmailEnabled
+                    })
+                    .FirstOrDefaultAsync(),
+                TrainerAssignments = await _db.TrainerAssignments.AsNoTracking()
+                    .Where(a => a.ClientId == clientId)
+                    .OrderBy(a => a.StartDate)
+                    .Select(a => new { Trainer = a.Trainer.User.FirstName + " " + a.Trainer.User.LastName, a.StartDate, a.EndDate, a.Notes })
+                    .ToListAsync(),
+                Measurements = await _db.HealthMeasurements.AsNoTracking()
+                    .Where(m => m.ClientId == clientId)
+                    .OrderBy(m => m.MeasuredAt)
+                    .Select(m => new
+                    {
+                        m.MeasuredAt, m.WeightKg, m.HeightCm, m.BodyFatPercent, m.WaistCm, m.RestingHeartRate,
+                        m.SystolicBp, m.DiastolicBp, m.BloodGlucose, m.Notes
+                    })
+                    .ToListAsync(),
+                WorkoutPlans = await _db.WorkoutPlans.AsNoTracking()
+                    .Where(p => p.ClientId == clientId)
+                    .OrderBy(p => p.StartDate)
+                    .Select(p => new
+                    {
+                        p.Title, p.Description, p.Difficulty, p.Status, p.StartDate, p.EndDate,
+                        Trainer = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
+                        Exercises = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => new
+                        {
+                            e.DayOfWeek, Exercise = e.Exercise.Name, e.Sets, e.Reps, e.DurationMinutes, e.RestSeconds, e.Notes
+                        }).ToList()
+                    })
+                    .ToListAsync(),
+                DietPlans = await _db.DietPlans.AsNoTracking()
+                    .Where(p => p.ClientId == clientId)
+                    .OrderBy(p => p.StartDate)
+                    .Select(p => new
+                    {
+                        p.Title, p.Description, p.Status, p.StartDate, p.EndDate, p.DailyCalorieTarget, p.ProteinTargetG,
+                        p.CarbsTargetG, p.FatTargetG,
+                        Trainer = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
+                        Meals = p.Meals.OrderBy(m => m.ScheduledTime).Select(m => new
+                        {
+                            m.DayOfWeek, m.MealType, m.ScheduledTime, m.MealDescription, m.TargetCalories
+                        }).ToList()
+                    })
+                    .ToListAsync(),
+                WorkoutLogs = await _db.WorkoutLogs.AsNoTracking()
+                    .Where(l => l.ClientId == clientId)
+                    .OrderBy(l => l.WorkoutDate)
+                    .Select(l => new
+                    {
+                        l.WorkoutDate, Plan = l.WorkoutPlan != null ? l.WorkoutPlan.Title : null, l.PerceivedEffort, l.Notes,
+                        Entries = l.Entries.Select(e => new
+                        {
+                            Exercise = e.Exercise.Name, e.SetsCompleted, e.RepsCompleted, e.WeightKg, e.DurationMinutes, e.DistanceKm,
+                            e.CaloriesBurned
+                        }).ToList()
+                    })
+                    .ToListAsync(),
+                MealLogs = await _db.MealLogs.AsNoTracking()
+                    .Where(l => l.ClientId == clientId)
+                    .OrderBy(l => l.MealDate)
+                    .ThenBy(l => l.MealType)
+                    .Select(l => new
+                    {
+                        l.MealDate, l.MealType, l.Notes,
+                        Items = l.Items.Select(i => new { Food = i.FoodItem.Name, i.Quantity, i.Calories, i.ProteinG, i.CarbsG, i.FatG }).ToList()
+                    })
+                    .ToListAsync(),
+                Appointments = await _db.Appointments.AsNoTracking()
+                    .Where(a => a.ClientId == clientId)
+                    .OrderBy(a => a.StartDateTime)
+                    .Select(a => new
+                    {
+                        Professional = a.Trainer.User.FirstName + " " + a.Trainer.User.LastName,
+                        a.AppointmentType, a.Mode, a.StartDateTime, a.DurationMinutes, a.Status, a.Location,
+                        a.ClientReason, a.ProfessionalNotes, a.CancellationReason, a.CreatedAt
+                    })
+                    .ToListAsync(),
+                Feedback = await _db.Feedback.AsNoTracking()
+                    .Where(f => f.ClientId == clientId)
+                    .OrderBy(f => f.CreatedAt)
+                    .Select(f => new { Trainer = f.Trainer.User.FirstName + " " + f.Trainer.User.LastName, f.Category, f.Rating, f.Message, f.CreatedAt })
+                    .ToListAsync(),
+                Notifications = await _db.Notifications.AsNoTracking()
+                    .Where(n => n.UserId == userId)
+                    .OrderBy(n => n.CreatedAt)
+                    .Select(n => new { n.Type, n.Title, n.Message, n.IsRead, n.CreatedAt })
+                    .ToListAsync()
+            };
+
+            // UC16: the export is audited, without any of its contents.
+            await _audit.LogAsync(userId, AuditAction.Export, "PersonalData", userId, "Personal data exported (UC16).");
+            return new PersonalDataExport($"healthtrack-my-data-{now.ToString("yyyyMMdd", CultureInfo.InvariantCulture)}.json",
+                JsonSerializer.SerializeToUtf8Bytes(data, ExportJson));
+        }
+
+        /// <inheritdoc />
+        public async Task<DeleteAccountStatus> DeleteAccountAsync(string userId, string password)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            var client = user is null ? null : await _db.ClientProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (user is null || client is null)
+            {
+                return DeleteAccountStatus.NotFound;
+            }
+
+            // The same check as signing in, with lockout, so the form can't be used to guess the password.
+            var check = await _signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+            if (check.IsLockedOut)
+            {
+                return DeleteAccountStatus.LockedOut;
+            }
+
+            if (!check.Succeeded)
+            {
+                return DeleteAccountStatus.WrongPassword;
+            }
+
+            var clientId = client.ClientId;
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+
+            // BR-22: the health records go in dependency order, because most foreign keys are Restrict (spec 2.9). Feedback can
+            // point at a workout log, and logs at plans and planned meals, so feedback goes first, then the logs, then the
+            // plans and everything else, and the profile last. Children are loaded so EF Core deletes them on every provider.
+            _db.Feedback.RemoveRange(await _db.Feedback.Where(f => f.ClientId == clientId).ToListAsync());
+            await _db.SaveChangesAsync();
+
+            _db.WorkoutLogs.RemoveRange(await _db.WorkoutLogs.Include(l => l.Entries).Where(l => l.ClientId == clientId).ToListAsync());
+            _db.MealLogs.RemoveRange(await _db.MealLogs.Include(l => l.Items).Where(l => l.ClientId == clientId).ToListAsync());
+            await _db.SaveChangesAsync();
+
+            _db.WorkoutPlans.RemoveRange(await _db.WorkoutPlans.Include(p => p.Exercises).Where(p => p.ClientId == clientId).ToListAsync());
+            _db.DietPlans.RemoveRange(await _db.DietPlans.Include(p => p.Meals).Where(p => p.ClientId == clientId).ToListAsync());
+            _db.Appointments.RemoveRange(await _db.Appointments.Where(a => a.ClientId == clientId).ToListAsync());
+            _db.HealthMeasurements.RemoveRange(await _db.HealthMeasurements.Where(m => m.ClientId == clientId).ToListAsync());
+            _db.TrainerAssignments.RemoveRange(await _db.TrainerAssignments.Where(a => a.ClientId == clientId).ToListAsync());
+            _db.Notifications.RemoveRange(await _db.Notifications.Where(n => n.UserId == userId).ToListAsync());
+            _db.NotificationPreferences.RemoveRange(await _db.NotificationPreferences.Where(p => p.UserId == userId).ToListAsync());
+            await _db.SaveChangesAsync();
+
+            _db.ClientProfiles.Remove(client);
+            await _db.SaveChangesAsync();
+
+            // The AspNetUsers row stays, because the audit log refers to it, but it no longer identifies anyone and can never
+            // sign in again.
+            var placeholder = $"deleted-{user.Id}@healthtrack.invalid";
+            user.FirstName = "Deleted";
+            user.LastName = "user";
+            user.Email = placeholder;
+            user.UserName = placeholder;
+            user.EmailConfirmed = false;
+            user.PhoneNumber = null;
+            user.PhoneNumberConfirmed = false;
+            user.PasswordHash = null;
+            user.DateOfBirth = DateTime.MinValue;
+            user.Gender = Gender.PreferNotToSay;
+            user.AccountStatus = AccountStatus.Deactivated;
+            user.LockoutEnabled = true;
+            user.LockoutEnd = DateTimeOffset.MaxValue;
+            user.AccessFailedCount = 0;
+            ThrowIfFailed(await _userManager.UpdateAsync(user));
+            // BR-05: a new security stamp signs out the account's other sessions within a minute.
+            ThrowIfFailed(await _userManager.UpdateSecurityStampAsync(user));
+
+            await _audit.LogAsync(userId, AuditAction.Delete, nameof(ApplicationUser), userId,
+                "Account deleted: health records removed and the user anonymised (BR-22).");
+            await transaction.CommitAsync();
+
+            await _signInManager.SignOutAsync();
+            return DeleteAccountStatus.Deleted;
         }
 
         // BR-03: only a registration that is still waiting can be approved or rejected.

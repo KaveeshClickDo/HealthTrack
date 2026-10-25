@@ -15,8 +15,16 @@
 
 <h1 class="h2 mb-1">Client performance</h1>
 <p class="text-muted mb-3">
-    @(Model.AllClients ? "Every client" : "Your assigned clients"), @Model.Range.Text: weight and BMI at the start and now,
-    workouts, adherence, eating against the diet target, calories burned and appointments attended.
+    @if (Model.AllClients)
+    {
+        @:Every client, @Model.Range.Text: workouts, adherence, eating against the diet target, calories burned and appointments
+        @:attended. Weight and BMI are left out: administrators don't see clients' measurements.
+    }
+    else
+    {
+        @:Your assigned clients, @Model.Range.Text: weight and BMI at the start and now, workouts, adherence, eating against the
+        @:diet target, calories burned and appointments attended.
+    }
 </p>
 
 <partial name="_ReportToolbar" model="toolbar" />
@@ -37,9 +45,12 @@ else
                 <thead class="table-light">
                     <tr>
                         <th scope="col">Client</th>
-                        <th scope="col" class="text-end">Weight (kg)</th>
-                        <th scope="col" class="text-end">Change</th>
-                        <th scope="col" class="text-end">BMI</th>
+                        @if (!Model.AllClients)
+                        {
+                            <th scope="col" class="text-end">Weight (kg)</th>
+                            <th scope="col" class="text-end">Change</th>
+                            <th scope="col" class="text-end">BMI</th>
+                        }
                         <th scope="col" class="text-end">Workouts</th>
                         <th scope="col" class="text-end">Adherence</th>
                         <th scope="col" class="text-end">kcal a day / target</th>
@@ -58,9 +69,12 @@ else
                                     <div class="small text-muted">@(row.TrainerName ?? "Unassigned")</div>
                                 }
                             </th>
-                            <td class="text-end text-nowrap">@Kg(row.StartWeightKg) → @Kg(row.LatestWeightKg)</td>
-                            <td class="text-end">@Signed(row.WeightChangeKg)</td>
-                            <td class="text-end text-nowrap">@Kg(row.StartBmi) → @Kg(row.LatestBmi)</td>
+                            @if (!Model.AllClients)
+                            {
+                                <td class="text-end text-nowrap">@Kg(row.StartWeightKg) → @Kg(row.LatestWeightKg)</td>
+                                <td class="text-end">@Signed(row.WeightChangeKg)</td>
+                                <td class="text-end text-nowrap">@Kg(row.StartBmi) → @Kg(row.LatestBmi)</td>
+                            }
                             <td class="text-end">@row.WorkoutsCompleted</td>
                             <td class="text-end">@(row.AdherencePercent is { } adherence ? adherence + "%" : "–")</td>
                             <td class="text-end text-nowrap">

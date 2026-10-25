@@ -149,7 +149,14 @@ namespace HealthTrack.Services
                 return [];
             }
 
+            // BR-15: nothing can be booked before today or more than 60 days ahead. Checking the day first also keeps a
+            // crafted date such as 9999-12-31 from overflowing the date arithmetic below.
             var day = date.Date;
+            if (day < _clock.Today || day > _clock.Today.AddDays(MaximumDaysAhead))
+            {
+                return [];
+            }
+
             var windows = trainer.Availabilities.Where(a => a.DayOfWeek == day.DayOfWeek).OrderBy(a => a.StartTime).ToList();
             if (windows.Count == 0)
             {

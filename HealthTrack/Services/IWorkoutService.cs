@@ -15,8 +15,8 @@ namespace HealthTrack.Services
         /// <param name="trainerUserId">The signed-in trainer.</param>
         /// <param name="clientId">The client to pre-select.</param>
         /// <param name="isTemplate">Whether the form is for a template.</param>
-        /// <returns>The form.</returns>
-        Task<WorkoutPlanViewModel> GetCreatePlanFormAsync(string trainerUserId, int? clientId, bool isTemplate);
+        /// <returns>The form, or null when the client isn't assigned to the trainer.</returns>
+        Task<WorkoutPlanViewModel?> GetCreatePlanFormAsync(string trainerUserId, int? clientId, bool isTemplate);
 
         /// <summary>
         /// Fills the plan form's client choices, for example after a failed post.

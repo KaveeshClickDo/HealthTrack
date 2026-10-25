@@ -67,10 +67,13 @@ namespace HealthTrack.Services
                         .FirstOrDefault()
                 })
                 .ToListAsync();
-            var readings = await _db.HealthMeasurements.AsNoTracking()
-                .Where(m => ids.Contains(m.ClientId) && m.MeasuredAt < end)
-                .Select(m => new { m.ClientId, m.MeasuredAt, m.MeasurementId, m.WeightKg, m.HeightCm })
-                .ToListAsync();
+            // Spec 1.9: administrators never see measurement values, so their report has no weight or BMI at all.
+            var readings = trainerUserId is null
+                ? []
+                : await _db.HealthMeasurements.AsNoTracking()
+                    .Where(m => ids.Contains(m.ClientId) && m.MeasuredAt < end)
+                    .Select(m => new { m.ClientId, m.MeasuredAt, m.MeasurementId, m.WeightKg, m.HeightCm })
+                    .ToListAsync();
             var workouts = await _db.WorkoutLogs.AsNoTracking()
                 .Where(l => ids.Contains(l.ClientId) && l.WorkoutDate >= start && l.WorkoutDate <= range.To)
                 .Select(l => new { l.ClientId, Calories = l.Entries.Sum(e => e.CaloriesBurned) })
@@ -377,7 +380,8 @@ namespace HealthTrack.Services
             {
                 case ClientPerformance:
                     title = "Client performance";
-                    csv = CsvExporter.ToCsv((await GetClientPerformanceAsync(range, trainerUserId)).Rows, ClientPerformanceColumns);
+                    csv = CsvExporter.ToCsv((await GetClientPerformanceAsync(range, trainerUserId)).Rows,
+                        trainerUserId is null ? [.. ClientColumns, .. ActivityColumns] : [.. ClientColumns, .. MeasurementColumns, .. ActivityColumns]);
                     break;
                 case PopularRoutines:
                     title = "Popular routines";
@@ -415,15 +419,24 @@ namespace HealthTrack.Services
                     .Distinct()
                     .ToListAsync();
 
-        private static readonly CsvColumn<ClientPerformanceRow>[] ClientPerformanceColumns =
+        // The client performance export: who, then (for trainers only, spec 1.9) the measurement columns, then activity.
+        private static readonly CsvColumn<ClientPerformanceRow>[] ClientColumns =
         [
             new("Client", r => r.ClientName),
-            new("Trainer", r => r.TrainerName),
+            new("Trainer", r => r.TrainerName)
+        ];
+
+        private static readonly CsvColumn<ClientPerformanceRow>[] MeasurementColumns =
+        [
             new("Start weight (kg)", r => Round1(r.StartWeightKg)),
             new("Latest weight (kg)", r => Round1(r.LatestWeightKg)),
             new("Weight change (kg)", r => Round1(r.WeightChangeKg)),
             new("Start BMI", r => Round1(r.StartBmi)),
-            new("Latest BMI", r => Round1(r.LatestBmi)),
+            new("Latest BMI", r => Round1(r.LatestBmi))
+        ];
+
+        private static readonly CsvColumn<ClientPerformanceRow>[] ActivityColumns =
+        [
             new("Workouts completed", r => r.WorkoutsCompleted),
             new("Workout adherence (%)", r => r.AdherencePercent),
             new("Average daily kcal", r => r.AverageDailyCalories),

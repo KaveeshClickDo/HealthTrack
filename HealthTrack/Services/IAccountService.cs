@@ -170,5 +170,24 @@ namespace HealthTrack.Services
         /// <param name="model">The form.</param>
         /// <returns>False when the user has no client profile.</returns>
         Task<bool> UpdateHealthProfileAsync(string userId, HealthProfileViewModel model);
+
+        /// <summary>
+        /// Everything the app holds about the signed-in client as a JSON file (UC16, BR-22): account, health profile with the
+        /// medical details decrypted, settings, assignments, measurements, plans, logs, appointments, feedback and
+        /// notifications. The export is audited.
+        /// </summary>
+        /// <param name="userId">The client's user ID.</param>
+        /// <returns>The file, or null when the user has no client profile.</returns>
+        Task<PersonalDataExport?> ExportPersonalDataAsync(string userId);
+
+        /// <summary>
+        /// Deletes the signed-in client's account (UC16, BR-22) after checking the password (with lockout): in one
+        /// transaction the health records are deleted in dependency order and the user row is anonymised and locked for
+        /// good; the audit log is kept, the deletion is audited and the user is signed out.
+        /// </summary>
+        /// <param name="userId">The client's user ID.</param>
+        /// <param name="password">The current password.</param>
+        /// <returns>What happened; nothing changes unless it is <see cref="DeleteAccountStatus.Deleted"/>.</returns>
+        Task<DeleteAccountStatus> DeleteAccountAsync(string userId, string password);
     }
 }

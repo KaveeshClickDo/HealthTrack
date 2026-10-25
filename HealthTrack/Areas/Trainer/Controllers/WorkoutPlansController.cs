@@ -35,10 +35,13 @@ namespace HealthTrack.Areas.Trainer.Controllers
         /// </summary>
         /// <param name="clientId">The client to pre-select.</param>
         /// <param name="template">Whether to create a template.</param>
-        /// <returns>The form.</returns>
+        /// <returns>The form, or 404 for a client who isn't assigned to the trainer.</returns>
         [HttpGet]
-        public async Task<IActionResult> Create(int? clientId, bool template = false) =>
-            View(await _workouts.GetCreatePlanFormAsync(CurrentUserId, clientId, template));
+        public async Task<IActionResult> Create(int? clientId, bool template = false)
+        {
+            var model = await _workouts.GetCreatePlanFormAsync(CurrentUserId, clientId, template);
+            return model is null ? NotFound() : View(model);
+        }
 
         /// <summary>
         /// Creates the Draft plan, then opens it to add exercises.

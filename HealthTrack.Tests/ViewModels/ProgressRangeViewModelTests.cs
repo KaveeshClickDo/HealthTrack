@@ -55,6 +55,22 @@ public sealed class ProgressRangeViewModelTests
         Assert.AreEqual(new DateTime(2024, 10, 1), resolved.From);
     }
 
+    /// <summary>
+    /// Crafted extreme dates (the ones that caused a 500 in Phase 9's Production check) are clamped to the last ten years up
+    /// to today instead of overflowing.
+    /// </summary>
+    [TestMethod]
+    public void Resolve_CustomExtremeDates_ClampedWithoutError()
+    {
+        var ancient = ProgressRangeViewModel.Resolve("custom", DateTime.MinValue, DateTime.MinValue.AddDays(1), Today);
+        var endless = ProgressRangeViewModel.Resolve("custom", DateTime.MinValue, DateTime.MaxValue, Today);
+
+        Assert.AreEqual(Today.AddYears(-10), ancient.From);
+        Assert.AreEqual(Today.AddYears(-10), ancient.To);
+        Assert.AreEqual(Today.AddYears(-2), endless.From);
+        Assert.AreEqual(Today, endless.To);
+    }
+
     /// <summary>Custom without both dates falls back to 4 weeks.</summary>
     [TestMethod]
     public void Resolve_CustomMissingDate_FallsBackToFourWeeks()

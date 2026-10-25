@@ -88,6 +88,22 @@ public sealed class AppointmentServiceTests
         CollectionAssert.AreEqual(new[] { "11:00", "11:15", "11:30", "11:45", "12:00" }, Times(slots));
     }
 
+    /// <summary>
+    /// BR-15: a day in the past or beyond 60 days has no free times, including a crafted 9999-12-31 (which must not
+    /// overflow the date arithmetic and end on the error page).
+    /// </summary>
+    [TestMethod]
+    public async Task GetAvailableSlotsAsync_OutsideBookingWindow_NoSlotsAndNoError()
+    {
+        var (host, trainer, client) = await ArrangeAsync();
+        await using var _ = host;
+        await host.AddAvailabilityAsync(trainer, DayOfWeek.Friday, 9, 12);
+        var appointments = host.Get<IAppointmentService>();
+
+        Assert.IsEmpty(await appointments.GetAvailableSlotsAsync(trainer.TrainerId, client.ClientId, DateTime.MaxValue.Date, 60));
+        Assert.IsEmpty(await appointments.GetAvailableSlotsAsync(trainer.TrainerId, client.ClientId, Monday.AddDays(-7), 60));
+    }
+
     /// <summary>BR-15: up to 60 days ahead (Thursday 24 December, 09:00 exactly), and nothing after that.</summary>
     [TestMethod]
     public async Task GetAvailableSlotsAsync_SixtyDaysAhead_LastSlotIsExactlySixtyDays()

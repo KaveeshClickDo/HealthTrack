@@ -143,6 +143,9 @@ if (!app.Environment.IsDevelopment())
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 app.UseHttpsRedirection();
 
+// Spec 1.9: Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy and Permissions-Policy.
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
 // One culture for everyone, so decimals use a dot and dates read the same on every machine (dd MMM yyyy).
 var appCulture = new CultureInfo("en-GB");
 app.UseRequestLocalization(new RequestLocalizationOptions

@@ -85,6 +85,23 @@
 
             <button type="submit" class="btn btn-primary">Save health profile</button>
         </form>
+
+        <section class="card shadow-sm mt-4" id="your-data">
+            <div class="card-body">
+                <h2 class="h5">Your data</h2>
+                <p class="text-muted">
+                    Download everything HealthTrack holds about you (your profile and medical details, measurements, plans, logs,
+                    appointments, feedback and notifications) as a JSON file, or delete your account and your health records.
+                    See the <a asp-area="" asp-controller="Home" asp-action="Privacy">privacy notice</a>.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <form asp-action="ExportMyData" method="post">
+                        <button type="submit" class="btn btn-outline-primary">Download my data</button>
+                    </form>
+                    <a class="btn btn-outline-danger" asp-action="DeleteAccount">Delete my account</a>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 

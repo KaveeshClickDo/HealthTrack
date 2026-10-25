@@ -25,7 +25,7 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>
         /// Turns the query-string values into a range. Unknown values give the last 4 weeks; custom dates are put in
-        /// order, end today at the latest and span at most two years.
+        /// order, lie within the last ten years, end today at the latest and span at most two years.
         /// </summary>
         /// <param name="range">4w, 3m or custom.</param>
         /// <param name="from">The custom start.</param>
@@ -43,16 +43,13 @@ namespace HealthTrack.Models.ViewModels
 
             if (range == Custom && from is { } start && to is { } end)
             {
-                var first = start.Date;
-                var last = end.Date;
+                // Clamping first also keeps a crafted 0001-01-01 from overflowing the "two years back" arithmetic below.
+                var earliest = today.AddYears(-10);
+                var first = Clamp(start.Date, earliest, today);
+                var last = Clamp(end.Date, earliest, today);
                 if (last < first)
                 {
                     (first, last) = (last, first);
-                }
-
-                if (last > today)
-                {
-                    last = today;
                 }
 
                 if (first < last.AddYears(-2))
@@ -60,10 +57,13 @@ namespace HealthTrack.Models.ViewModels
                     first = last.AddYears(-2);
                 }
 
-                return new ProgressRangeViewModel { Range = Custom, From = first > last ? last : first, To = last };
+                return new ProgressRangeViewModel { Range = Custom, From = first, To = last };
             }
 
             return new ProgressRangeViewModel { Range = FourWeeks, From = today.AddDays(-27), To = today };
         }
+
+        private static DateTime Clamp(DateTime value, DateTime earliest, DateTime latest) =>
+            value < earliest ? earliest : value > latest ? latest : value;
     }
 }

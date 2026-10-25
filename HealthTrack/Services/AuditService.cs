@@ -69,9 +69,9 @@ namespace HealthTrack.Services
                 query = query.Where(a => a.Timestamp >= start);
             }
 
-            if (filter.To is { } to)
+            // The To day is included in full; the last representable day (a crafted 9999-12-31) has no day after it.
+            if (filter.To is { } to && to.Date < DateTime.MaxValue.Date)
             {
-                // The To day is included in full.
                 var end = to.Date.AddDays(1);
                 query = query.Where(a => a.Timestamp < end);
             }

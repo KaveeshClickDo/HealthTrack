@@ -86,4 +86,17 @@ public sealed class AuditServiceTests
         Assert.AreEqual("Amaya Perera", row.UserName);
         Assert.AreEqual(today.AddDays(-1).AddHours(23), row.Timestamp);
     }
+
+    /// <summary>A crafted "to" of 9999-12-31 has no day after it: the filter just has no end instead of failing.</summary>
+    [TestMethod]
+    public async Task GetPageAsync_LastPossibleToDate_NoError()
+    {
+        await using var host = await TestHost.CreateAsync();
+        host.Db.AuditLogs.Add(new AuditLog { Action = AuditAction.Login, Timestamp = host.Clock.Now });
+        await host.Db.SaveChangesAsync();
+
+        var page = await host.Get<IAuditService>().GetPageAsync(new AuditLogFilterViewModel { To = DateTime.MaxValue }, 1);
+
+        Assert.AreEqual(1, page.TotalCount);
+    }
 }
