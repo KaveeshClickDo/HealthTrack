@@ -1,6 +1,97 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = "Privacy notice";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <h1 class="h2 mb-2">@ViewData["Title"]</h1>
+        <p class="text-muted">How HealthTrack collects, protects and uses your personal and health information.</p>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">What we collect and why</h2>
+                <ul>
+                    <li><strong>Account details:</strong> your name, email address, password (stored only as a salted hash), date of birth, gender and phone number, so you can sign in and so we can confirm you are 16 or older.</li>
+                    <li><strong>Health profile (clients):</strong> your goal, activity level, target weight, health conditions, allergies, medications and an emergency contact, so plans and calorie targets suit you.</li>
+                    <li><strong>Activity and measurements (clients):</strong> workouts, meals, weight, height and vital signs you record, so you and your trainer can follow your progress.</li>
+                    <li><strong>Professional details (trainers):</strong> your profession, specialisation, qualifications, licence number and experience, so an administrator can approve your account and clients can choose you.</li>
+                    <li><strong>Appointments and feedback:</strong> bookings, the reason you give for a booking, and the professional's consultation notes.</li>
+                    <li><strong>Security records:</strong> sign-ins, failed sign-ins and important changes, with the time and IP address, to protect your account. These records never contain passwords or health values.</li>
+                </ul>
+                <p class="mb-0">We only ask for what the service needs. Optional fields can be left empty.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">How your data is protected</h2>
+                <ul class="mb-0">
+                    <li>Health conditions, allergies, medications, measurement notes, appointment reasons and consultation notes are <strong>encrypted</strong> before they are stored.</li>
+                    <li>Every page needs you to be signed in, and the connection is always encrypted (HTTPS).</li>
+                    <li>Accounts are locked for 15 minutes after 5 wrong passwords, and you are signed out after 30 minutes of inactivity.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">Who can see what</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-2">
+                        <thead>
+                            <tr>
+                                <th scope="col">Who</th>
+                                <th scope="col">What they can see</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>You</td>
+                                <td>Everything in your own account.</td>
+                            </tr>
+                            <tr>
+                                <td>Your assigned trainer</td>
+                                <td>Your plans, logs, measurements and progress while they are assigned to you. Your medical details only if you allow it.</td>
+                            </tr>
+                            <tr>
+                                <td>A professional you book</td>
+                                <td>The appointment and the reason you gave for it.</td>
+                            </tr>
+                            <tr>
+                                <td>Administrators</td>
+                                <td>Account details and activity totals, to run the service. Never your clinical notes or measurement values.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="mb-0">
+                    <strong>Sharing medical details:</strong> in your health profile you can turn off
+                    &ldquo;Share my medical details with my trainer&rdquo;. Your trainer then no longer sees your health conditions,
+                    allergies or medications.
+                </p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h5">Your rights</h2>
+                <ul class="mb-0">
+                    <li><strong>See and correct your data:</strong> edit your details and health profile at any time.</li>
+                    <li><strong>Download your data:</strong> clients can download everything we hold about them as a file.</li>
+                    <li><strong>Delete your account:</strong> clients can delete their account. Your health records are removed and your account is anonymised; security records are kept without your name.</li>
+                    <li><strong>Reminders and email:</strong> choose which reminders you receive and whether copies are sent by email.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Cookies</h2>
+                <p class="mb-0">
+                    HealthTrack uses only the cookies it needs to work: one that keeps you signed in, one that protects forms
+                    against forgery, and one that carries short messages between pages. There are no advertising or tracking cookies.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

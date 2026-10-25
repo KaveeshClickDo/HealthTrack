@@ -1,0 +1,116 @@
+@model RegisterClientViewModel
+@{
+    ViewData["Title"] = "Register as a client";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <h1 class="h2 mb-2">Create a client account</h1>
+        <p class="text-muted mb-4">
+            Already registered? <a asp-action="Login">Log in</a>.
+            Are you a trainer or health professional? <a asp-action="RegisterTrainer">Register as a professional</a>.
+        </p>
+
+        <form asp-action="RegisterClient" method="post">
+            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">About you</h2>
+                    <partial name="_AccountFields" model="Model" />
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-1">Your health profile</h2>
+                    <p class="text-muted small mb-3">Your height and weight become your first measurement, and they set your suggested calorie target.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="FitnessGoal" class="form-label"></label>
+                            <select asp-for="FitnessGoal" asp-items="Html.GetEnumSelectList<FitnessGoal>()" class="form-select">
+                                <option value="">Choose…</option>
+                            </select>
+                            <span asp-validation-for="FitnessGoal" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ActivityLevel" class="form-label"></label>
+                            <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="form-select">
+                                <option value="">Choose…</option>
+                            </select>
+                            <span asp-validation-for="ActivityLevel" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="HeightCm" class="form-label"></label>
+                            <input asp-for="HeightCm" type="number" step="0.1" min="50" max="250" class="form-control" />
+                            <span asp-validation-for="HeightCm" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="WeightKg" class="form-label"></label>
+                            <input asp-for="WeightKg" type="number" step="0.1" min="20" max="350" class="form-control" />
+                            <span asp-validation-for="WeightKg" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="TargetWeightKg" class="form-label"></label> <span class="text-muted small">(optional)</span>
+                            <input asp-for="TargetWeightKg" type="number" step="0.1" min="30" max="300" class="form-control" />
+                            <span asp-validation-for="TargetWeightKg" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-1">Medical details <span class="text-muted small fw-normal">(optional)</span></h2>
+                    <p class="text-muted small mb-3">
+                        These are encrypted before they are stored. Your assigned trainer can see them unless you turn sharing off
+                        in your health profile later.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="MedicalConditions" class="form-label"></label>
+                            <textarea asp-for="MedicalConditions" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="MedicalConditions" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Allergies" class="form-label"></label>
+                            <textarea asp-for="Allergies" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="Allergies" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="CurrentMedications" class="form-label"></label>
+                            <textarea asp-for="CurrentMedications" class="form-control" rows="2"></textarea>
+                            <span asp-validation-for="CurrentMedications" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Emergency contact <span class="text-muted small fw-normal">(optional)</span></h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="EmergencyContactName" class="form-label"></label>
+                            <input asp-for="EmergencyContactName" class="form-control" />
+                            <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="EmergencyContactPhone" class="form-label"></label>
+                            <input asp-for="EmergencyContactPhone" type="tel" class="form-control" />
+                            <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <partial name="_PrivacyConsent" model="Model" />
+
+            <button type="submit" class="btn btn-primary btn-lg">Create my account</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

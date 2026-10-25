@@ -35,8 +35,8 @@ HealthTrack/              the web project (HealthTrack.csproj)
   Models/ViewModels/      form, dashboard and report view models
   Data/                   ApplicationDbContext, Migrations/, DbSeeder
   Services/               I<Name>Service + <Name>Service pairs, ReminderBackgroundService
-  Security/               EncryptionService, EncryptedStringConverter, MinimumAgeAttribute, NotInFutureAttribute, SecurityHeadersMiddleware
-  Helpers/                HealthCalculator, CsvExporter, IClock + SystemClock, BusinessRuleException
+  Security/               AppRoles (role-name constants), EncryptionService, EncryptedStringConverter, MinimumAgeAttribute, NotInFutureAttribute, MustBeTrueAttribute, SecurityHeadersMiddleware
+  Helpers/                HealthCalculator, CsvExporter, IClock + SystemClock, BusinessRuleException, EnumExtensions (GetDisplayName), StringExtensions
   Views/Shared/           _Layout, _Alerts, error views
   wwwroot/                css/site.css, js/ (healthtrack.js, validators.js, one file per page script), lib/
   App_Data/               keys/ (Data Protection), mail/ (dev email pickup) – both git-ignored
@@ -75,7 +75,7 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - Leave `options.Stores.SchemaVersion` at its default. .NET 10's `IdentitySchemaVersions.Version3` adds an AspNetUserPasskeys table, which would be a schema change.
 - Password: at least 8 characters with upper case, lower case, a digit and a symbol; `RequireUniqueEmail = true`; `SignIn.RequireConfirmedAccount = false`; `PasswordHasherOptions.IterationCount = 100_000` (stated explicitly for the report).
 - Lockout: 5 failed attempts → 15 minutes, on for every user; sign-in checks always use `lockoutOnFailure: true`.
-- Login: find the user, `CheckPasswordSignInAsync(user, password, lockoutOnFailure: true)`, and only after the password is right check `user.CanSignIn()` (Pending, Suspended and Deactivated get their own message), then `SignInAsync`. Unknown email and wrong password show the same message. Redirect to `returnUrl` only if `Url.IsLocalUrl(returnUrl)`, otherwise to the role's dashboard.
+- Login: find the user, `CheckPasswordSignInAsync(user, password, lockoutOnFailure: true)`, and only after the password is right check `user.CanSignIn()` (Pending, Suspended and Deactivated get their own message), then `SignInAsync`. Unknown email and wrong password show the same message. Redirect to `returnUrl` only if `Url.IsLocalUrl(returnUrl)`, otherwise to the role's dashboard. The flow lives in `AccountService.LoginAsync`; AccountController only turns the `LoginStatus` into a message or a redirect.
 - Cookie: LoginPath `/Account/Login`, AccessDeniedPath `/Error/Forbidden`, 30-minute sliding expiration, HttpOnly, `SecurePolicy = Always`, SameSite Lax.
 - `SecurityStampValidatorOptions.ValidationInterval = 1 minute`; changing a user's status updates their security stamp, so a suspended user is signed out within a minute.
 - Fallback authorization policy requires an authenticated user; `[AllowAnonymous]` only on Home, the Account login/register actions and Error.
@@ -93,7 +93,8 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 - Success and error messages through TempData and the `_Alerts` partial.
 - Destructive actions confirm first. Lists page at 20 rows. Empty states say what to do next.
 - Forms show validation messages next to fields and a summary at the top. Enum dropdowns use `Html.GetEnumSelectList<T>()` with the enums' `[Display]` names.
-- Dates `dd MMM yyyy`, times `HH:mm`; weight and BMI 1 dp, kcal 0 dp.
+- Dates `dd MMM yyyy`, times `HH:mm`; weight and BMI 1 dp, kcal 0 dp. The app always runs in the `en-GB` culture (`UseRequestLocalization` in Program.cs), so decimals bind with a dot and month names are English on every machine.
+- Role names come from `AppRoles` (`[Authorize(Roles = AppRoles.Client)]`, `User.IsInRole(AppRoles.Admin)`); enum labels in code and views come from `value.GetDisplayName()`.
 
 ## Coding conventions (these are marked)
 

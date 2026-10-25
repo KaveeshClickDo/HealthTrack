@@ -1,8 +1,99 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Welcome";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="hero rounded-4 p-4 p-md-5 mb-5">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <h1 class="display-5 fw-semibold">Your training, nutrition and health in one place</h1>
+            <p class="lead mt-3">
+                HealthTrack brings your workout plans, meals, measurements and appointments together,
+                so you and your trainer can see real progress, week by week.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Create a free account</a>
+                <a class="btn btn-outline-primary btn-lg" asp-controller="Account" asp-action="Login">Log in</a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h6 text-uppercase text-muted mb-3">A typical week</h2>
+                    <ul class="list-unstyled mb-0 hero-list">
+                        <li>Follow the plan your trainer wrote for you</li>
+                        <li>Log workouts and meals in a minute; calories are worked out for you</li>
+                        <li>Record weight and vitals and watch the trends</li>
+                        <li>Book a session with a trainer, nutritionist or physiotherapist</li>
+                        <li>Get reminders for workouts, meals and appointments</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="mb-5" aria-labelledby="features-heading">
+    <h2 id="features-heading" class="h4 mb-3">What you can do</h2>
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6">Plans from professionals</h3>
+                    <p class="card-text text-muted small">Workout and diet plans written for you, laid out day by day, with targets for calories and macros.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6">Quick logging</h3>
+                    <p class="card-text text-muted small">Tick off today's exercises or pick foods from the library. HealthTrack calculates calories burned and eaten.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6">Progress you can see</h3>
+                    <p class="card-text text-muted small">Charts of weight, BMI, calories, heart rate and blood pressure over the weeks and months.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="h6">Appointments</h3>
+                    <p class="card-text text-muted small">See when professionals are free, request a slot and get a reminder before it starts.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">For trainers and health professionals</h2>
+                <p class="text-muted">
+                    Fitness trainers, nutritionists, physiotherapists and doctors can coach their clients here: write plans,
+                    follow adherence, give feedback and manage appointments. Professional accounts are checked and approved
+                    by an administrator before first use.
+                </p>
+                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="RegisterTrainer">Register as a professional</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Your data is protected</h2>
+                <p class="text-muted">
+                    Medical details and consultation notes are encrypted, every page needs you to be signed in, and you decide
+                    whether your trainer sees your medical information. You can download or delete your data at any time.
+                </p>
+                <a asp-controller="Home" asp-action="Privacy">Read the privacy notice</a>
+            </div>
+        </div>
+    </div>
+</section>

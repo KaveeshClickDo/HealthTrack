@@ -1,0 +1,11 @@
+@model RegisterViewModel
+@* BR-02: the privacy notice must be accepted to register. *@
+<div class="form-check mb-4">
+    <input asp-for="AcceptPrivacy" class="form-check-input" />
+    <label asp-for="AcceptPrivacy" class="form-check-label">
+        I have read and accept the
+        <a asp-controller="Home" asp-action="Privacy" target="_blank" rel="noopener">privacy notice</a>
+        (opens in a new tab).
+    </label>
+    <div><span asp-validation-for="AcceptPrivacy" class="text-danger small"></span></div>
+</div>

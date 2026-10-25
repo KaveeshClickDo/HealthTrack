@@ -890,7 +890,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 
 | Service | Responsibility | Key methods |
 | --- | --- | --- |
-| AccountService | Registration, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, ExportPersonalData, DeleteAccountAsync |
+| AccountService | Registration, sign-in, the user's own account, approval, account status, privacy requests | RegisterClientAsync, RegisterTrainerAsync, LoginAsync, SignInAsync, LogoutAsync, GetAccountSummaryAsync, UpdateProfileAsync, ChangePasswordAsync, CreateAdminAsync, ApproveTrainerAsync, RejectTrainerAsync, SetAccountStatusAsync, ExportPersonalData, DeleteAccountAsync |
 | AssignmentService | Trainer–client assignments and access checks | AssignTrainer, EndAssignment, GetActiveTrainer, IsTrainerAssignedToClient, GetUnassignedClients |
 | WorkoutService | Plans, templates and workout logging | CreatePlan, AddExercise, SaveAsTemplate, AssignTemplate, ActivatePlan, GetTodaysWorkout, LogWorkout, GetHistory |
 | DietService | Diet plans and meal logging | CreatePlan, AddMeal, ActivatePlan, GetTodaysMeals, LogMeal, GetDailySummary |
@@ -925,6 +925,7 @@ Every service implements an interface of the same name with an I prefix (for exa
 | IClock, SystemClock | Supplies the current time, so tests can fix it |
 | CsvExporter (static) | Turns report rows into CSV |
 | MinimumAgeAttribute, NotInFutureAttribute | Custom validation attributes with client-side adapters |
+| MustBeTrueAttribute | Server-side check that the privacy-consent checkbox is ticked (the browser uses the implicit required rule) |
 | SecurityHeadersMiddleware | Adds Content-Security-Policy, X-Frame-Options, X-Content-Type-Options and Referrer-Policy headers |
 | BusinessRuleException | Thrown by services when a business rule fails; controllers turn it into a form error |
 

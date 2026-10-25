@@ -1,25 +1,26 @@
-using HealthTrack.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace HealthTrack.Controllers
 {
-    public class HomeController : Controller
+    /// <summary>
+    /// The public landing page and privacy notice.
+    /// </summary>
+    [AllowAnonymous]
+    public class HomeController : BaseController
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
+        /// <summary>
+        /// The landing page; signed-in users go straight to their dashboard.
+        /// </summary>
+        /// <returns>The landing page or a redirect.</returns>
+        [HttpGet]
+        public IActionResult Index() => CurrentRole() is { } role ? RedirectToDashboard(role) : View();
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
+        /// <summary>
+        /// The privacy notice the registration consent links to (BR-02).
+        /// </summary>
+        /// <returns>The privacy notice.</returns>
+        [HttpGet]
+        public IActionResult Privacy() => View();
     }
 }

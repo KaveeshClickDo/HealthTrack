@@ -1,5 +1,8 @@
+using HealthTrack.Helpers;
 using HealthTrack.Models.Entities;
 using HealthTrack.Models.Enums;
+using HealthTrack.Security;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthTrack.Data
@@ -36,6 +39,201 @@ namespace HealthTrack.Data
             // 1. Libraries
             await SeedExercisesAsync(db, logger, cancellationToken);
             await SeedFoodItemsAsync(db, logger, cancellationToken);
+
+            // 2. Roles and the demo accounts of CLAUDE.md
+            await SeedRolesAsync(scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>());
+            await SeedUsersAsync(db, scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+                scope.ServiceProvider.GetRequiredService<IClock>(), logger, cancellationToken);
+        }
+
+        // Roles are checked on every start, so a database that has users but lost a role still works.
+        private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
+        {
+            foreach (var role in AppRoles.All)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    ThrowIfFailed(await roleManager.CreateAsync(new IdentityRole(role)), $"role {role}");
+                }
+            }
+        }
+
+        private static async Task SeedUsersAsync(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+            IClock clock, ILogger logger, CancellationToken cancellationToken)
+        {
+            if (await db.Users.AnyAsync(cancellationToken))
+            {
+                return;
+            }
+
+            var now = clock.Now;
+
+            // All or nothing: a half-seeded database would be skipped on the next start because it has users.
+            await using var transaction = db.Database.IsRelational()
+                ? await db.Database.BeginTransactionAsync(cancellationToken)
+                : null;
+
+            // Administrator
+            var admin = await CreateUserAsync(userManager, "admin@healthtrack.test", "Admin@123", AppRoles.Admin,
+                NewUser("admin@healthtrack.test", "System", "Administrator", new DateTime(1985, 4, 2), Gender.PreferNotToSay,
+                    "+94 11 234 5678", now.AddDays(-120)));
+            db.NotificationPreferences.Add(NotificationPreference.CreateDefault(admin.Id));
+
+            // Trainers: two approved, and a physiotherapist waiting for approval to demo UC30.
+            var trainer = await CreateTrainerAsync(db, userManager, "trainer@healthtrack.test",
+                NewUser("trainer@healthtrack.test", "Chris", "Bandara", new DateTime(1988, 6, 14), Gender.Male, "+94 77 345 6789", now.AddDays(-90)),
+                ProfessionalType.FitnessTrainer, "Strength and conditioning",
+                "Level 3 Personal Trainer; Strength and Conditioning Coach certificate; first aid and CPR", null, 8,
+                "I help beginners build confidence with simple, progressive strength and cardio plans.", approved: true);
+
+            var nutritionist = await CreateTrainerAsync(db, userManager, "nutritionist@healthtrack.test",
+                NewUser("nutritionist@healthtrack.test", "Shanika", "De Silva", new DateTime(1990, 11, 3), Gender.Female, "+94 71 456 7890", now.AddDays(-85)),
+                ProfessionalType.Nutritionist, "Weight management and sports nutrition",
+                "BSc (Hons) Nutrition and Dietetics; registered nutritionist", "NUT-20417", 6,
+                "Practical eating plans that fit real life, from weight loss to performance nutrition.", approved: true);
+
+            await CreateTrainerAsync(db, userManager, "physio@healthtrack.test",
+                NewUser("physio@healthtrack.test", "Daniel", "Perera", new DateTime(1993, 2, 21), Gender.Male, "+94 76 567 8901", now.AddDays(-2)),
+                ProfessionalType.Physiotherapist, "Sports injury rehabilitation",
+                "BSc (Hons) Physiotherapy; certificate in sports massage", "PT-33018", 4,
+                "Rehabilitation after sports injuries and help with back and joint pain.", approved: false);
+
+            // Clients with mixed goals and activity; client5@ and client6@ start unassigned.
+            var client = await CreateClientAsync(db, userManager, "client@healthtrack.test",
+                NewUser("client@healthtrack.test", "Amaya", "Perera", new DateTime(1994, 3, 12), Gender.Female, "+94 77 234 5678", now.AddDays(-63)),
+                FitnessGoal.LoseWeight, ActivityLevel.ModeratelyActive, heightCm: 165.0m, weightKg: 72.0m, targetWeightKg: 64.0m);
+            client.Allergies = "Peanuts";
+            client.EmergencyContactName = "Ruwan Perera";
+            client.EmergencyContactPhone = "+94 77 987 6543";
+
+            var client2 = await CreateClientAsync(db, userManager, "client2@healthtrack.test",
+                NewUser("client2@healthtrack.test", "Ravi", "Fernando", new DateTime(1989, 7, 21), Gender.Male, "+94 71 222 3344", now.AddDays(-56)),
+                FitnessGoal.GainMuscle, ActivityLevel.VeryActive, heightCm: 178.0m, weightKg: 74.5m, targetWeightKg: 80.0m);
+            client2.ShareMedicalInfoWithTrainer = false;
+
+            var client3 = await CreateClientAsync(db, userManager, "client3@healthtrack.test",
+                NewUser("client3@healthtrack.test", "Dilini", "Silva", new DateTime(2000, 11, 2), Gender.Female, null, now.AddDays(-49)),
+                FitnessGoal.ImproveEndurance, ActivityLevel.LightlyActive, heightCm: 160.0m, weightKg: 58.0m, targetWeightKg: null);
+
+            var client4 = await CreateClientAsync(db, userManager, "client4@healthtrack.test",
+                NewUser("client4@healthtrack.test", "Kasun", "Jayawardena", new DateTime(1978, 1, 30), Gender.Male, "+94 75 333 4455", now.AddDays(-42)),
+                FitnessGoal.GeneralWellbeing, ActivityLevel.Sedentary, heightCm: 172.0m, weightKg: 88.0m, targetWeightKg: 80.0m);
+            client4.MedicalConditions = "Type 2 diabetes, managed with diet and medication";
+            client4.CurrentMedications = "Metformin 500 mg twice daily";
+
+            await CreateClientAsync(db, userManager, "client5@healthtrack.test",
+                NewUser("client5@healthtrack.test", "Priya", "Nair", new DateTime(1997, 5, 18), Gender.Female, null, now.AddDays(-14)),
+                FitnessGoal.ImproveFlexibility, ActivityLevel.Sedentary, heightCm: 158.0m, weightKg: 55.0m, targetWeightKg: null);
+
+            await CreateClientAsync(db, userManager, "client6@healthtrack.test",
+                NewUser("client6@healthtrack.test", "Alex", "Morgan", new DateTime(1985, 9, 9), Gender.PreferNotToSay, null, now.AddDays(-5)),
+                FitnessGoal.MaintainWeight, ActivityLevel.ExtraActive, heightCm: 183.0m, weightKg: 79.0m, targetWeightKg: null);
+
+            // Active assignments from the day each client joined (BR-06: one per client).
+            AddAssignment(db, client, trainer, "Wants to lose weight before a family wedding.");
+            AddAssignment(db, client2, trainer, "Muscle gain; trains five days a week.");
+            AddAssignment(db, client3, trainer, "Building up to a first 10K.");
+            AddAssignment(db, client4, nutritionist, "Diet support alongside diabetes care.");
+
+            await db.SaveChangesAsync(cancellationToken);
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            logger.LogInformation("Seeded the demo accounts: 1 admin, 3 trainers and 6 clients.");
+        }
+
+        private static ApplicationUser NewUser(string email, string firstName, string lastName, DateTime dateOfBirth,
+            Gender gender, string? phoneNumber, DateTime createdAt) => new()
+            {
+                UserName = email,
+                Email = email,
+                EmailConfirmed = true,
+                FirstName = firstName,
+                LastName = lastName,
+                DateOfBirth = dateOfBirth,
+                Gender = gender,
+                PhoneNumber = phoneNumber,
+                AccountStatus = AccountStatus.Active,
+                PrivacyConsentAt = createdAt,
+                CreatedAt = createdAt
+            };
+
+        private static async Task<ApplicationUser> CreateUserAsync(UserManager<ApplicationUser> userManager, string email,
+            string password, string role, ApplicationUser user)
+        {
+            ThrowIfFailed(await userManager.CreateAsync(user, password), email);
+            ThrowIfFailed(await userManager.AddToRoleAsync(user, role), email);
+            return user;
+        }
+
+        private static async Task<TrainerProfile> CreateTrainerAsync(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+            string email, ApplicationUser user, ProfessionalType type, string specialization, string qualifications,
+            string? licenseNumber, int yearsOfExperience, string bio, bool approved)
+        {
+            // BR-03: an unapproved trainer stays PendingApproval with no ApprovedAt.
+            user.AccountStatus = approved ? AccountStatus.Active : AccountStatus.PendingApproval;
+            await CreateUserAsync(userManager, email, "Trainer@123", AppRoles.Trainer, user);
+
+            var profile = new TrainerProfile
+            {
+                UserId = user.Id,
+                ProfessionalType = type,
+                Specialization = specialization,
+                Qualifications = qualifications,
+                LicenseNumber = licenseNumber,
+                YearsOfExperience = yearsOfExperience,
+                Bio = bio,
+                MaxClients = 20,
+                ApprovedAt = approved ? user.CreatedAt.AddDays(1) : null,
+                CreatedAt = user.CreatedAt
+            };
+
+            db.TrainerProfiles.Add(profile);
+            db.NotificationPreferences.Add(NotificationPreference.CreateDefault(user.Id));
+            return profile;
+        }
+
+        private static async Task<ClientProfile> CreateClientAsync(ApplicationDbContext db, UserManager<ApplicationUser> userManager,
+            string email, ApplicationUser user, FitnessGoal goal, ActivityLevel activityLevel, decimal heightCm, decimal weightKg,
+            decimal? targetWeightKg)
+        {
+            await CreateUserAsync(userManager, email, "Client@123", AppRoles.Client, user);
+
+            var profile = new ClientProfile
+            {
+                UserId = user.Id,
+                FitnessGoal = goal,
+                ActivityLevel = activityLevel,
+                TargetWeightKg = targetWeightKg,
+                CreatedAt = user.CreatedAt
+            };
+
+            // As at registration, the first measurement is the height and weight given when joining.
+            profile.Measurements.Add(new HealthMeasurement { MeasuredAt = user.CreatedAt, WeightKg = weightKg, HeightCm = heightCm });
+
+            db.ClientProfiles.Add(profile);
+            db.NotificationPreferences.Add(NotificationPreference.CreateDefault(user.Id));
+            return profile;
+        }
+
+        private static void AddAssignment(ApplicationDbContext db, ClientProfile client, TrainerProfile trainer, string notes) =>
+            db.TrainerAssignments.Add(new TrainerAssignment
+            {
+                Client = client,
+                Trainer = trainer,
+                StartDate = client.CreatedAt.Date,
+                Notes = notes
+            });
+
+        private static void ThrowIfFailed(IdentityResult result, string what)
+        {
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Seeding {what} failed: {string.Join(" ", result.Errors.Select(e => e.Description))}");
+            }
         }
 
         private static async Task SeedExercisesAsync(ApplicationDbContext db, ILogger logger, CancellationToken cancellationToken)
