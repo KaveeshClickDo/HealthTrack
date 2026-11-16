@@ -1,68 +1,95 @@
 @model PagedResult<WorkoutPlanListItemViewModel>
 @{
     ViewData["Title"] = "Workout plans";
+    ViewData["Parent"] = "Planning";
     var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+    // The totals are counted from the rows shown, so they appear only when every plan fits on one page.
+    var allShown = Model.TotalPages <= 1;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Workout plans</h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" asp-action="Templates">Templates</a>
-        <a class="btn btn-outline-primary" asp-action="Create" asp-route-template="true">New template</a>
-        <a class="btn btn-primary" asp-action="Create">New client plan</a>
+<div class="page-head stacked">
+    <div class="intro">
+        <h1 class="h1">Workout plans</h1>
+        <p>Plans you've written for your clients. A new plan starts as a draft — add exercises, then activate it.</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="Templates">@Icons.Svg("copy", 18)Templates</a>
+        <a class="btn btn-secondary" asp-action="Create" asp-route-template="true">@Icons.Svg("clipboard", 18)New template</a>
+        <a class="btn btn-primary" asp-action="Create">@Icons.Svg("plus", 18)New client plan</a>
     </div>
 </div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            You haven't written any client plans yet. <a asp-action="Create">Create one</a> or
-            <a asp-action="Templates">assign a template</a> to one of your clients.
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("clipboard", 24)</span>
+        <p><span class="strong">You haven't written any client plans yet.</span> Create one, or assign a routine template to one of your clients.</p>
+        <div class="actions">
+            <a class="btn btn-primary" asp-action="Create">New client plan</a>
+            <a class="btn btn-secondary" asp-action="Templates">Templates</a>
         </div>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Plan</th>
-                        <th scope="col">Client</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Dates</th>
-                        <th scope="col" class="text-end">Exercises</th>
-                    </tr>
-                </thead>
+    @if (allShown)
+    {
+        var items = Model.Items;
+        var active = items.Count(p => p.Status == PlanStatus.Active);
+        var drafts = items.Count(p => p.Status == PlanStatus.Draft);
+        <div class="grid g-4">
+            <div class="card stat"><span class="stat-label">Active plans</span><span class="kpi">@active</span><span class="stat-meta">@(active == 1 ? "One client on a plan" : $"{active} clients on a plan")</span></div>
+            <div class="card stat"><span class="stat-label">Drafts</span><span class="kpi">@drafts</span><span class="stat-meta">Waiting to be activated</span></div>
+            <div class="card stat"><span class="stat-label">From templates</span><span class="kpi">@items.Count(p => p.SourceTemplateTitle is not null)</span><span class="stat-meta">Copied, then adjusted</span></div>
+            <div class="card stat"><span class="stat-label">Exercises planned</span><span class="kpi">@items.Sum(p => p.ExerciseCount)</span><span class="stat-meta">Across all @items.Count plans</span></div>
+        </div>
+    }
+
+    <section class="card flush">
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th scope="col">Plan</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Dates</th><th scope="col" class="r">Exercises</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
                 <tbody>
                     @foreach (var plan in Model.Items)
                     {
                         <tr>
+                            <th scope="row">
+                                <span class="cell-person">
+                                    <img class="thumb plan-thumb" src="@(plan.FirstExerciseName is null ? null : ExercisePhotos.For(plan.FirstExerciseName, plan.FirstExerciseCategory ?? ExerciseCategory.Strength))" alt="" />
+                                    <span>
+                                        <a class="strong row-link" asp-action="Edit" asp-route-id="@plan.WorkoutPlanId">@plan.Title</a>
+                                        <span class="sub">@(plan.SourceTemplateTitle is null ? "Written from scratch" : "From the template " + plan.SourceTemplateTitle) · @plan.Difficulty.GetDisplayName()</span>
+                                    </span>
+                                </span>
+                            </th>
+                            <td><span class="cell-person"><span class="avatar av-sm av-@((plan.ClientId ?? 0) % 6 + 1)">@plan.ClientName.Initials()</span>@plan.ClientName</span></td>
                             <td>
-                                <a asp-action="Edit" asp-route-id="@plan.WorkoutPlanId">@plan.Title</a>
-                                @if (plan.SourceTemplateTitle is not null)
+                                @if (plan.Status == PlanStatus.Draft)
                                 {
-                                    <div class="small text-muted">From the template @plan.SourceTemplateTitle</div>
+                                    <span class="badge">@Icons.Svg("pencil", 12)Draft</span>
+                                }
+                                else
+                                {
+                                    <span class="badge @StatusBadges.For(plan.Status)"><span class="dot"></span>@plan.Status.GetDisplayName()</span>
                                 }
                             </td>
-                            <td>@plan.ClientName</td>
-                            <td><span class="badge @StatusBadges.For(plan.Status)">@plan.Status.GetDisplayName()</span></td>
-                            <td class="text-nowrap small">
-                                @plan.StartDate?.ToString("dd MMM yyyy")
-                                @if (plan.EndDate is { } end)
+                            <td class="nowrap">From @(plan.StartDate?.ToString("d MMM yyyy") ?? "–")<span class="sub">@(plan.EndDate is { } end ? "to " + end.ToString("d MMM yyyy") : "No end date")</span></td>
+                            <td class="r num">@plan.ExerciseCount</td>
+                            <td class="r">
+                                @if (plan.Status == PlanStatus.Draft)
                                 {
-                                    <span>to @end.ToString("dd MMM yyyy")</span>
+                                    <a class="btn btn-primary btn-sm" asp-action="Edit" asp-route-id="@plan.WorkoutPlanId">Continue</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@plan.WorkoutPlanId">@(plan.Status == PlanStatus.Active ? "Edit" : "Open")</a>
                                 }
                             </td>
-                            <td class="text-end">@plan.ExerciseCount</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+        <partial name="_Pager" model="pager" />
+    </section>
 }
-
-<partial name="_Pager" model="pager" />

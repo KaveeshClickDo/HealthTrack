@@ -122,7 +122,11 @@ namespace HealthTrack.Services
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
                     ExerciseCount = p.Exercises.Count,
-                    SourceTemplateTitle = p.SourceTemplate != null ? p.SourceTemplate.Title : null
+                    SourceTemplateTitle = p.SourceTemplate != null ? p.SourceTemplate.Title : null,
+                    ClientId = p.ClientId,
+                    Difficulty = p.Difficulty,
+                    FirstExerciseName = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => e.Exercise.Name).FirstOrDefault(),
+                    FirstExerciseCategory = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => (ExerciseCategory?)e.Exercise.Category).FirstOrDefault()
                 })
                 .ToPagedResultAsync(page);
         }
@@ -350,7 +354,10 @@ namespace HealthTrack.Services
                     IsOwn = p.TrainerId == trainerId,
                     ExerciseCount = p.Exercises.Count,
                     DayCount = p.Exercises.Select(e => e.DayOfWeek).Distinct().Count(),
-                    TimesAssigned = p.Copies.Count
+                    TimesAssigned = p.Copies.Count,
+                    FirstExerciseName = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => e.Exercise.Name).FirstOrDefault(),
+                    FirstExerciseCategory = p.Exercises.OrderBy(e => e.DayOfWeek).ThenBy(e => e.SortOrder).Select(e => (ExerciseCategory?)e.Exercise.Category).FirstOrDefault(),
+                    Days = p.Exercises.Select(e => e.DayOfWeek).Distinct().ToList()
                 })
                 .ToListAsync();
         }

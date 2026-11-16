@@ -1,88 +1,105 @@
 @model WorkoutPlanViewModel
 @{
     ViewData["Title"] = Model.IsTemplate ? "New template" : "New workout plan";
+    ViewData["Parent"] = Model.IsTemplate ? "Templates" : "Workout plans";
+    ViewData["ParentUrl"] = Url.Action(Model.IsTemplate ? "Templates" : "Index");
+    ViewData["ContentClass"] = "narrow-lg";
     var clients = new SelectList(Model.ClientOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+    var back = Model.IsTemplate ? "Templates" : "Index";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <p><a asp-action="@(Model.IsTemplate ? "Templates" : "Index")">&larr; @(Model.IsTemplate ? "Templates" : "Workout plans")</a></p>
-        <h1 class="h2 mb-2">@ViewData["Title"]</h1>
-        <p class="text-muted mb-4">
-            @if (Model.IsTemplate)
-            {
-                <span>A template is a reusable routine. Any trainer can copy it to their own clients.</span>
-            }
-            else
-            {
-                <span>The plan starts as a draft. Add exercises next, then activate it for the client.</span>
-            }
-        </p>
+<a class="back" asp-action="@back">@Icons.Svg("arrow-left", 16)@(Model.IsTemplate ? "Templates" : "Workout plans")</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">@ViewData["Title"]</h1>
+        <p>@(Model.IsTemplate
+            ? "A template is a reusable routine. Any trainer can copy it to their own clients."
+            : "The plan starts as a draft. Add exercises next, then activate it for your client.")</p>
+    </div>
+</div>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form asp-action="Create" method="post">
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-                    <input asp-for="IsTemplate" type="hidden" />
-
-                    <div class="row g-3">
-                        @if (!Model.IsTemplate)
-                        {
-                            <div class="col-12">
-                                <label asp-for="ClientId" class="form-label"></label>
-                                @if (Model.ClientOptions.Count == 0)
-                                {
-                                    <div class="alert alert-warning mb-0">
-                                        No clients are assigned to you yet. You can <a asp-action="Create" asp-route-template="true">create a template</a> instead.
-                                    </div>
-                                }
-                                else
-                                {
-                                    <select asp-for="ClientId" asp-items="clients" class="form-select">
-                                        <option value="">Choose a client…</option>
-                                    </select>
-                                }
-                                <span asp-validation-for="ClientId" class="text-danger small"></span>
-                            </div>
-                        }
-                        <div class="col-md-8">
-                            <label asp-for="Title" class="form-label"></label>
-                            <input asp-for="Title" class="form-control" />
-                            <span asp-validation-for="Title" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Difficulty" class="form-label"></label>
-                            <select asp-for="Difficulty" asp-items="Html.GetEnumSelectList<DifficultyLevel>()" class="form-select"></select>
-                            <span asp-validation-for="Difficulty" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Description" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                            <textarea asp-for="Description" class="form-control" rows="3" placeholder="The goal of the plan and how to approach it"></textarea>
-                            <span asp-validation-for="Description" class="text-danger small"></span>
-                        </div>
-                        @if (!Model.IsTemplate)
-                        {
-                            <div class="col-md-6">
-                                <label asp-for="StartDate" class="form-label"></label>
-                                <input asp-for="StartDate" class="form-control" />
-                                <span asp-validation-for="StartDate" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="EndDate" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                                <input asp-for="EndDate" class="form-control" />
-                                <span asp-validation-for="EndDate" class="text-danger small"></span>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">Create and add exercises</button>
-                        <a class="btn btn-outline-secondary" asp-action="@(Model.IsTemplate ? "Templates" : "Index")">Cancel</a>
-                    </div>
-                </form>
+<div class="split">
+    <form class="main card gp-24" asp-action="Create" method="post">
+        <div asp-validation-summary="All" role="alert"></div>
+        <input asp-for="IsTemplate" type="hidden" />
+        <div class="field">
+            <span class="label">What are you making?</span>
+            <div class="seg-group">
+                <a class="@(Model.IsTemplate ? string.Empty : "is-on")" asp-action="Create" asp-route-clientId="@Model.ClientId">@Icons.Svg("user", 16)A plan for a client</a>
+                <a class="@(Model.IsTemplate ? "is-on" : string.Empty)" asp-action="Create" asp-route-template="true">@Icons.Svg("layout-template", 16)A reusable template</a>
             </div>
         </div>
-    </div>
+        <div class="divider"></div>
+        <div class="form-grid">
+            @if (!Model.IsTemplate)
+            {
+                <div class="field full">
+                    <label asp-for="ClientId" class="label"></label>
+                    @if (Model.ClientOptions.Count == 0)
+                    {
+                        <div class="alert alert-info">@Icons.Svg("info", 18)<span>No clients are assigned to you yet. You can <a asp-action="Create" asp-route-template="true">create a template</a> instead.</span></div>
+                    }
+                    else
+                    {
+                        <select asp-for="ClientId" asp-items="clients" class="select">
+                            <option value="">Choose a client…</option>
+                        </select>
+                        <span class="hint">Activating the new plan completes the client's current one.</span>
+                    }
+                    <span asp-validation-for="ClientId" class="error-text"></span>
+                </div>
+            }
+            <div class="field">
+                <label asp-for="Title" class="label"></label>
+                <input asp-for="Title" class="input" />
+                <span asp-validation-for="Title" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Difficulty" class="label"></label>
+                <select asp-for="Difficulty" asp-items="Html.GetEnumSelectList<DifficultyLevel>()" class="select"></select>
+                <span asp-validation-for="Difficulty" class="error-text"></span>
+            </div>
+            <div class="field full">
+                <label asp-for="Description" class="label">Description <span class="opt">Optional</span></label>
+                <textarea asp-for="Description" class="textarea" placeholder="The goal of the plan and how to approach it"></textarea>
+                <span asp-validation-for="Description" class="error-text"></span>
+            </div>
+            @if (!Model.IsTemplate)
+            {
+                <div class="field">
+                    <label asp-for="StartDate" class="label"></label>
+                    <input asp-for="StartDate" class="input" />
+                    <span asp-validation-for="StartDate" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="EndDate" class="label">End date <span class="opt">Optional</span></label>
+                    <input asp-for="EndDate" class="input" />
+                    <span class="hint">Leave empty to keep it running.</span>
+                    <span asp-validation-for="EndDate" class="error-text"></span>
+                </div>
+            }
+        </div>
+        <div class="divider"></div>
+        <div class="actions end">
+            <a class="btn btn-ghost" asp-action="@back">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create and add exercises @Icons.Svg("arrow-right", 18)</button>
+        </div>
+    </form>
+
+    <aside class="aside card gp-18">
+        <h2 class="h3">How it works</h2>
+        <ol class="list how-steps-list">
+            <li><span class="avatar av-sm">1</span><span class="vs gp-2"><span class="strong small">Create the @(Model.IsTemplate ? "template" : "plan")</span><span class="xs subtle">@(Model.IsTemplate ? "Give it a title and a difficulty." : "It starts as a draft only you can see.")</span></span></li>
+            <li><span class="avatar av-sm">2</span><span class="vs gp-2"><span class="strong small">Add exercises by day</span><span class="xs subtle">Sets and reps, or minutes, with a coaching cue.</span></span></li>
+            <li><span class="avatar av-sm">3</span><span class="vs gp-2"><span class="strong small">@(Model.IsTemplate ? "Assign it" : "Activate it")</span><span class="xs subtle">@(Model.IsTemplate ? "Copy it to any of your clients, then adjust the copy." : "The client is notified and sees it straight away.")</span></span></li>
+        </ol>
+        <div class="divider"></div>
+        <a class="hrow row-link gp-12" asp-action="Templates">
+            <span class="stat-icon" data-tone="violet">@Icons.Svg("copy", 18)</span>
+            <span class="grow vs gp-2"><span class="strong small">Start from a template</span><span class="xs subtle">Copy a routine and adjust it for the client.</span></span>
+            @Icons.Svg("chevron-right", 16)
+        </a>
+    </aside>
 </div>
 
 @section Scripts {

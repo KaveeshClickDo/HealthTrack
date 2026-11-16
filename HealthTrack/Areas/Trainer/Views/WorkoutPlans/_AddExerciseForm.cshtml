@@ -2,64 +2,76 @@
 @{
     var planId = (int)ViewData["PlanId"]!;
     var options = (IReadOnlyList<SelectOptionViewModel>)ViewData["ExerciseOptions"]!;
+    var chosen = options.FirstOrDefault(o => o.Id == Model.ExerciseId);
 }
-@* Its own form, so adding a line doesn't post the plan's other fields. The field names come from this partial's model. *@
-<form asp-action="AddExercise" asp-route-id="@planId" method="post" class="row g-2 align-items-end">
-    <div class="col-md-3">
-        <label asp-for="DayOfWeek" class="form-label small"></label>
-        <select asp-for="DayOfWeek" class="form-select">
-            <option value="">Choose…</option>
-            @foreach (var day in WorkoutText.WeekFromMonday)
-            {
-                <option value="@((int)day)">@day</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-5">
-        <label asp-for="ExerciseId" class="form-label small"></label>
-        <select asp-for="ExerciseId" class="form-select">
-            <option value="">Choose an exercise…</option>
-            @foreach (var group in options.GroupBy(o => o.Group))
-            {
-                <optgroup label="@group.Key">
-                    @foreach (var option in group)
+@* Its own form, so adding a line doesn't post the plan's other fields. The field names come from this partial's model.
+   wwwroot/js/exercise-preview.js shows the chosen exercise's photo beside the form. *@
+<div class="add-split">
+    <form asp-action="AddExercise" asp-route-id="@planId" method="post">
+        <div class="grid-day">
+            <div class="field">
+                <label asp-for="DayOfWeek" class="label"></label>
+                <select asp-for="DayOfWeek" class="select">
+                    <option value="">Choose…</option>
+                    @foreach (var day in WorkoutText.WeekFromMonday)
                     {
-                        <option value="@option.Id">@option.Label</option>
+                        <option value="@((int)day)">@day</option>
                     }
-                </optgroup>
-            }
-        </select>
+                </select>
+                <span asp-validation-for="DayOfWeek" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="ExerciseId" class="label"></label>
+                <select asp-for="ExerciseId" class="select" data-exercise-picker>
+                    <option value="">Choose an exercise…</option>
+                    @foreach (var group in options.GroupBy(o => o.Group))
+                    {
+                        <optgroup label="@group.Key">
+                            @foreach (var option in group)
+                            {
+                                <option value="@option.Id" data-photo="@ExercisePhotos.ForOption(option.Label, option.Group)" data-group="@option.Group">@option.Label</option>
+                            }
+                        </optgroup>
+                    }
+                </select>
+                <span asp-validation-for="ExerciseId" class="error-text"></span>
+            </div>
+        </div>
+        <div class="grid-4">
+            <div class="field">
+                <label asp-for="Sets" class="label"></label>
+                <input asp-for="Sets" type="number" min="1" max="20" class="input" />
+                <span asp-validation-for="Sets" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="Reps" class="label"></label>
+                <input asp-for="Reps" type="number" min="1" max="100" class="input" />
+                <span asp-validation-for="Reps" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="DurationMinutes" class="label"></label>
+                <input asp-for="DurationMinutes" type="number" min="1" max="300" class="input" />
+                <span asp-validation-for="DurationMinutes" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="RestSeconds" class="label"></label>
+                <input asp-for="RestSeconds" type="number" min="0" max="600" step="15" class="input" />
+                <span asp-validation-for="RestSeconds" class="error-text"></span>
+            </div>
+        </div>
+        <div class="field">
+            <label asp-for="Notes" class="label">Notes <span class="opt">Optional</span></label>
+            <input asp-for="Notes" class="input" placeholder="A coaching cue, for example keep your back straight" />
+        </div>
+        <div><button type="submit" class="btn btn-secondary">@Icons.Svg("plus", 18)Add the exercise</button></div>
+    </form>
+
+    <div class="frame add-preview" data-exercise-preview aria-live="polite">
+        <img class="photo photo-fill" data-preview-photo src="@(chosen is null ? null : ExercisePhotos.ForOption(chosen.Label, chosen.Group))" alt="" />
+        <div class="shade"></div>
+        <div class="tile-caption">
+            <span class="xs tile-kicker" data-preview-kicker>@(chosen is null ? "Choose an exercise" : "Selected · " + chosen.Group)</span>
+            <span class="h3" data-preview-name>@(chosen?.Label ?? "Its photo shows here")</span>
+        </div>
     </div>
-    <div class="col-4 col-md-2">
-        <label asp-for="Sets" class="form-label small"></label>
-        <input asp-for="Sets" type="number" min="1" max="20" class="form-control" />
-    </div>
-    <div class="col-4 col-md-2">
-        <label asp-for="Reps" class="form-label small"></label>
-        <input asp-for="Reps" type="number" min="1" max="100" class="form-control" />
-    </div>
-    <div class="col-4 col-md-2">
-        <label asp-for="DurationMinutes" class="form-label small"></label>
-        <input asp-for="DurationMinutes" type="number" min="1" max="300" class="form-control" />
-    </div>
-    <div class="col-4 col-md-2">
-        <label asp-for="RestSeconds" class="form-label small"></label>
-        <input asp-for="RestSeconds" type="number" min="0" max="600" step="15" class="form-control" />
-    </div>
-    <div class="col-8 col-md-6">
-        <label asp-for="Notes" class="form-label small"></label>
-        <input asp-for="Notes" class="form-control" placeholder="A coaching cue, for example keep your back straight" />
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-primary">Add</button>
-    </div>
-    <div class="col-12">
-        <span asp-validation-for="DayOfWeek" class="text-danger small d-block"></span>
-        <span asp-validation-for="ExerciseId" class="text-danger small d-block"></span>
-        <span asp-validation-for="Sets" class="text-danger small d-block"></span>
-        <span asp-validation-for="Reps" class="text-danger small d-block"></span>
-        <span asp-validation-for="DurationMinutes" class="text-danger small d-block"></span>
-        <span asp-validation-for="RestSeconds" class="text-danger small d-block"></span>
-        <div class="form-text">Give sets and reps (strength) or minutes (cardio and stretching), or both.</div>
-    </div>
-</form>
+</div>

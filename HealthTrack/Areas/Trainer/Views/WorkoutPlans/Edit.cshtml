@@ -1,166 +1,178 @@
 @model WorkoutPlanEditViewModel
 @{
     ViewData["Title"] = Model.Title;
+    ViewData["Parent"] = Model.IsTemplate ? "Templates" : "Workout plans";
+    ViewData["ParentUrl"] = Url.Action(Model.IsTemplate ? "Templates" : "Index");
     var addFormData = new ViewDataDictionary(ViewData) { ["PlanId"] = Model.WorkoutPlanId, ["ExerciseOptions"] = Model.ExerciseOptions };
+    var days = Model.Lines.Select(l => l.DayOfWeek).Distinct().OrderBy(d => ((int)d + 6) % 7).Select(d => d.ToString()).ToList();
+    var clientFirstName = Model.ClientName?.Split(' ')[0];
 }
 
-<p><a asp-action="@(Model.IsTemplate ? "Templates" : "Index")">&larr; @(Model.IsTemplate ? "Templates" : "Workout plans")</a></p>
-
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">@Model.Title</h1>
-        <span class="badge @StatusBadges.For(Model.Status)">@Model.Status.GetDisplayName()</span>
-        @if (Model.IsTemplate)
-        {
-            <span class="text-muted small ms-1">Template &middot; assigned @Model.TimesAssigned @(Model.TimesAssigned == 1 ? "time" : "times")</span>
-        }
-        else
-        {
-            <span class="text-muted small ms-1">Plan for @Model.ClientName</span>
-        }
+<a class="back" asp-action="@(Model.IsTemplate ? "Templates" : "Index")">@Icons.Svg("arrow-left", 16)@(Model.IsTemplate ? "Templates" : "Workout plans")</a>
+<div class="page-head">
+    <div class="intro">
+        <div class="plan-meta">
+            @if (Model.Status == PlanStatus.Draft)
+            {
+                <span class="badge">@Icons.Svg("pencil", 12)Draft</span>
+            }
+            else
+            {
+                <span class="badge @StatusBadges.For(Model.Status)"><span class="dot"></span>@Model.Status.GetDisplayName()</span>
+            }
+            @if (Model.IsTemplate)
+            {
+                <span class="small subtle">Template · assigned @Model.TimesAssigned @(Model.TimesAssigned == 1 ? "time" : "times")</span>
+            }
+            else
+            {
+                <span class="small subtle">Plan for</span>
+                <span class="avatar av-sm av-client">@Model.ClientName.Initials()</span>
+                <span class="small strong">@Model.ClientName</span>
+            }
+        </div>
+        <h1 class="h1">@Model.Title</h1>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        @if (!Model.IsTemplate && Model.Status == PlanStatus.Draft)
+    <div class="actions">
+        @if (Model.Status != PlanStatus.Archived)
         {
-            <form asp-action="Activate" asp-route-id="@Model.WorkoutPlanId" method="post"
-                  data-confirm="Activate this plan for @Model.ClientName? Their current active workout plan will be completed.">
-                <button type="submit" class="btn btn-primary">Activate</button>
+            <form class="inline" asp-action="Archive" asp-route-id="@Model.WorkoutPlanId" method="post"
+                  data-confirm="Archive this plan? It stays in the history but can't be changed or used again.">
+                <button type="submit" class="btn btn-danger">@Icons.Svg("archive", 18)Archive</button>
+            </form>
+        }
+        @if (!Model.IsTemplate && Model.Lines.Count > 0)
+        {
+            <form class="inline" asp-action="SaveAsTemplate" asp-route-id="@Model.WorkoutPlanId" method="post">
+                <button type="submit" class="btn btn-secondary">@Icons.Svg("copy-plus", 18)Save as template</button>
             </form>
         }
         @if (Model.IsTemplate && Model.Status != PlanStatus.Archived)
         {
-            <a class="btn btn-primary" asp-action="AssignTemplate" asp-route-id="@Model.WorkoutPlanId">Assign to a client</a>
+            <a class="btn btn-primary" asp-action="AssignTemplate" asp-route-id="@Model.WorkoutPlanId">@Icons.Svg("user-plus", 18)Assign to a client</a>
         }
-        @if (!Model.IsTemplate && Model.Lines.Count > 0)
+        @if (!Model.IsTemplate && Model.Status == PlanStatus.Draft)
         {
-            <form asp-action="SaveAsTemplate" asp-route-id="@Model.WorkoutPlanId" method="post">
-                <button type="submit" class="btn btn-outline-primary">Save as template</button>
-            </form>
-        }
-        @if (Model.Status != PlanStatus.Archived)
-        {
-            <form asp-action="Archive" asp-route-id="@Model.WorkoutPlanId" method="post"
-                  data-confirm="Archive this plan? It stays in the history but can't be changed or used again.">
-                <button type="submit" class="btn btn-outline-danger">Archive</button>
+            <form class="inline" asp-action="Activate" asp-route-id="@Model.WorkoutPlanId" method="post"
+                  data-confirm="Activate this plan for @Model.ClientName? Their current active workout plan will be completed.">
+                <button type="submit" class="btn btn-primary">@Icons.Svg("play-circle", 18)Activate</button>
             </form>
         }
     </div>
 </div>
 
+@if (!Model.IsTemplate && Model.Status == PlanStatus.Draft)
+{
+    <div class="alert alert-info">@Icons.Svg("eye-off", 18)<span><span class="strong">@clientFirstName can't see this yet.</span> When you activate it, they're notified and their current workout plan is marked completed.</span></div>
+}
 @if (!Model.CanEdit)
 {
-    <div class="alert alert-secondary">This plan is @Model.Status.GetDisplayName().ToLowerInvariant() and is kept as history, so it can't be changed.</div>
+    <div class="alert on-surface">@Icons.Svg("info", 18)<span class="muted">This plan is @Model.Status.GetDisplayName().ToLowerInvariant() and is kept as history, so it can't be changed.</span></div>
 }
 
-<form asp-action="Edit" asp-route-id="@Model.WorkoutPlanId" method="post">
-    <fieldset disabled="@(!Model.CanEdit)">
-        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+<form class="form-stack" asp-action="Edit" asp-route-id="@Model.WorkoutPlanId" method="post">
+    <fieldset class="form-stack" disabled="@(!Model.CanEdit)">
+        <div asp-validation-summary="All" role="alert"></div>
         <input asp-for="IsTemplate" type="hidden" />
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-body row g-3">
-                <div class="col-md-8">
-                    <label asp-for="Title" class="form-label"></label>
-                    <input asp-for="Title" class="form-control" />
-                    <span asp-validation-for="Title" class="text-danger small"></span>
+        <section class="card form-card">
+            <h2 class="h2">Plan details</h2>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="Title" class="label"></label>
+                    <input asp-for="Title" class="input" />
+                    <span asp-validation-for="Title" class="error-text"></span>
                 </div>
-                <div class="col-md-4">
-                    <label asp-for="Difficulty" class="form-label"></label>
-                    <select asp-for="Difficulty" asp-items="Html.GetEnumSelectList<DifficultyLevel>()" class="form-select"></select>
+                <div class="field">
+                    <label asp-for="Difficulty" class="label"></label>
+                    <select asp-for="Difficulty" asp-items="Html.GetEnumSelectList<DifficultyLevel>()" class="select"></select>
                 </div>
-                <div class="col-12">
-                    <label asp-for="Description" class="form-label"></label>
-                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
-                    <span asp-validation-for="Description" class="text-danger small"></span>
+                <div class="field full">
+                    <label asp-for="Description" class="label"></label>
+                    <textarea asp-for="Description" class="textarea"></textarea>
+                    <span asp-validation-for="Description" class="error-text"></span>
                 </div>
                 @if (!Model.IsTemplate)
                 {
-                    <div class="col-md-6">
-                        <label asp-for="StartDate" class="form-label"></label>
-                        <input asp-for="StartDate" class="form-control" />
-                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    <div class="field">
+                        <label asp-for="StartDate" class="label"></label>
+                        <input asp-for="StartDate" class="input" />
+                        <span asp-validation-for="StartDate" class="error-text"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label asp-for="EndDate" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                        <input asp-for="EndDate" class="form-control" />
-                        <span asp-validation-for="EndDate" class="text-danger small"></span>
+                    <div class="field">
+                        <label asp-for="EndDate" class="label">End date <span class="opt">Optional</span></label>
+                        <input asp-for="EndDate" class="input" />
+                        <span asp-validation-for="EndDate" class="error-text"></span>
                     </div>
                 }
             </div>
-        </div>
+        </section>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <h2 class="h5">Exercises by day</h2>
-                @if (Model.Lines.Count == 0)
-                {
-                    <p class="text-muted mb-0">No exercises yet. Add the first one below.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Exercise</th>
-                                    <th scope="col">Sets</th>
-                                    <th scope="col">Reps</th>
-                                    <th scope="col">Minutes</th>
-                                    <th scope="col">Rest (s)</th>
-                                    <th scope="col">Notes</th>
-                                    <th scope="col">Remove</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (var i = 0; i < Model.Lines.Count; i++)
+        <section class="card flush">
+            <div class="card-head pad">
+                <div class="vs gp-4">
+                    <h2 class="h2">Exercises by day</h2>
+                    <span class="small subtle">@Model.Lines.Count @(Model.Lines.Count == 1 ? "exercise" : "exercises")@(days.Count > 0 ? " · " + (days.Count == 1 ? days[0] : string.Join(", ", days.Take(days.Count - 1)) + " and " + days[^1]) : string.Empty)</span>
+                </div>
+            </div>
+            @if (Model.Lines.Count == 0)
+            {
+                <p class="small muted card-pad-bottom">No exercises yet. Add the first one below.</p>
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table compact lines">
+                        <thead><tr><th scope="col">Exercise</th><th scope="col">Sets</th><th scope="col">Reps</th><th scope="col">Minutes</th><th scope="col">Rest (s)</th><th scope="col">Notes</th><th scope="col" class="c">Remove</th></tr></thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Lines.Count; i++)
+                            {
+                                var line = Model.Lines[i];
+                                if (i == 0 || Model.Lines[i - 1].DayOfWeek != line.DayOfWeek)
                                 {
-                                    var line = Model.Lines[i];
-                                    if (i == 0 || Model.Lines[i - 1].DayOfWeek != line.DayOfWeek)
-                                    {
-                                        <tr class="table-light">
-                                            <th colspan="7" scope="rowgroup">@line.DayOfWeek</th>
-                                        </tr>
-                                    }
-                                    <tr>
-                                        <td>
-                                            <input asp-for="Lines[i].WorkoutPlanExerciseId" type="hidden" />
-                                            @line.ExerciseName
-                                            <span asp-validation-for="Lines[i].Sets" class="text-danger small d-block"></span>
-                                        </td>
-                                        <td><input asp-for="Lines[i].Sets" type="number" min="1" max="20" class="form-control form-control-sm" aria-label="Sets" /></td>
-                                        <td><input asp-for="Lines[i].Reps" type="number" min="1" max="100" class="form-control form-control-sm" aria-label="Reps" /></td>
-                                        <td><input asp-for="Lines[i].DurationMinutes" type="number" min="1" max="300" class="form-control form-control-sm" aria-label="Minutes" /></td>
-                                        <td><input asp-for="Lines[i].RestSeconds" type="number" min="0" max="600" step="15" class="form-control form-control-sm" aria-label="Rest in seconds" /></td>
-                                        <td><input asp-for="Lines[i].Notes" class="form-control form-control-sm" aria-label="Notes" /></td>
-                                        <td class="text-center"><input asp-for="Lines[i].Remove" class="form-check-input" aria-label="Remove @line.ExerciseName" /></td>
-                                    </tr>
+                                    <tr class="group"><th colspan="7" scope="rowgroup">@line.DayOfWeek</th></tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </div>
-
-        @if (Model.CanEdit)
-        {
-            <div class="mb-4">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-            </div>
-        }
+                                <tr>
+                                    <th scope="row">
+                                        <input asp-for="Lines[i].WorkoutPlanExerciseId" type="hidden" />
+                                        <span class="cell-person"><img class="thumb thumb-sm" src="@ExercisePhotos.For(line.ExerciseName)" alt="" /><span class="strong">@line.ExerciseName</span></span>
+                                        <span asp-validation-for="Lines[i].Sets" class="error-text d-block"></span>
+                                    </th>
+                                    <td><input asp-for="Lines[i].Sets" type="number" min="1" max="20" class="input input-sm" aria-label="Sets" /></td>
+                                    <td><input asp-for="Lines[i].Reps" type="number" min="1" max="100" class="input input-sm" aria-label="Reps" /></td>
+                                    <td><input asp-for="Lines[i].DurationMinutes" type="number" min="1" max="300" class="input input-sm" aria-label="Minutes" /></td>
+                                    <td><input asp-for="Lines[i].RestSeconds" type="number" min="0" max="600" step="15" class="input input-sm" aria-label="Rest in seconds" /></td>
+                                    <td><input asp-for="Lines[i].Notes" class="input input-sm note" aria-label="Notes" placeholder="Add a coaching cue" /></td>
+                                    <td class="c"><input asp-for="Lines[i].Remove" class="remove" aria-label="Remove @line.ExerciseName" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @if (Model.CanEdit)
+            {
+                <div class="foot-note">
+                    <span class="small subtle">Tick Remove, then save, to take an exercise out.</span>
+                    <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
+                </div>
+            }
+        </section>
     </fieldset>
 </form>
 
 @if (Model.CanEdit)
 {
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="h5">Add an exercise</h2>
-            <partial name="_AddExerciseForm" model="Model.NewExercise" view-data="addFormData" />
+    <section class="card form-card">
+        <div class="vs gp-4">
+            <h2 class="h2">Add an exercise</h2>
+            <p class="small subtle">Give sets and reps for strength, minutes for cardio and stretching — or both.</p>
         </div>
-    </div>
+        <partial name="_AddExerciseForm" model="Model.NewExercise" view-data="addFormData" />
+    </section>
 }
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/exercise-preview.js" asp-append-version="true"></script>
 }

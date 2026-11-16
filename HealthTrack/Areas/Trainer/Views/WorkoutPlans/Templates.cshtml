@@ -1,56 +1,56 @@
 @model IReadOnlyList<TemplateListItemViewModel>
 @{
     ViewData["Title"] = "Routine templates";
+    ViewData["Parent"] = "Planning";
+    ViewData["Crumb"] = "Templates";
     var clientId = ViewData["ClientId"] as int?;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Routine templates</h1>
-        <p class="text-muted mb-0">Reusable routines from every trainer. Assigning one copies it to your client; the template itself never changes.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Routine templates</h1>
+        <p>Reusable routines from every trainer. Assigning one gives your client their own copy — the template itself never changes.</p>
     </div>
-    <a class="btn btn-primary" asp-action="Create" asp-route-template="true">New template</a>
+    <div class="actions"><a class="btn btn-primary" asp-action="Create" asp-route-template="true">@Icons.Svg("plus", 18)New template</a></div>
 </div>
 
-@if (Model.Count == 0)
-{
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No templates yet. <a asp-action="Create" asp-route-template="true">Create one</a>, or open a client plan and save it as a template.
-        </div>
-    </div>
-}
-else
-{
-    <div class="row g-3">
-        @foreach (var template in Model)
-        {
-            <div class="col-md-6 col-xl-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <h2 class="h5 mb-1">@template.Title</h2>
-                            <span class="badge text-bg-light border">@template.Difficulty.GetDisplayName()</span>
-                        </div>
-                        <p class="small text-muted mb-2">By @(template.IsOwn ? "you" : template.AuthorName)</p>
-                        @if (!string.IsNullOrEmpty(template.Description))
-                        {
-                            <p class="small">@template.Description</p>
-                        }
-                        <p class="small mb-3">
-                            @template.ExerciseCount exercises over @template.DayCount @(template.DayCount == 1 ? "day" : "days")
-                            &middot; assigned @template.TimesAssigned @(template.TimesAssigned == 1 ? "time" : "times")
-                        </p>
-                        <div class="mt-auto d-flex gap-2">
-                            <a class="btn btn-primary btn-sm" asp-action="AssignTemplate" asp-route-id="@template.WorkoutPlanId" asp-route-clientId="@clientId">Assign to a client</a>
-                            @if (template.IsOwn)
-                            {
-                                <a class="btn btn-outline-primary btn-sm" asp-action="Edit" asp-route-id="@template.WorkoutPlanId">Edit</a>
-                            }
-                        </div>
-                    </div>
+<div class="grid g-3">
+    @foreach (var template in Model)
+    {
+        var days = template.Days.OrderBy(d => ((int)d + 6) % 7).Select(d => d.ToString()[..3]).ToList();
+        <article class="card flush template-card">
+            <div class="frame">
+                <img class="photo photo-fill" src="@(template.FirstExerciseName is null ? null : ExercisePhotos.For(template.FirstExerciseName, template.FirstExerciseCategory ?? ExerciseCategory.Strength))" alt="" />
+                <div class="shade"></div>
+                <span class="badge diff-@((int)template.Difficulty)">@template.Difficulty.GetDisplayName()</span>
+            </div>
+            <div class="body">
+                <div class="between items-start gp-8"><h2 class="h2">@template.Title</h2><span class="small subtle nowrap">By @(template.IsOwn ? "you" : template.AuthorName)</span></div>
+                @if (!string.IsNullOrEmpty(template.Description))
+                {
+                    <p class="small muted">@template.Description</p>
+                }
+                <div class="facts xs subtle">
+                    <span>@Icons.Svg("dumbbell", 14)@template.ExerciseCount @(template.ExerciseCount == 1 ? "exercise" : "exercises")</span>
+                    @if (days.Count > 0)
+                    {
+                        <span>@Icons.Svg("calendar", 14)@string.Join(", ", days)</span>
+                    }
+                    <span>@Icons.Svg("users", 14)@(template.TimesAssigned == 0 ? "Not assigned yet" : template.TimesAssigned == 1 ? "Assigned once" : $"Assigned {template.TimesAssigned} times")</span>
+                </div>
+                <div class="actions">
+                    <a class="btn btn-primary btn-sm" asp-action="AssignTemplate" asp-route-id="@template.WorkoutPlanId" asp-route-clientId="@clientId">Assign to a client</a>
+                    @if (template.IsOwn)
+                    {
+                        <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@template.WorkoutPlanId">Edit</a>
+                    }
                 </div>
             </div>
-        }
-    </div>
-}
+        </article>
+    }
+    <a class="card add-card" asp-action="Create" asp-route-template="true">
+        <span class="stat-icon">@Icons.Svg("plus", 24)</span>
+        <span class="strong">Create a template</span>
+        <span class="small muted">Or open one of your client plans and save it as a template.</span>
+    </a>
+</div>

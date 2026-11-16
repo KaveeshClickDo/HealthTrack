@@ -30,5 +30,17 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>The template it was copied from, if any.</summary>
         public string? SourceTemplateTitle { get; init; }
+
+        /// <summary>The client's ID, for the avatar colour.</summary>
+        public int? ClientId { get; init; }
+
+        /// <summary>The plan's difficulty.</summary>
+        public DifficultyLevel Difficulty { get; init; }
+
+        /// <summary>The first exercise of the week, for the plan's photo; null when the plan has none yet.</summary>
+        public string? FirstExerciseName { get; init; }
+
+        /// <summary>That exercise's category, for the photo when the exercise has none of its own.</summary>
+        public ExerciseCategory? FirstExerciseCategory { get; init; }
     }
 }

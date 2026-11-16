@@ -1153,3 +1153,40 @@ input.switch[type="checkbox"] { width: 46px; height: 28px; }
 .eat-days > div:first-child { padding-top: 0; }
 .eat-days > div:last-child { border-bottom: 0; padding-bottom: 0; }
 .kv dt { font-weight: 400; } .kv dd { margin-bottom: 0; }
+
+/* Trainer: plan lists */
+.page-head.stacked { flex-direction: column; align-items: flex-start; }
+.thumb.plan-thumb { width: 56px; height: 56px; }
+
+/* Trainer: plan editor */
+.seg-group a { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 9px; font-size: 14px; font-weight: 600; color: var(--text-2); }
+.seg-group a.is-on { background: var(--surface-3); color: var(--text); }
+.how-steps-list > li { display: flex; align-items: flex-start; gap: 14px; }
+.how-steps-list .avatar { background: var(--surface-3); color: var(--text); }
+.how-steps-list li:first-child .avatar { background: var(--accent); color: var(--accent-ink); }
+.plan-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.alert.alert-info.plain { background: var(--surface); }
+.lines .group > * { padding-left: 24px; }
+.lines td .input-sm { min-width: 64px; }
+.lines td .input-sm.note { min-width: 200px; }
+.lines .remove { width: 18px; height: 18px; }
+.add-split { display: flex; flex-wrap: wrap; gap: 24px; }
+.add-split form { flex: 2 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.add-preview { flex: 1 1 260px; min-height: 260px; }
+.add-preview .tile-caption .badge { background: rgba(8, 11, 11, .72); }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 14px; }
+.grid-day { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(200px, 2fr); gap: 14px; }
+@media (max-width: 760px) { .grid-day { grid-template-columns: 1fr; } }
+
+/* Trainer: template cards */
+.template-card { display: flex; flex-direction: column; }
+.template-card .frame { height: 180px; border-radius: 0; }
+.template-card .frame .badge { position: absolute; left: 14px; top: 14px; background: rgba(8, 11, 11, .72); }
+.template-card .body { padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+.template-card .facts { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.template-card .facts span { display: inline-flex; align-items: center; gap: 6px; }
+.template-card .actions { margin-top: auto; }
+.add-card { border: 1px dashed var(--line-2); background: transparent; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 12px; color: var(--text-2); }
+.add-card:hover { border-color: var(--field-line); color: var(--text); }
+.add-card .stat-icon { width: 52px; height: 52px; border-radius: 16px; color: var(--accent); }
+.badge.diff-1 { color: var(--green); } .badge.diff-2 { color: var(--amber); } .badge.diff-3 { color: var(--red); }

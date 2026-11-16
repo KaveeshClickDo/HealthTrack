@@ -33,5 +33,14 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>Client plans copied from it.</summary>
         public int TimesAssigned { get; init; }
+
+        /// <summary>The first exercise of the week, for the card's photo.</summary>
+        public string? FirstExerciseName { get; init; }
+
+        /// <summary>That exercise's category, for the photo when the exercise has none of its own.</summary>
+        public ExerciseCategory? FirstExerciseCategory { get; init; }
+
+        /// <summary>The weekdays the routine trains on.</summary>
+        public IReadOnlyList<DayOfWeek> Days { get; init; } = [];
     }
 }
