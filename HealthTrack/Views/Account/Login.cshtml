@@ -1,4 +1,5 @@
 @model LoginViewModel
+@inject HealthTrack.Helpers.IClock Clock
 @{
     ViewData["Title"] = "Log in";
     Layout = "_AuthLayout";
@@ -6,64 +7,69 @@
 
 <div class="auth">
     <main id="main-content" class="auth-main">
-        <a class="ht-brand align-self-start px-0" asp-controller="Home" asp-action="Index">
+        <a class="ht-brand" asp-controller="Home" asp-action="Index">
             <span class="ht-logo">@Icons.Svg("logo")</span>
             HealthTrack
         </a>
 
-        <div class="auth-body">
+        <div class="auth-center">
             <div class="auth-form">
-                <div class="d-flex flex-column gap-2">
-                    <h1 class="display auth-title mb-0">Welcome back</h1>
-                    <p class="lead mb-0">Log in to pick up where you left off.</p>
+                <div class="auth-intro">
+                    <h1 class="display auth-title">Welcome back</h1>
+                    <p class="lead">Log in to pick up where you left off.</p>
                 </div>
 
                 <partial name="_Alerts" />
 
-                <form asp-action="Login" method="post" class="d-flex flex-column gap-3">
-                    <div asp-validation-summary="All" class="alert alert-danger mb-0" role="alert"></div>
+                <form asp-action="Login" method="post" novalidate>
+                    <div asp-validation-summary="All" role="alert"></div>
                     <input asp-for="ReturnUrl" type="hidden" />
 
-                    <div>
-                        <label asp-for="Email" class="form-label"></label>
-                        <div class="input-icon">
-                            @Icons.Svg("mail", 18)
-                            <input asp-for="Email" class="form-control" autocomplete="username" placeholder="you@example.com" autofocus />
+                    <div class="field">
+                        <label asp-for="Email" class="label"></label>
+                        <div class="input-wrap">
+                            <span class="lead-icon">@Icons.Svg("mail", 18)</span>
+                            <input asp-for="Email" class="input" autocomplete="username" placeholder="you@example.com" autofocus />
                         </div>
-                        <span asp-validation-for="Email" class="text-danger small"></span>
+                        <span asp-validation-for="Email" class="error-text"></span>
                     </div>
-                    <div>
-                        <label asp-for="Password" class="form-label"></label>
-                        <div class="input-icon">
-                            @Icons.Svg("lock", 18)
-                            <input asp-for="Password" class="form-control" autocomplete="current-password" placeholder="Your password" />
+                    <div class="field">
+                        <label asp-for="Password" class="label"></label>
+                        <div class="input-wrap">
+                            <span class="lead-icon">@Icons.Svg("lock", 18)</span>
+                            <input asp-for="Password" class="input" autocomplete="current-password" placeholder="Your password" />
                         </div>
-                        <span asp-validation-for="Password" class="text-danger small"></span>
+                        <span asp-validation-for="Password" class="error-text"></span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">Log in</button>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Log in</button>
                 </form>
 
-                <div class="auth-divider d-flex flex-column gap-2">
-                    <p class="mb-0">New to HealthTrack? <a class="fw-semibold" asp-action="Register">Create an account</a></p>
-                    <p class="small text-muted mb-0">Coaching clients? <a asp-action="RegisterTrainer">Apply as a professional</a></p>
+                <div class="divider"></div>
+                <div class="auth-links">
+                    <p class="muted">New to HealthTrack? <a class="link-strong" asp-action="Register">Create an account</a></p>
+                    <p class="small subtle">Coaching clients? <a asp-action="RegisterTrainer">Apply as a professional</a></p>
                 </div>
             </div>
         </div>
 
-        <div class="auth-foot">
-            <span>&copy; @DateTime.Now.Year HealthTrack</span>
+        <div class="between wrap xs subtle auth-foot">
+            <span>&copy; @Clock.Now.Year HealthTrack</span>
             <a asp-controller="Home" asp-action="Privacy">Privacy notice</a>
         </div>
     </main>
 
-    <aside class="auth-panel" aria-hidden="true">
-        <div class="auth-chip">
-            <span class="chip-icon">@Icons.Svg("play", 18)</span>
-            <div><b>Today · Beginner full body</b><span>Stationary cycling · Seated cable row</span></div>
+    <aside class="frame auth-photo" aria-hidden="true">
+        <img class="photo" src="@ExercisePhotos.Hero("treadmill")" alt="" />
+        <div class="veil"></div>
+        <div class="overlay">
+            <div class="card auth-chip">
+                <span class="stat-icon">@Icons.Svg("play", 18)</span>
+                <div><div class="small strong">Today · Beginner full body</div><div class="xs subtle">Stationary cycling · Seated cable row</div></div>
+            </div>
+            <p class="display auth-photo-title">Your plan is ready when you are.</p>
+            <p class="muted auth-photo-text">Today's workout, your meals and messages from your coach — waiting where you left them.</p>
         </div>
-        <p class="display auth-panel-title mb-0">Your plan is ready when you are.</p>
-        <p class="auth-panel-text mb-0">Today's workout, your meals and messages from your coach — waiting where you left them.</p>
     </aside>
 </div>
 

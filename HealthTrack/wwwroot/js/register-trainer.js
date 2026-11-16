@@ -4,17 +4,18 @@
     'use strict';
 
     $(function () {
-        var $type = $('#ProfessionalType');
+        var $profession = $('[data-profession]');
+        var $types = $profession.find('input[type="radio"]');
         var $licence = $('#LicenseNumber');
-        if (!$type.length || !$licence.length || !$licence.rules) {
+        if (!$types.length || !$licence.length || !$licence.rules) {
             return;
         }
 
-        var fitnessTrainer = String($type.data('fitness-trainer'));
+        var fitnessTrainer = String($profession.data('fitness-trainer'));
 
         function licenceRequired() {
-            var value = $type.val();
-            return value !== '' && value !== fitnessTrainer;
+            var value = $types.filter(':checked').val();
+            return value !== undefined && value !== fitnessTrainer;
         }
 
         $licence.rules('add', {
@@ -26,7 +27,7 @@
             $('#licence-required').toggleClass('d-none', !licenceRequired());
         }
 
-        $type.on('change', function () {
+        $types.on('change', function () {
             update();
             if ($licence.hasClass('input-validation-error') || $licence.val() !== '') {
                 $licence.valid();

@@ -1,55 +1,80 @@
-﻿@{
+﻿@inject HealthTrack.Services.INavigationService Navigation
+@inject HealthTrack.Helpers.IClock Clock
+@{
     var signedIn = User.Identity?.IsAuthenticated == true;
     var currentArea = ViewContext.RouteData.Values["area"] as string ?? string.Empty;
     var currentController = ViewContext.RouteData.Values["controller"] as string ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"] as string ?? string.Empty;
 
     // Highlights the sidebar link of the page being shown.
-    string Active(string area, string controller, string? action = null) =>
+    string Active(string area, string controller, params string[] actions) =>
         string.Equals(currentArea, area, StringComparison.OrdinalIgnoreCase)
         && string.Equals(currentController, controller, StringComparison.OrdinalIgnoreCase)
-        && (action is null || string.Equals(currentAction, action, StringComparison.OrdinalIgnoreCase))
+        && (actions.Length == 0 || actions.Any(a => string.Equals(currentAction, a, StringComparison.OrdinalIgnoreCase)))
             ? "is-active" : string.Empty;
 
-    var userName = User.Identity?.Name ?? string.Empty;
-    var initials = userName.Length >= 2 ? userName[..2] : userName;
-    var roleLabel = User.IsInRole(AppRoles.Admin) ? "Administrator" : User.IsInRole(AppRoles.Trainer) ? "Trainer" : "Client";
-    var avatarClass = User.IsInRole(AppRoles.Admin) ? "avatar-admin" : User.IsInRole(AppRoles.Trainer) ? "avatar-trainer" : string.Empty;
+    var isClient = User.IsInRole(AppRoles.Client);
+    var isTrainer = User.IsInRole(AppRoles.Trainer);
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var fullName = User.FindFirst(AppClaims.FullName)?.Value;
+    if (string.IsNullOrWhiteSpace(fullName))
+    {
+        fullName = User.Identity?.Name ?? string.Empty;
+    }
+
+    var initials = string.Concat(fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(w => char.ToUpperInvariant(w[0])));
+    var roleLabel = isAdmin ? "Administrator" : isTrainer ? User.FindFirst(AppClaims.Profession)?.Value ?? "Trainer" : "Client";
+    var avatarClass = isAdmin ? "av-admin" : isTrainer ? "av-trainer" : "av-client";
+    var counts = signedIn && (isTrainer || isAdmin)
+        ? await Navigation.GetCountsAsync(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty, isTrainer, isAdmin)
+        : new HealthTrack.Models.ViewModels.NavCountsViewModel();
+
+    // Breadcrumb: an optional parent page, then the current page.
+    var parent = ViewData["Parent"] as string;
+    var parentUrl = ViewData["ParentUrl"] as string;
+    var crumb = ViewData["Crumb"] as string ?? ViewData["Title"] as string;
+
+    // Guest pages: "home" (full header and footer), "register" (a log-in prompt), "privacy" or "plain" (brand only).
+    var shell = ViewData["PublicShell"] as string ?? "home";
 }
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HealthTrack</title>
+    <title>@ViewData["Title"] — HealthTrack</title>
     <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
     <link rel="alternate icon" href="~/favicon.ico" sizes="32x32" />
     <link rel="preload" href="~/lib/fonts/archivo/archivo-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="~/js/early.js" asp-append-version="true"></script>
 </head>
 <body>
-    <a class="visually-hidden-focusable btn btn-primary position-absolute m-2" href="#main-content">Skip to content</a>
+    <a class="skip-link btn btn-primary" href="#main-content">Skip to content</a>
 
     @if (signedIn)
     {
         <div class="ht-app">
-            <aside class="ht-side">
-                <a class="ht-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <span class="ht-logo">@Icons.Svg("logo")</span>
-                    HealthTrack
-                    @if (!User.IsInRole(AppRoles.Client))
-                    {
-                        <span class="ht-role">@(User.IsInRole(AppRoles.Admin) ? "Admin" : "Trainer")</span>
-                    }
-                </a>
+            <aside class="ht-side" id="ht-side">
+                <div class="ht-side-head">
+                    <a class="ht-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                        <span class="ht-logo">@Icons.Svg("logo")</span>
+                        HealthTrack
+                        @if (!isClient)
+                        {
+                            <span class="ht-role">@(isAdmin ? "Admin" : "Trainer")</span>
+                        }
+                    </a>
+                    <button type="button" class="icon-btn nav-toggle" data-nav-toggle aria-controls="ht-side" aria-expanded="false" aria-label="Menu">@Icons.Svg("menu")</button>
+                </div>
 
                 <nav class="ht-nav" aria-label="Main">
-                    @if (User.IsInRole(AppRoles.Client))
+                    @if (isClient)
                     {
                         <a class="@Active("Client", "Dashboard")" asp-area="Client" asp-controller="Dashboard" asp-action="Index">@Icons.Svg("dashboard")Dashboard</a>
                         <p class="ht-nav-label">Training</p>
-                        <a class="@Active("Client", "Workouts", "Today")" asp-area="Client" asp-controller="Workouts" asp-action="Today">@Icons.Svg("play")Today's workout</a>
+                        <a class="@Active("Client", "Workouts", "Today", "Log")" asp-area="Client" asp-controller="Workouts" asp-action="Today">@Icons.Svg("play")Today's workout</a>
                         <a class="@Active("Client", "Workouts", "MyPlan")" asp-area="Client" asp-controller="Workouts" asp-action="MyPlan">@Icons.Svg("clipboard")Workout plan</a>
                         <a class="@Active("Client", "Workouts", "History")" asp-area="Client" asp-controller="Workouts" asp-action="History">@Icons.Svg("history")Workout history</a>
                         <p class="ht-nav-label">Nutrition</p>
@@ -59,37 +84,37 @@
                         <p class="ht-nav-label">Health</p>
                         <a class="@Active("Client", "Progress")" asp-area="Client" asp-controller="Progress" asp-action="Index">@Icons.Svg("trending-up")Progress</a>
                         <a class="@Active("Client", "Measurements")" asp-area="Client" asp-controller="Measurements" asp-action="Index">@Icons.Svg("ruler")Measurements</a>
-                        <a class="@Active("Client", "Profile")" asp-area="Client" asp-controller="Profile" asp-action="Edit">@Icons.Svg("shield")Health profile</a>
                         <p class="ht-nav-label">Coaching</p>
                         <a class="@Active("Client", "Appointments")" asp-area="Client" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar")Appointments</a>
                         <a class="@Active("Client", "Feedback")" asp-area="Client" asp-controller="Feedback" asp-action="Index">@Icons.Svg("message")Feedback</a>
                     }
-                    else if (User.IsInRole(AppRoles.Trainer))
+                    else if (isTrainer)
                     {
                         <a class="@Active("Trainer", "Dashboard")" asp-area="Trainer" asp-controller="Dashboard" asp-action="Index">@Icons.Svg("dashboard")Dashboard</a>
                         <p class="ht-nav-label">Coaching</p>
-                        <a class="@Active("Trainer", "Clients")" asp-area="Trainer" asp-controller="Clients" asp-action="Index">@Icons.Svg("users")Clients</a>
-                        <a class="@Active("Trainer", "Appointments")" asp-area="Trainer" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar")Appointments</a>
+                        <a class="@Active("Trainer", "Clients")" asp-area="Trainer" asp-controller="Clients" asp-action="Index">@Icons.Svg("users")Clients@if (counts.ActiveClients > 0) {<span class="count">@counts.ActiveClients</span>}</a>
+                        <a class="@Active("Trainer", "Appointments")" asp-area="Trainer" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar")Appointments@if (counts.PendingRequests > 0) {<span class="count hot" title="Requests to answer">@counts.PendingRequests</span>}</a>
                         <a class="@Active("Trainer", "Availability")" asp-area="Trainer" asp-controller="Availability" asp-action="Index">@Icons.Svg("clock")Availability</a>
+                        <a class="@Active("Trainer", "Feedback")" asp-area="Trainer" asp-controller="Feedback" asp-action="Create">@Icons.Svg("message-plus")Give feedback</a>
                         <p class="ht-nav-label">Planning</p>
-                        <a class="@(currentAction == "Templates" ? string.Empty : Active("Trainer", "WorkoutPlans"))" asp-area="Trainer" asp-controller="WorkoutPlans" asp-action="Index">@Icons.Svg("clipboard")Workout plans</a>
-                        <a class="@Active("Trainer", "WorkoutPlans", "Templates")" asp-area="Trainer" asp-controller="WorkoutPlans" asp-action="Templates">@Icons.Svg("copy")Templates</a>
+                        <a class="@(currentAction is "Templates" or "AssignTemplate" ? string.Empty : Active("Trainer", "WorkoutPlans"))" asp-area="Trainer" asp-controller="WorkoutPlans" asp-action="Index">@Icons.Svg("clipboard")Workout plans</a>
+                        <a class="@Active("Trainer", "WorkoutPlans", "Templates", "AssignTemplate")" asp-area="Trainer" asp-controller="WorkoutPlans" asp-action="Templates">@Icons.Svg("copy")Templates</a>
                         <a class="@Active("Trainer", "DietPlans")" asp-area="Trainer" asp-controller="DietPlans" asp-action="Index">@Icons.Svg("apple")Diet plans</a>
                         <p class="ht-nav-label">Reports</p>
                         <a class="@Active("Trainer", "Reports", "ClientPerformance")" asp-area="Trainer" asp-controller="Reports" asp-action="ClientPerformance">@Icons.Svg("trending-up")Client performance</a>
                         <a class="@Active("Trainer", "Reports", "PopularRoutines")" asp-area="Trainer" asp-controller="Reports" asp-action="PopularRoutines">@Icons.Svg("flame")Popular routines</a>
                         <a class="@Active("Trainer", "Reports", "Engagement")" asp-area="Trainer" asp-controller="Reports" asp-action="Engagement">@Icons.Svg("activity")Engagement</a>
                     }
-                    else if (User.IsInRole(AppRoles.Admin))
+                    else if (isAdmin)
                     {
                         <a class="@Active("Admin", "Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Icons.Svg("dashboard")Dashboard</a>
                         <p class="ht-nav-label">People</p>
                         <a class="@Active("Admin", "Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">@Icons.Svg("users")Users</a>
-                        <a class="@Active("Admin", "TrainerApprovals")" asp-area="Admin" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check")Trainer approvals</a>
+                        <a class="@Active("Admin", "TrainerApprovals")" asp-area="Admin" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check")Trainer approvals@if (counts.PendingApprovals > 0) {<span class="count hot">@counts.PendingApprovals</span>}</a>
                         <a class="@Active("Admin", "Assignments")" asp-area="Admin" asp-controller="Assignments" asp-action="Index">@Icons.Svg("link")Assignments</a>
                         <p class="ht-nav-label">Library</p>
-                        <a class="@Active("Admin", "Library", "Exercises")" asp-area="Admin" asp-controller="Library" asp-action="Exercises">@Icons.Svg("dumbbell")Exercises</a>
-                        <a class="@Active("Admin", "Library", "Foods")" asp-area="Admin" asp-controller="Library" asp-action="Foods">@Icons.Svg("apple")Foods</a>
+                        <a class="@Active("Admin", "Library", "Exercises", "EditExercise")" asp-area="Admin" asp-controller="Library" asp-action="Exercises">@Icons.Svg("dumbbell")Exercises</a>
+                        <a class="@Active("Admin", "Library", "Foods", "EditFood")" asp-area="Admin" asp-controller="Library" asp-action="Foods">@Icons.Svg("apple")Foods</a>
                         <p class="ht-nav-label">Insights</p>
                         <a class="@Active("Admin", "Reports", "ClientPerformance")" asp-area="Admin" asp-controller="Reports" asp-action="ClientPerformance">@Icons.Svg("trending-up")Client performance</a>
                         <a class="@Active("Admin", "Reports", "PopularRoutines")" asp-area="Admin" asp-controller="Reports" asp-action="PopularRoutines">@Icons.Svg("flame")Popular routines</a>
@@ -97,30 +122,35 @@
                         <a class="@Active("Admin", "Reports", "TrainerWorkload")" asp-area="Admin" asp-controller="Reports" asp-action="TrainerWorkload">@Icons.Svg("gauge")Trainer workload</a>
                         <a class="@Active("Admin", "AuditLog")" asp-area="Admin" asp-controller="AuditLog" asp-action="Index">@Icons.Svg("scroll")Audit log</a>
                     }
-                    <p class="ht-nav-label">Account</p>
-                    <a class="@Active("", "Notifications", "Preferences")" asp-area="" asp-controller="Notifications" asp-action="Preferences">@Icons.Svg("sliders")Notification settings</a>
-                    <a class="@Active("", "Manage")" asp-area="" asp-controller="Manage" asp-action="Index">@Icons.Svg("user")Manage account</a>
+                    <p class="ht-nav-label nav-phone-only">Account</p>
+                    <a class="nav-phone-only @Active("", "Manage")" asp-area="" asp-controller="Manage" asp-action="Index">@Icons.Svg("user")Your account</a>
                 </nav>
 
                 <a class="ht-me" asp-area="" asp-controller="Manage" asp-action="Index">
-                    <span class="avatar @avatarClass" aria-hidden="true">@initials</span>
-                    <span class="who"><b>@userName</b><span>@roleLabel</span></span>
+                    <span class="avatar av-sm @avatarClass" aria-hidden="true">@initials</span>
+                    <span class="who"><b>@fullName</b><span>@roleLabel</span></span>
                 </a>
             </aside>
 
             <div class="ht-main">
                 <header class="ht-top">
-                    <div class="ht-crumbs">@ViewData["Title"]</div>
+                    <nav class="ht-crumbs" aria-label="Breadcrumb">
+                        @if (!string.IsNullOrEmpty(parent))
+                        {
+                            <a href="@parentUrl">@parent</a><span class="sep" aria-hidden="true">/</span>
+                        }
+                        <span class="here">@crumb</span>
+                    </nav>
                     <div class="ht-top-actions">
-                        <span class="small text-muted d-none d-sm-inline">@DateTime.Now.ToString("ddd d MMM")</span>
-                        <a class="icon-btn @(Active("", "Notifications", "Index").Length > 0 ? "active" : string.Empty)" asp-area="" asp-controller="Notifications" asp-action="Index" aria-label="Notifications"
+                        <span class="small subtle d-none d-sm-inline">@Clock.Now.ToString("ddd d MMM")</span>
+                        <a class="icon-btn" asp-area="" asp-controller="Notifications" asp-action="Index" aria-label="Notifications"
                            data-notification-bell
                            data-poll-url="@Url.Action("Poll", "Notifications", new { area = "" })"
                            data-mark-read-url="@Url.Action("MarkAsRead", "Notifications", new { area = "" })">
                             @Icons.Svg("bell")
                             <span id="notification-count" class="badge-dot d-none">0</span>
                         </a>
-                        <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
+                        <form class="inline" asp-area="" asp-controller="Account" asp-action="Logout" method="post">
                             <button type="submit" class="icon-btn" aria-label="Log out" title="Log out">@Icons.Svg("log-out")</button>
                         </form>
                     </div>
@@ -132,7 +162,7 @@
                 </main>
 
                 <footer class="ht-foot">
-                    <span>&copy; @DateTime.Now.Year HealthTrack</span>
+                    <span>&copy; @Clock.Now.Year HealthTrack</span>
                     <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy notice</a>
                 </footer>
             </div>
@@ -145,33 +175,79 @@
     }
     else
     {
-        <div class="d-flex flex-column min-vh-100">
-            <header class="border-bottom">
-                <nav class="container site-nav" aria-label="Main">
-                    <a class="ht-brand px-0" asp-area="" asp-controller="Home" asp-action="Index">
+        <div class="site">
+            <header class="container">
+                <nav class="site-nav" aria-label="Main">
+                    <a class="ht-brand" asp-area="" asp-controller="Home" asp-action="Index">
                         <span class="ht-logo">@Icons.Svg("logo")</span>
                         HealthTrack
                     </a>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="small text-muted d-none d-md-inline me-1">Already have an account?</span>
-                        <a class="btn btn-outline-primary" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
-                        <a class="btn btn-primary" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
-                    </div>
+                    @if (shell == "register")
+                    {
+                        <div class="actions">
+                            <span class="small subtle">Already have an account?</span>
+                            <a class="btn btn-secondary" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
+                        </div>
+                    }
+                    else if (shell != "plain")
+                    {
+                        <div class="site-links">
+                            <a asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="how">How it works</a>
+                            <a asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="features">Features</a>
+                            <a asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="pros">For professionals</a>
+                        </div>
+                        <div class="actions">
+                            <a class="btn btn-ghost" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
+                            <a class="btn btn-primary" asp-area="" asp-controller="Account" asp-action="Register">Get started</a>
+                        </div>
+                    }
                 </nav>
             </header>
 
-            <main id="main-content" class="flex-grow-1 py-5">
-                <div class="container">
-                    <partial name="_Alerts" />
-                    @RenderBody()
-                </div>
+            <main id="main-content" class="site-main">
+                @if (TempData.Peek("Success") is not null || TempData.Peek("Error") is not null)
+                {
+                    <div class="container site-alerts"><partial name="_Alerts" /></div>
+                }
+                @RenderBody()
             </main>
 
             <footer class="site-foot">
-                <div class="container d-flex flex-wrap justify-content-between gap-2">
-                    <span>&copy; @DateTime.Now.Year HealthTrack</span>
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy notice</a>
+                @if (shell != "home")
+                {
+                    <div class="container between wrap xs subtle site-foot-bar">
+                        <span>&copy; @Clock.Now.Year HealthTrack</span>
+                        @if (shell == "privacy")
+                        {
+                            <a asp-area="" asp-controller="Home" asp-action="Index">Back to home</a>
+                        }
+                        else
+                        {
+                            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy notice</a>
+                        }
+                    </div>
+                }
+                else
+                {
+                <div class="container foot-wrap">
+                    <div class="foot-top">
+                        <div class="foot-brand">
+                            <a class="ht-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                                <span class="ht-logo">@Icons.Svg("logo")</span>
+                                HealthTrack
+                            </a>
+                            <p class="small subtle">Workouts, meals, measurements and coaching — in one place.</p>
+                        </div>
+                        <div class="foot-cols">
+                            <div class="foot-col"><span class="eyebrow">Product</span><a class="small" asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="how">How it works</a><a class="small" asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="features">Features</a><a class="small" asp-area="" asp-controller="Home" asp-action="Index" asp-fragment="pros">For professionals</a></div>
+                            <div class="foot-col"><span class="eyebrow">Account</span><a class="small" asp-area="" asp-controller="Account" asp-action="Login">Log in</a><a class="small" asp-area="" asp-controller="Account" asp-action="RegisterClient">Create an account</a><a class="small" asp-area="" asp-controller="Account" asp-action="RegisterTrainer">Apply as a professional</a></div>
+                            <div class="foot-col"><span class="eyebrow">Legal</span><a class="small" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy notice</a></div>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="between wrap small subtle"><span>&copy; @Clock.Now.Year HealthTrack</span><span>Made for healthier weeks.</span></div>
                 </div>
+                }
             </footer>
         </div>
     }

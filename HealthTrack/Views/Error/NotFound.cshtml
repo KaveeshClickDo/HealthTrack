@@ -1,10 +1,26 @@
 @{
     ViewData["Title"] = "Page not found";
+    ViewData["PublicShell"] = "plain";
+    var signedIn = User.Identity?.IsAuthenticated == true;
 }
 
-<div class="error-page text-center mx-auto">
-    <p class="error-code mb-3">404</p>
-    <h1 class="h3">We couldn't find that page</h1>
-    <p class="text-muted">The link may be out of date, or the page may not be available to your account.</p>
-    <a class="btn btn-primary" asp-area="" asp-controller="Home" asp-action="Index">Go to the home page</a>
+<div class="container error-wrap">
+    <div class="error-box">
+        <span class="stat-icon i-blue">@Icons.Svg("search", 26)</span>
+        <p class="display error-code" aria-hidden="true">404</p>
+        <h1 class="h1">We can't find that page</h1>
+        <p class="lead">The link may be out of date, or the page may not be available to your account.</p>
+        <div class="actions">
+            @if (signedIn)
+            {
+                @* Home sends a signed-in user to their own dashboard. *@
+                <a class="btn btn-primary btn-lg" asp-area="" asp-controller="Home" asp-action="Index">Go to my dashboard</a>
+            }
+            else
+            {
+                <a class="btn btn-primary btn-lg" asp-area="" asp-controller="Home" asp-action="Index">Go to the home page</a>
+                <a class="btn btn-secondary btn-lg" asp-area="" asp-controller="Account" asp-action="Login">Log in</a>
+            }
+        </div>
+    </div>
 </div>

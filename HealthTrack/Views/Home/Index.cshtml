@@ -1,98 +1,247 @@
 ﻿@{
-    ViewData["Title"] = "Welcome";
+    ViewData["Title"] = "Real progress, week by week";
 }
 
-<section class="hero rounded-4 p-4 p-md-5 mb-5">
-    <div class="row align-items-center g-4">
-        <div class="col-lg-7">
-            <h1 class="display-5 fw-semibold">Your training, nutrition and health in one place</h1>
-            <p class="lead mt-3">
-                HealthTrack brings your workout plans, meals, measurements and appointments together,
-                so you and your trainer can see real progress, week by week.
-            </p>
-            <div class="d-flex flex-wrap gap-2 mt-4">
-                <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="Register">Create a free account</a>
-                <a class="btn btn-outline-primary btn-lg" asp-controller="Account" asp-action="Login">Log in</a>
+<section class="container home-hero">
+    <div class="home-intro">
+        <span class="badge b-accent badge-lg"><span class="dot"></span>Workouts · Meals · Measurements · Coaching</span>
+        <h1 class="display home-title">Real progress,<br />week by week.</h1>
+        <p class="lead">HealthTrack brings your training plan, meals, measurements and coaching sessions together — so you and your trainer always know what's working.</p>
+        <div class="actions">
+            <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="RegisterClient">Create your free account @Icons.Svg("arrow-right", 18)</a>
+            <a class="btn btn-secondary btn-lg" asp-controller="Account" asp-action="RegisterTrainer">I'm a trainer or health professional</a>
+        </div>
+        <p class="small subtle">Already have an account? <a asp-controller="Account" asp-action="Login">Log in</a></p>
+    </div>
+
+    <div class="home-collage" aria-hidden="true">
+        <div class="frame collage-photo">
+            <img class="photo photo-fill" src="@ExercisePhotos.For("Barbell back squat")" alt="" />
+            <div class="shade"></div>
+            <div class="collage-caption">
+                <span class="badge b-accent self-start">Strength split · Monday</span>
+                <span class="name">Barbell back squat</span>
+                <span class="small muted">5 sets × 5 reps · 3 min rest</span>
             </div>
         </div>
-        <div class="col-lg-5">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <h2 class="h6 text-uppercase text-muted mb-3">A typical week</h2>
-                    <ul class="list-unstyled mb-0 hero-list">
-                        <li>Follow the plan your trainer wrote for you</li>
-                        <li>Log workouts and meals in a minute; calories are worked out for you</li>
-                        <li>Record weight and vitals and watch the trends</li>
-                        <li>Book a session with a trainer, nutritionist or physiotherapist</li>
-                        <li>Get reminders for workouts, meals and appointments</li>
-                    </ul>
+
+        <div class="collage-mid">
+            <div class="card vs gp-18">
+                <div class="between">
+                    <div class="vs gp-4"><span class="eyebrow">Today · Wednesday</span><span class="h2">Beginner full body</span></div>
+                    <span class="badge">2 exercises</span>
                 </div>
+                <ul class="list">
+                    <li class="hrow">
+                        <img class="thumb" src="@ExercisePhotos.For("Stationary cycling")" alt="" />
+                        <div class="grow"><div class="strong">Stationary cycling</div><div class="small subtle">15 min · moderate effort</div></div>
+                        <span class="badge b-green">@Icons.Svg("check", 14)Done</span>
+                    </li>
+                    <li class="hrow">
+                        <img class="thumb" src="@ExercisePhotos.For("Seated cable row")" alt="" />
+                        <div class="grow"><div class="strong">Seated cable row</div><div class="small subtle">3 × 12 · 60 s rest</div></div>
+                        <span class="badge">Up next</span>
+                    </li>
+                </ul>
+                <a class="btn btn-primary btn-block" asp-controller="Account" asp-action="RegisterClient" tabindex="-1">Continue workout</a>
+            </div>
+            <div class="card vs gp-14">
+                <div class="between"><span class="h3">Calories today</span><span class="small subtle num">Target 1,700 kcal</span></div>
+                <div class="kpi-line"><span class="kpi">950</span><span class="muted">kcal eaten · 56%</span></div>
+                <div class="bar thick"><i data-progress-width="56"></i></div>
+                <div class="macro-grid">
+                    <div class="vs gp-6"><span class="xs subtle">Protein</span><span class="small strong num">61 / 110 g</span><div class="bar"><i class="protein" data-progress-width="55"></i></div></div>
+                    <div class="vs gp-6"><span class="xs subtle">Carbs</span><span class="small strong num">102 / 180 g</span><div class="bar"><i class="carbs" data-progress-width="57"></i></div></div>
+                    <div class="vs gp-6"><span class="xs subtle">Fat</span><span class="small strong num">28 / 55 g</span><div class="bar"><i class="fat" data-progress-width="51"></i></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="collage-side">
+            <div class="frame"><img class="photo photo-fill" src="@ExercisePhotos.Hero("rowing")" alt="" /></div>
+            <div class="card vs gp-10">
+                <div class="between"><span class="h3">Weight</span><span class="badge b-green">−3.5 kg</span></div>
+                <div class="kpi-line"><span class="kpi">68.5</span><span class="muted">kg · since 26 Aug</span></div>
+                <svg class="chart" viewBox="-6 -6 232 66" role="img" aria-label="Weight trending down from 72.0 kg to 68.5 kg over nine weeks">
+                    <polyline class="c-line" stroke="#3DDBB3" points="0,8.4 24.4,11.6 48.9,18.2 73.3,20.4 97.8,26.9 122.2,29.1 146.7,35.6 171.1,37.8 195.6,43.3 220,46.6"></polyline>
+                    <circle class="c-dot" cx="220" cy="46.6" r="5" fill="#3DDBB3"></circle>
+                </svg>
             </div>
         </div>
     </div>
 </section>
 
-<section class="mb-5" aria-labelledby="features-heading">
-    <h2 id="features-heading" class="h4 mb-3">What you can do</h2>
-    <div class="row g-3">
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h3 class="h6">Plans from professionals</h3>
-                    <p class="card-text text-muted small">Workout and diet plans written for you, laid out day by day, with targets for calories and macros.</p>
+<section class="container pb-112">
+    <div class="trust-strip">
+        <div><span class="stat-icon i-accent">@Icons.Svg("user-check", 18)</span><div><div class="strong">Verified professionals</div><div class="small subtle">Every trainer is approved before they coach.</div></div></div>
+        <div><span class="stat-icon i-orange">@Icons.Svg("flame", 18)</span><div><div class="strong">Calories worked out for you</div><div class="small subtle">For every workout and every meal you log.</div></div></div>
+        <div><span class="stat-icon i-blue">@Icons.Svg("lock", 18)</span><div><div class="strong">Medical details encrypted</div><div class="small subtle">Before they are ever stored.</div></div></div>
+        <div><span class="stat-icon i-violet">@Icons.Svg("bell", 18)</span><div><div class="strong">Reminders that fit your day</div><div class="small subtle">In the app, and by email if you like.</div></div></div>
+    </div>
+</section>
+
+<section id="how" class="container home-section">
+    <div class="section-head">
+        <div class="section-title">
+            <span class="eyebrow">How it works</span>
+            <h2 class="display section-display">A week with HealthTrack</h2>
+        </div>
+        <p class="lead">Five small habits. One clear picture of how you're doing — for you and for your coach.</p>
+    </div>
+    <ol class="how-steps">
+        <li class="card"><span class="mono step-no">01</span><span class="h3">Follow your plan</span><p class="small muted">Your trainer writes your workouts and meals, laid out day by day.</p></li>
+        <li class="card"><span class="mono step-no">02</span><span class="h3">Log it in a minute</span><p class="small muted">Tick off today's exercises or pick foods from the library. Calories are worked out for you.</p></li>
+        <li class="card"><span class="mono step-no">03</span><span class="h3">Track your body</span><p class="small muted">Record your weight and vitals, then watch the trends on your charts.</p></li>
+        <li class="card"><span class="mono step-no">04</span><span class="h3">Book a session</span><p class="small muted">See when trainers, nutritionists and physios are free, and request a time.</p></li>
+        <li class="card"><span class="mono step-no">05</span><span class="h3">Stay on track</span><p class="small muted">Get reminders for workouts, meals and appointments, right when you need them.</p></li>
+    </ol>
+</section>
+
+<section id="features" class="container home-section">
+    <div class="section-title wide">
+        <span class="eyebrow">Features</span>
+        <h2 class="display section-display">Built around your plan</h2>
+        <p class="lead">Everything you and your trainer need to stay on track — and nothing you don't.</p>
+    </div>
+    <div class="feature-row">
+        <article class="frame feature-photo">
+            <img class="photo photo-fill" src="@ExercisePhotos.For("Dumbbell shoulder press")" alt="Man pressing dumbbells overhead on a bench" />
+            <div class="shade"></div>
+            <div class="feature-days" aria-hidden="true"><span class="badge">Mon</span><span class="badge b-accent">Wed</span><span class="badge">Fri</span></div>
+            <div class="feature-caption">
+                <span class="badge b-accent self-start">@Icons.Svg("clipboard", 14)Plans</span>
+                <h3 class="h2">Plans written by professionals</h3>
+                <p class="muted">Workout and diet plans made for you, laid out day by day, with daily calorie and macro targets.</p>
+            </div>
+        </article>
+
+        <article class="card feature-card">
+            <div class="feature-text">
+                <span class="badge b-orange self-start">Logging</span>
+                <h3 class="h2">Quick logging</h3>
+                <p class="muted">Tick off exercises or pick foods from the library. HealthTrack works out the calories burned and eaten.</p>
+            </div>
+            <ul class="list feature-demo" aria-hidden="true">
+                <li class="hrow"><input type="checkbox" checked tabindex="-1" /><span class="grow">Stationary cycling</span><span class="small subtle num">117 kcal</span></li>
+                <li class="hrow"><input type="checkbox" checked tabindex="-1" /><span class="grow">Seated cable row</span><span class="small subtle num">41 kcal</span></li>
+                <li class="hrow"><span class="grow strong">Burned today</span><span class="strong num">158 kcal</span></li>
+            </ul>
+        </article>
+
+        <article class="card feature-card short">
+            <div class="feature-text">
+                <span class="badge b-blue self-start">Progress</span>
+                <h3 class="h2">Progress you can see</h3>
+                <p class="muted">Weight, BMI, calories, heart rate and blood pressure — over weeks and months.</p>
+            </div>
+            <div class="feature-chart">
+                <svg class="chart" viewBox="0 0 360 180" role="img" aria-label="Weight chart: 72.0 kg in late August down to 68.5 kg in late October, target 64.0 kg">
+                    <line class="c-grid" x1="34" x2="350" y1="28.6" y2="28.6"></line>
+                    <line class="c-grid" x1="34" x2="350" y1="57.8" y2="57.8"></line>
+                    <line class="c-grid" x1="34" x2="350" y1="87" y2="87"></line>
+                    <line class="c-grid" x1="34" x2="350" y1="116.2" y2="116.2"></line>
+                    <line class="c-axis" x1="34" x2="350" y1="160" y2="160"></line>
+                    <text class="t-end" x="26" y="32">72</text>
+                    <text class="t-end" x="26" y="61">70</text>
+                    <text class="t-end" x="26" y="90">68</text>
+                    <text class="t-end" x="26" y="120">66</text>
+                    <text class="t-end" x="26" y="149">64</text>
+                    <line class="c-target" x1="34" x2="350" y1="145.4" y2="145.4"></line>
+                    <path class="c-area" fill="#3987E5" d="M34,160 L34,28.6 L69.1,33 L104.2,41.7 L139.3,44.7 L174.4,53.4 L209.6,56.3 L244.7,65.1 L279.8,68 L314.9,75.3 L350,79.7 L350,160 Z"></path>
+                    <polyline class="c-line" stroke="#3987E5" points="34,28.6 69.1,33 104.2,41.7 139.3,44.7 174.4,53.4 209.6,56.3 244.7,65.1 279.8,68 314.9,75.3 350,79.7"></polyline>
+                    <circle class="c-dot" cx="350" cy="79.7" r="5" fill="#3987E5"></circle>
+                    <text class="t-end t-strong" x="350" y="102">68.5 kg</text>
+                    <text x="34" y="176">Aug</text>
+                    <text class="t-mid" x="192" y="176">Sep</text>
+                    <text class="t-end" x="350" y="176">Oct</text>
+                </svg>
+                <div class="legend"><span><i class="line blue"></i>Weight (kg)</span><span><i class="dash"></i>Target 64 kg</span></div>
+            </div>
+        </article>
+
+        <article class="card feature-wide">
+            <div class="feature-text wide">
+                <span class="badge b-violet self-start">Appointments</span>
+                <h3 class="h2">Sessions that fit your week</h3>
+                <p class="muted">See when your trainer, a nutritionist or a physiotherapist is free, request a time, and get a reminder before it starts.</p>
+            </div>
+            <div class="booking-demo">
+                <div class="hrow">
+                    <span class="avatar av-trainer">CB</span>
+                    <div class="grow"><div class="strong">Chris Bandara</div><div class="small subtle">Fitness trainer · Strength and conditioning</div></div>
+                    <span class="badge b-accent">Your trainer</span>
                 </div>
+                <div class="between"><span class="small muted">Thursday 29 October</span><span class="small subtle">30 minutes · Online</span></div>
+                <div class="pill-grid">
+                    @foreach (var (time, i) in new[] { "09:00", "09:30", "10:15", "11:00", "14:30", "16:15" }.Select((t, i) => (t, i)))
+                    {
+                        <span class="pill">
+                            <input type="radio" name="demo-time" id="demo-time-@i" checked="@(i == 1)" />
+                            <label for="demo-time-@i">@time</label>
+                        </span>
+                    }
+                </div>
+                <a class="btn btn-primary mt-auto-btn" asp-controller="Account" asp-action="RegisterClient">Request a time</a>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section id="pros" class="container pb-120">
+    <div class="pros">
+        <div class="pros-visual">
+            <div class="frame"><img class="photo photo-fill" src="@ExercisePhotos.For("Deadlift")" alt="Athlete setting up for a barbell deadlift" /></div>
+            <div class="card pros-card" aria-hidden="true">
+                <div class="between"><span class="h3">Requests to answer</span><span class="badge b-amber">1 new</span></div>
+                <div class="hrow">
+                    <span class="avatar av-sm av-client">AP</span>
+                    <div class="grow"><div class="small strong">Amaya Perera · Personal training</div><div class="xs subtle">Mon 2 Nov, 10:00 · 60 minutes · In person</div></div>
+                </div>
+                <div class="actions"><span class="btn btn-success btn-sm">Approve</span><span class="btn btn-secondary btn-sm">Decline</span></div>
             </div>
         </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h3 class="h6">Quick logging</h3>
-                    <p class="card-text text-muted small">Tick off today's exercises or pick foods from the library. HealthTrack calculates calories burned and eaten.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h3 class="h6">Progress you can see</h3>
-                    <p class="card-text text-muted small">Charts of weight, BMI, calories, heart rate and blood pressure over the weeks and months.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h3 class="h6">Appointments</h3>
-                    <p class="card-text text-muted small">See when professionals are free, request a slot and get a reminder before it starts.</p>
-                </div>
-            </div>
+        <div class="pros-text">
+            <span class="eyebrow accent">For trainers &amp; health professionals</span>
+            <h2 class="display section-display">Coach every client from one dashboard.</h2>
+            <p class="lead">Fitness trainers, nutritionists, physiotherapists and doctors write plans, follow adherence, give feedback and manage appointments — all in one place.</p>
+            <ul class="ticks">
+                <li class="hrow"><span class="accent">@Icons.Svg("check", 18)</span><span>See each client's last activity and 7-day adherence at a glance</span></li>
+                <li class="hrow"><span class="accent">@Icons.Svg("check", 18)</span><span>Build reusable routine templates and assign a copy in seconds</span></li>
+                <li class="hrow"><span class="accent">@Icons.Svg("check", 18)</span><span>Publish your weekly availability — clients only book free times</span></li>
+                <li class="hrow"><span class="accent">@Icons.Svg("check", 18)</span><span>Run performance and engagement reports, then export them as CSV</span></li>
+            </ul>
+            <div class="alert on-surface"><span class="accent">@Icons.Svg("shield-check", 18)</span><span class="muted">Every professional account is checked and approved by an administrator before its first login.</span></div>
+            <div class="actions"><a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="RegisterTrainer">Apply as a professional</a></div>
         </div>
     </div>
 </section>
 
-<section class="row g-3 mb-4">
-    <div class="col-lg-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">For trainers and health professionals</h2>
-                <p class="text-muted">
-                    Fitness trainers, nutritionists, physiotherapists and doctors can coach their clients here: write plans,
-                    follow adherence, give feedback and manage appointments. Professional accounts are checked and approved
-                    by an administrator before first use.
-                </p>
-                <a class="btn btn-outline-primary" asp-controller="Account" asp-action="RegisterTrainer">Register as a professional</a>
-            </div>
+<section id="privacy" class="container home-section">
+    <div class="section-head">
+        <div class="section-title">
+            <span class="eyebrow">Privacy &amp; security</span>
+            <h2 class="display section-display">Your health data stays yours.</h2>
         </div>
+        <a class="btn btn-secondary" asp-action="Privacy">Read the privacy notice @Icons.Svg("arrow-right", 18)</a>
     </div>
-    <div class="col-lg-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">Your data is protected</h2>
-                <p class="text-muted">
-                    Medical details and consultation notes are encrypted, every page needs you to be signed in, and you decide
-                    whether your trainer sees your medical information. You can download or delete your data at any time.
-                </p>
-                <a asp-controller="Home" asp-action="Privacy">Read the privacy notice</a>
+    <div class="grid g-4">
+        <div class="card stack-14"><span class="stat-icon i-accent">@Icons.Svg("lock", 18)</span><span class="h3">Encrypted at rest</span><p class="small muted">Medical details, measurement notes and consultation notes are encrypted before they're stored.</p></div>
+        <div class="card stack-14"><span class="stat-icon i-accent">@Icons.Svg("eye-off", 18)</span><span class="h3">You decide who sees what</span><p class="small muted">Turn off medical sharing at any time and your trainer stops seeing your conditions, allergies and medications.</p></div>
+        <div class="card stack-14"><span class="stat-icon i-accent">@Icons.Svg("shield-check", 18)</span><span class="h3">Locked down by default</span><p class="small muted">Every page needs you to be signed in, and accounts lock for 15 minutes after 5 wrong passwords.</p></div>
+        <div class="card stack-14"><span class="stat-icon i-accent">@Icons.Svg("download", 18)</span><span class="h3">Download or delete anytime</span><p class="small muted">Export everything we hold about you, or delete your account and health records whenever you choose.</p></div>
+    </div>
+</section>
+
+<section class="container pb-96">
+    <div class="frame cta">
+        <img class="photo photo-fill" src="@ExercisePhotos.Hero("trail-run")" alt="Runner on a sunny trail" />
+        <div class="cta-veil"></div>
+        <div class="cta-body">
+            <h2 class="display cta-title">Start your first week today.</h2>
+            <p class="lead">Create a free account in a couple of minutes. Your trainer takes it from there.</p>
+            <div class="actions">
+                <a class="btn btn-primary btn-lg" asp-controller="Account" asp-action="RegisterClient">Create your free account</a>
+                <a class="btn btn-secondary btn-lg" asp-controller="Account" asp-action="Login">Log in</a>
             </div>
         </div>
     </div>

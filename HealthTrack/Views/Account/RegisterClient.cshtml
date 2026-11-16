@@ -1,129 +1,140 @@
 @model RegisterClientViewModel
 @{
     ViewData["Title"] = "Register as a client";
+    ViewData["PublicShell"] = "register";
 }
 
-<div class="row g-5">
-    <aside class="col-lg-4 d-flex flex-column gap-4">
-        <a class="register-back" asp-action="Register">&larr; Choose a different account</a>
-        <div class="d-flex flex-column gap-3">
-            <h1 class="display register-title mb-0">Create your client account</h1>
-            <p class="text-muted mb-0">Your account is ready straight away. An administrator then matches you with a trainer who builds your plan.</p>
-        </div>
-        <ol class="register-steps">
-            <li><a href="#about"><span class="step-no">1</span>About you</a></li>
-            <li><a href="#health"><span class="step-no">2</span>Your health profile</a></li>
-            <li><a href="#medical"><span class="step-no">3</span>Medical details <span class="text-muted small">· optional</span></a></li>
-            <li><a href="#emergency"><span class="step-no">4</span>Emergency contact <span class="text-muted small">· optional</span></a></li>
-        </ol>
-        <div class="alert alert-secondary d-flex gap-2 mb-0">
-            @Icons.Svg("shield", 18)
-            <span class="small text-muted">Medical details are encrypted before they're stored. You can download or delete your data at any time.</span>
-        </div>
-        <p class="small text-muted mb-0">Coaching clients yourself? <a asp-action="RegisterTrainer">Register as a professional</a></p>
-    </aside>
-
-    <div class="col-lg-8">
-        <form asp-action="RegisterClient" method="post">
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-
-            <div id="about" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 1</p>
-                    <h2 class="h4 mb-3">About you</h2>
-                    <partial name="_AccountFields" model="Model" />
-                </div>
+<div class="container page-pad">
+    <div class="split reg-split">
+        <aside class="aside reg-aside">
+            <a class="back" asp-action="Register">@Icons.Svg("arrow-left", 16)Choose a different account</a>
+            <div class="vs gp-12">
+                <h1 class="display reg-title">Create your client account</h1>
+                <p class="muted">Your account is ready straight away. An administrator then matches you with a trainer who builds your plan.</p>
             </div>
+            <ol class="reg-steps">
+                <li><a href="#about" class="hrow is-current"><span class="avatar av-sm">1</span><span class="strong">About you</span></a></li>
+                <li><a href="#health" class="hrow"><span class="avatar av-sm">2</span>Your health profile</a></li>
+                <li><a href="#medical" class="hrow"><span class="avatar av-sm">3</span>Medical details <span class="subtle small">· optional</span></a></li>
+                <li><a href="#emergency" class="hrow"><span class="avatar av-sm">4</span>Emergency contact <span class="subtle small">· optional</span></a></li>
+            </ol>
+            <div class="alert on-surface">
+                <span class="accent">@Icons.Svg("lock", 18)</span>
+                <span class="small muted">Medical details are encrypted before they're stored. You can download or delete your data at any time.</span>
+            </div>
+            <p class="small subtle">Coaching clients yourself? <a asp-action="RegisterTrainer">Register as a professional</a></p>
+        </aside>
 
-            <div id="health" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 2</p>
-                    <h2 class="h4 mb-1">Your health profile</h2>
-                    <p class="text-muted small mb-3">Your height and weight become your first measurement, and they set your suggested calorie target.</p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="FitnessGoal" class="form-label"></label>
-                            <select asp-for="FitnessGoal" asp-items="Html.GetEnumSelectList<FitnessGoal>()" class="form-select">
-                                <option value="">Choose…</option>
-                            </select>
-                            <span asp-validation-for="FitnessGoal" class="text-danger small"></span>
+        <form class="main gp-20" asp-action="RegisterClient" method="post" novalidate>
+            <div asp-validation-summary="All" role="alert"></div>
+
+            <section id="about" class="card form-card">
+                <div class="vs gp-4"><span class="eyebrow">Step 1</span><h2 class="h2">About you</h2></div>
+                <partial name="_AccountFields" model="Model" />
+            </section>
+
+            <section id="health" class="card form-card">
+                <div class="vs gp-4">
+                    <span class="eyebrow">Step 2</span>
+                    <h2 class="h2">Your health profile</h2>
+                    <p class="small subtle">Your height and weight become your first measurement and set your suggested calorie target.</p>
+                </div>
+                <fieldset class="field">
+                    <legend class="label legend-gap">What's your main goal?</legend>
+                    <div class="pill-grid">
+                        @foreach (var goal in Enum.GetValues<FitnessGoal>())
+                        {
+                            <span class="pill">
+                                <input type="radio" asp-for="FitnessGoal" value="@goal" id="goal-@goal" />
+                                <label for="goal-@goal">@goal.GetDisplayName()</label>
+                            </span>
+                        }
+                    </div>
+                    <span asp-validation-for="FitnessGoal" class="error-text"></span>
+                </fieldset>
+                <div class="form-grid">
+                    <div class="field full">
+                        <label asp-for="ActivityLevel" class="label">How active are you day to day?</label>
+                        <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="select">
+                            <option value="">Choose…</option>
+                        </select>
+                        <span asp-validation-for="ActivityLevel" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="HeightCm" class="label">Height</label>
+                        <div class="input-wrap">
+                            <input asp-for="HeightCm" type="number" step="0.1" min="50" max="250" class="input" />
+                            <span class="unit">cm</span>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="ActivityLevel" class="form-label"></label>
-                            <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="form-select">
-                                <option value="">Choose…</option>
-                            </select>
-                            <span asp-validation-for="ActivityLevel" class="text-danger small"></span>
+                        <span asp-validation-for="HeightCm" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="WeightKg" class="label">Weight</label>
+                        <div class="input-wrap">
+                            <input asp-for="WeightKg" type="number" step="0.1" min="20" max="350" class="input" />
+                            <span class="unit">kg</span>
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="HeightCm" class="form-label"></label>
-                            <input asp-for="HeightCm" type="number" step="0.1" min="50" max="250" class="form-control" />
-                            <span asp-validation-for="HeightCm" class="text-danger small"></span>
+                        <span asp-validation-for="WeightKg" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="TargetWeightKg" class="label">Target weight <span class="opt">Optional</span></label>
+                        <div class="input-wrap">
+                            <input asp-for="TargetWeightKg" type="number" step="0.1" min="30" max="300" class="input" />
+                            <span class="unit">kg</span>
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="WeightKg" class="form-label"></label>
-                            <input asp-for="WeightKg" type="number" step="0.1" min="20" max="350" class="form-control" />
-                            <span asp-validation-for="WeightKg" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="TargetWeightKg" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                            <input asp-for="TargetWeightKg" type="number" step="0.1" min="30" max="300" class="form-control" />
-                            <span asp-validation-for="TargetWeightKg" class="text-danger small"></span>
-                        </div>
+                        <span asp-validation-for="TargetWeightKg" class="error-text"></span>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div id="medical" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 3 · optional</p>
-                    <h2 class="h4 mb-1">Medical details</h2>
-                    <p class="text-muted small mb-3">
-                        These are encrypted before they are stored. Your assigned trainer can see them unless you turn sharing off
-                        in your health profile later.
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label asp-for="MedicalConditions" class="form-label"></label>
-                            <textarea asp-for="MedicalConditions" class="form-control" rows="2"></textarea>
-                            <span asp-validation-for="MedicalConditions" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Allergies" class="form-label"></label>
-                            <textarea asp-for="Allergies" class="form-control" rows="2"></textarea>
-                            <span asp-validation-for="Allergies" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="CurrentMedications" class="form-label"></label>
-                            <textarea asp-for="CurrentMedications" class="form-control" rows="2"></textarea>
-                            <span asp-validation-for="CurrentMedications" class="text-danger small"></span>
-                        </div>
+            <section id="medical" class="card form-card">
+                <div class="vs gp-4">
+                    <span class="eyebrow">Step 3 · Optional</span>
+                    <div class="hrow wrap"><h2 class="h2">Medical details</h2><span class="badge b-accent">@Icons.Svg("lock", 14)Encrypted</span></div>
+                    <p class="small subtle">Your trainer sees these so your plan stays safe for you. You can turn sharing off in your health profile at any time.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="field full">
+                        <label asp-for="MedicalConditions" class="label"></label>
+                        <textarea asp-for="MedicalConditions" class="textarea" placeholder="For example, asthma or a past knee injury"></textarea>
+                        <span asp-validation-for="MedicalConditions" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="Allergies" class="label"></label>
+                        <textarea asp-for="Allergies" class="textarea"></textarea>
+                        <span asp-validation-for="Allergies" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="CurrentMedications" class="label"></label>
+                        <textarea asp-for="CurrentMedications" class="textarea" placeholder="Name and dose"></textarea>
+                        <span asp-validation-for="CurrentMedications" class="error-text"></span>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div id="emergency" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 4 · optional</p>
-                    <h2 class="h4 mb-3">Emergency contact</h2>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="EmergencyContactName" class="form-label"></label>
-                            <input asp-for="EmergencyContactName" class="form-control" />
-                            <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="EmergencyContactPhone" class="form-label"></label>
-                            <input asp-for="EmergencyContactPhone" type="tel" class="form-control" />
-                            <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
-                        </div>
+            <section id="emergency" class="card form-card">
+                <div class="vs gp-4"><span class="eyebrow">Step 4 · Optional</span><h2 class="h2">Emergency contact</h2></div>
+                <div class="form-grid">
+                    <div class="field">
+                        <label asp-for="EmergencyContactName" class="label">Name</label>
+                        <input asp-for="EmergencyContactName" class="input" />
+                        <span asp-validation-for="EmergencyContactName" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="EmergencyContactPhone" class="label">Phone number</label>
+                        <input asp-for="EmergencyContactPhone" type="tel" class="input" />
+                        <span asp-validation-for="EmergencyContactPhone" class="error-text"></span>
                     </div>
                 </div>
+            </section>
+
+            <div class="card vs gp-20">
+                <partial name="_PrivacyConsent" model="Model" />
+                <div class="between wrap">
+                    <span class="small subtle">You can change all of this later.</span>
+                    <button type="submit" class="btn btn-primary btn-lg">Create my account @Icons.Svg("arrow-right", 18)</button>
+                </div>
             </div>
-
-            <partial name="_PrivacyConsent" model="Model" />
-
-            <button type="submit" class="btn btn-primary btn-lg">Create my account</button>
         </form>
     </div>
 </div>

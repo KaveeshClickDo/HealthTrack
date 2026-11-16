@@ -1,15 +1,15 @@
 @* Success and error messages set by BaseController.SetSuccess and SetError (TempData), shown once on the next page. *@
 @if (TempData["Success"] is string success)
 {
-    <div class="alert alert-success alert-dismissible fade show" role="status">
-        @success
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-success" role="status">
+        @Icons.Svg("check-circle", 18)
+        <div class="grow">@success</div>
     </div>
 }
 @if (TempData["Error"] is string error)
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @error
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="alert alert-error" role="alert">
+        @Icons.Svg("alert-circle", 18)
+        <div class="grow">@error</div>
     </div>
 }

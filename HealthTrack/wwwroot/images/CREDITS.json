@@ -1,0 +1,178 @@
+{
+  "exercises/tai-chi.jpg": {
+    "id": "NlpGEsjyu88",
+    "photographer": "cheng shi song"
+  },
+  "exercises/bosu-ball-squat.jpg": {
+    "id": "rBLTWS3WsQ8",
+    "photographer": "gustavo torres"
+  },
+  "exercises/single-leg-balance.jpg": {
+    "id": "rpTkn1WrSSQ",
+    "photographer": "vitaly gariev"
+  },
+  "exercises/elliptical-trainer.jpg": {
+    "id": "oP_RVBuY8fg",
+    "photographer": "hans y"
+  },
+  "exercises/rowing-machine.jpg": {
+    "id": "ggIv3nJXx78",
+    "photographer": "grace anne bobadilla"
+  },
+  "exercises/swimming.jpg": {
+    "id": "ZbbhkQ0M2AM",
+    "photographer": "marcus ng"
+  },
+  "exercises/brisk-walking.jpg": {
+    "id": "pxEroa7lYx8",
+    "photographer": "johannes plenio"
+  },
+  "exercises/jump-rope.jpg": {
+    "id": "QPzlfCwww5A",
+    "photographer": "anastase maragos"
+  },
+  "exercises/running-treadmill.jpg": {
+    "id": "_cUZkx0wTyM",
+    "photographer": "sour moha"
+  },
+  "exercises/running-road.jpg": {
+    "id": "J154nEkpzlQ",
+    "photographer": "gabin vallet"
+  },
+  "exercises/stair-climber.jpg": {
+    "id": "nZ3AItyCNpw",
+    "photographer": "amie johnson"
+  },
+  "exercises/stationary-cycling.jpg": {
+    "id": "43GZBXNOQq8",
+    "photographer": "galina bogdanova"
+  },
+  "exercises/pilates.jpg": {
+    "id": "aY5uOJ2o96g",
+    "photographer": "roxana popovici"
+  },
+  "exercises/stretching.jpg": {
+    "id": "AkSJQnem75Y",
+    "photographer": "dane wetton"
+  },
+  "exercises/yoga.jpg": {
+    "id": "04-1hwEezPU",
+    "photographer": "vitaly gariev"
+  },
+  "exercises/mountain-climbers.jpg": {
+    "id": "Gh8QHONEHOE",
+    "photographer": "julia ballew"
+  },
+  "exercises/burpees.jpg": {
+    "id": "wy_L8W0zcpI",
+    "photographer": "meghan holmes"
+  },
+  "exercises/circuit-training.jpg": {
+    "id": "0Wra5YYVQJE",
+    "photographer": "karsten winegeart"
+  },
+  "exercises/jumping-jacks.jpg": {
+    "id": "SsEVyFwqups",
+    "photographer": "luke aguaita"
+  },
+  "exercises/kettlebell-swing.jpg": {
+    "id": "IFSFaEGoBU8",
+    "photographer": "rafik wahba"
+  },
+  "exercises/boxing.jpg": {
+    "id": "W9lvjLgjtJk",
+    "photographer": "anastase maragos"
+  },
+  "exercises/badminton.jpg": {
+    "id": "FjryzR6Pjoc",
+    "photographer": "irish83"
+  },
+  "exercises/basketball.jpg": {
+    "id": "CREqtqgBFcU",
+    "photographer": "august phlieger"
+  },
+  "exercises/tennis.jpg": {
+    "id": "AldB5IWh8l4",
+    "photographer": "wilson stratton"
+  },
+  "exercises/football.jpg": {
+    "id": "2QwMsZ1TIdI",
+    "photographer": "edoardo busti"
+  },
+  "exercises/biceps-curl.jpg": {
+    "id": "2L9dtK0fRdQ",
+    "photographer": "ramy mamdouh"
+  },
+  "exercises/triceps-dip.jpg": {
+    "id": "dcxvSmgv5jI",
+    "photographer": "salman sidheek"
+  },
+  "exercises/deadlift.jpg": {
+    "id": "vqDAUejnwKw",
+    "photographer": "victor freitas"
+  },
+  "exercises/lat-pulldown.jpg": {
+    "id": "A-fnVvkTqlY",
+    "photographer": "ramy mamdouh"
+  },
+  "exercises/pull-up.jpg": {
+    "id": "IbuPLoOAaEY",
+    "photographer": "calugar ana maria"
+  },
+  "exercises/seated-cable-row.jpg": {
+    "id": "KI13sHKszxg",
+    "photographer": "mina rad"
+  },
+  "exercises/bench-press.jpg": {
+    "id": "Dueawl5Q75s",
+    "photographer": "shoham avisrur"
+  },
+  "exercises/push-up.jpg": {
+    "id": "6DD1mLk6ae0",
+    "photographer": "mina rad"
+  },
+  "exercises/crunch.jpg": {
+    "id": "2GaQX8JbovI",
+    "photographer": "paige madison"
+  },
+  "exercises/plank.jpg": {
+    "id": "XxD_wt6lDpc",
+    "photographer": "anastase maragos"
+  },
+  "exercises/back-squat.jpg": {
+    "id": "Qu70BExHRkQ",
+    "photographer": "sam sabourin"
+  },
+  "exercises/leg-press.jpg": {
+    "id": "L_AksVMsODU",
+    "photographer": "galina bogdanova"
+  },
+  "exercises/walking-lunge.jpg": {
+    "id": "AiNoIOYNpKw",
+    "photographer": "galina bogdanova"
+  },
+  "exercises/shoulder-press.jpg": {
+    "id": "Pv97-3sdjdY",
+    "photographer": "samuel girven"
+  },
+  "exercises/lateral-raise.jpg": {
+    "id": "FeIVyHICRqY",
+    "photographer": "asso myron"
+  },
+  "hero/treadmill.jpg": {
+    "id": "_cUZkx0wTyM",
+    "photographer": "sour moha"
+  },
+  "hero/trail-run.jpg": {
+    "id": "I1EWTM5mFEM",
+    "photographer": "venti views"
+  },
+  "hero/kettlebell.jpg": {
+    "id": "cfQs_63ZRAY",
+    "photographer": "anastase maragos"
+  },
+  "hero/rowing.jpg": {
+    "id": "ggIv3nJXx78",
+    "photographer": "grace anne bobadilla"
+  }
+}

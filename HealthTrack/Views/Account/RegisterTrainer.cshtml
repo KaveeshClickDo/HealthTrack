@@ -1,86 +1,97 @@
 @model RegisterTrainerViewModel
 @{
     ViewData["Title"] = "Register as a professional";
+    ViewData["PublicShell"] = "register";
 }
 
-<div class="row g-5">
-    <aside class="col-lg-4 d-flex flex-column gap-4">
-        <a class="register-back" asp-action="Register">&larr; Choose a different account</a>
-        <div class="d-flex flex-column gap-3">
-            <h1 class="display register-title mb-0">Register as a professional</h1>
-            <p class="text-muted mb-0">For fitness trainers, nutritionists, physiotherapists and medical doctors. An administrator checks your details before you can log in.</p>
-        </div>
-        <ol class="register-steps">
-            <li><a href="#about"><span class="step-no">1</span>About you</a></li>
-            <li><a href="#professional"><span class="step-no">2</span>Professional details</a></li>
-        </ol>
-        <div class="alert alert-warning d-flex gap-2 mb-0">
-            @Icons.Svg("user-check", 18)
-            <span class="small">Your account stays <strong>pending approval</strong> until an administrator approves it. We'll let you know as soon as it's ready.</span>
-        </div>
-        <p class="small text-muted mb-0">Looking to track your own health? <a asp-action="RegisterClient">Register as a client</a></p>
-    </aside>
-
-    <div class="col-lg-8">
-        <form asp-action="RegisterTrainer" method="post">
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-
-            <div id="about" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 1</p>
-                    <h2 class="h4 mb-3">About you</h2>
-                    <partial name="_AccountFields" model="Model" />
-                </div>
+<div class="container page-pad">
+    <div class="split reg-split">
+        <aside class="aside reg-aside">
+            <a class="back" asp-action="Register">@Icons.Svg("arrow-left", 16)Choose a different account</a>
+            <div class="vs gp-12">
+                <h1 class="display reg-title">Apply to coach on HealthTrack</h1>
+                <p class="muted">For fitness trainers, nutritionists, physiotherapists and medical doctors.</p>
             </div>
+            <div class="card vs gp-18">
+                <span class="h3">What happens next</span>
+                <ol class="vs gp-16 next-steps">
+                    <li class="hrow items-start"><span class="avatar av-sm">1</span><div><div class="small strong">Send your application</div><div class="xs subtle">It takes about three minutes.</div></div></li>
+                    <li class="hrow items-start"><span class="avatar av-sm">2</span><div><div class="small strong">We check your details</div><div class="xs subtle">An administrator reviews your qualifications and licence.</div></div></li>
+                    <li class="hrow items-start"><span class="avatar av-sm">3</span><div><div class="small strong">Start coaching</div><div class="xs subtle">Once approved, you can log in and clients are assigned to you.</div></div></li>
+                </ol>
+            </div>
+            <p class="small subtle">Looking to track your own health? <a asp-action="RegisterClient">Register as a client</a></p>
+        </aside>
 
-            <div id="professional" class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <p class="eyebrow mb-1">Step 2</p>
-                    <h2 class="h4 mb-1">Professional details</h2>
-                    <p class="text-muted small mb-3">Clients see your profession, specialisation and bio when they book.</p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="ProfessionalType" class="form-label"></label>
-                            <select asp-for="ProfessionalType" asp-items="Html.GetEnumSelectList<ProfessionalType>()" class="form-select"
-                                    data-fitness-trainer="@((int)ProfessionalType.FitnessTrainer)">
-                                <option value="">Choose…</option>
-                            </select>
-                            <span asp-validation-for="ProfessionalType" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Specialization" class="form-label"></label>
-                            <input asp-for="Specialization" class="form-control" placeholder="For example, strength and conditioning" />
-                            <span asp-validation-for="Specialization" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Qualifications" class="form-label"></label>
-                            <textarea asp-for="Qualifications" class="form-control" rows="2" placeholder="Certificates and degrees"></textarea>
-                            <span asp-validation-for="Qualifications" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="LicenseNumber" class="form-label"></label>
-                            <span id="licence-required" class="text-muted small d-none">(required for your profession)</span>
-                            <input asp-for="LicenseNumber" class="form-control" data-required-message="@RegisterTrainerViewModel.LicenseRequiredMessage" />
-                            <div class="form-text">Needed for nutritionists, physiotherapists and medical doctors; optional for fitness trainers.</div>
-                            <span asp-validation-for="LicenseNumber" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="YearsOfExperience" class="form-label"></label>
-                            <input asp-for="YearsOfExperience" type="number" min="0" max="60" class="form-control" />
-                            <span asp-validation-for="YearsOfExperience" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Bio" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                            <textarea asp-for="Bio" class="form-control" rows="3"></textarea>
-                            <span asp-validation-for="Bio" class="text-danger small"></span>
-                        </div>
+        <form class="main gp-20" asp-action="RegisterTrainer" method="post" novalidate>
+            <div asp-validation-summary="All" role="alert"></div>
+
+            <section id="about" class="card form-card">
+                <div class="vs gp-4"><span class="eyebrow">Step 1</span><h2 class="h2">About you</h2></div>
+                <partial name="_AccountFields" model="Model" />
+            </section>
+
+            <section id="professional" class="card form-card">
+                <div class="vs gp-4">
+                    <span class="eyebrow">Step 2</span>
+                    <h2 class="h2">Your practice</h2>
+                    <p class="small subtle">Clients see your profession, specialisation and bio when they book a session with you.</p>
+                </div>
+                <fieldset class="field" data-profession data-fitness-trainer="@ProfessionalType.FitnessTrainer">
+                    <legend class="label legend-gap">Profession</legend>
+                    <div class="choice-grid">
+                        @foreach (var type in Enum.GetValues<ProfessionalType>())
+                        {
+                            <label class="choice" for="type-@type">
+                                <input type="radio" asp-for="ProfessionalType" value="@type" id="type-@type" />
+                                <span class="choice-text">
+                                    <span class="strong">@type.GetDisplayName()</span>
+                                    <span class="xs subtle">@(type == ProfessionalType.FitnessTrainer ? "Licence optional" : "Licence required")</span>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="ProfessionalType" class="error-text"></span>
+                </fieldset>
+                <div class="form-grid">
+                    <div class="field">
+                        <label asp-for="Specialization" class="label"></label>
+                        <input asp-for="Specialization" class="input" placeholder="For example, strength and conditioning" />
+                        <span asp-validation-for="Specialization" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="YearsOfExperience" class="label"></label>
+                        <input asp-for="YearsOfExperience" type="number" min="0" max="60" class="input" />
+                        <span asp-validation-for="YearsOfExperience" class="error-text"></span>
+                    </div>
+                    <div class="field full">
+                        <label asp-for="Qualifications" class="label"></label>
+                        <textarea asp-for="Qualifications" class="textarea"></textarea>
+                        <span class="hint">Certificates and degrees, separated by semicolons.</span>
+                        <span asp-validation-for="Qualifications" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="LicenseNumber" class="label">Licence number <span id="licence-required" class="badge b-amber in-label d-none">Required for your profession</span></label>
+                        <input asp-for="LicenseNumber" class="input" data-required-message="@RegisterTrainerViewModel.LicenseRequiredMessage" />
+                        <span class="hint">Needed for nutritionists, physiotherapists and medical doctors.</span>
+                        <span asp-validation-for="LicenseNumber" class="error-text"></span>
+                    </div>
+                    <div class="field full">
+                        <label asp-for="Bio" class="label">Short bio <span class="opt">Optional</span></label>
+                        <textarea asp-for="Bio" class="textarea"></textarea>
+                        <span class="hint">Two or three sentences about how you work with clients.</span>
+                        <span asp-validation-for="Bio" class="error-text"></span>
                     </div>
                 </div>
+            </section>
+
+            <div class="card vs gp-20">
+                <partial name="_PrivacyConsent" model="Model" />
+                <div class="between wrap">
+                    <span class="small subtle">We'll let you know as soon as your account is approved.</span>
+                    <button type="submit" class="btn btn-primary btn-lg">Send my application</button>
+                </div>
             </div>
-
-            <partial name="_PrivacyConsent" model="Model" />
-
-            <button type="submit" class="btn btn-primary btn-lg">Send my registration</button>
         </form>
     </div>
 </div>

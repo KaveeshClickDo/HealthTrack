@@ -29,6 +29,20 @@
         }
     });
 
+    // Phone layout: the menu button folds the sidebar's links open and shut.
+    document.addEventListener('click', function (event) {
+        var toggle = event.target instanceof Element ? event.target.closest('[data-nav-toggle]') : null;
+        if (!toggle) {
+            return;
+        }
+
+        var app = toggle.closest('.ht-app');
+        if (app) {
+            var open = app.classList.toggle('nav-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+    });
+
     // Progress bars: data-progress-width="40" sets the width to 40%. Set through the style property rather than a
     // style attribute in the markup, which a Content-Security-Policy without 'unsafe-inline' styles would block.
     document.addEventListener('DOMContentLoaded', function () {

@@ -1,97 +1,89 @@
 ﻿@{
     ViewData["Title"] = "Privacy notice";
+    ViewData["PublicShell"] = "privacy";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <h1 class="h2 mb-2">@ViewData["Title"]</h1>
-        <p class="text-muted">How HealthTrack collects, protects and uses your personal and health information.</p>
+<div class="container doc-page">
+    <div class="doc-head">
+        <span class="eyebrow accent">Privacy notice</span>
+        <h1 class="display doc-title">Your data, handled with care.</h1>
+        <p class="lead">How HealthTrack collects, protects and uses your personal and health information — in plain language.</p>
+    </div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h5">What we collect and why</h2>
-                <ul>
-                    <li><strong>Account details:</strong> your name, email address, password (stored only as a salted hash), date of birth, gender and phone number, so you can sign in and so we can confirm you are 16 or older.</li>
-                    <li><strong>Health profile (clients):</strong> your goal, activity level, target weight, health conditions, allergies, medications and an emergency contact, so plans and calorie targets suit you.</li>
-                    <li><strong>Activity and measurements (clients):</strong> workouts, meals, weight, height and vital signs you record, so you and your trainer can follow your progress.</li>
-                    <li><strong>Professional details (trainers):</strong> your profession, specialisation, qualifications, licence number and experience, so an administrator can approve your account and clients can choose you.</li>
-                    <li><strong>Appointments and feedback:</strong> bookings, the reason you give for a booking, and the professional's consultation notes.</li>
-                    <li><strong>Security records:</strong> sign-ins, failed sign-ins and important changes, with the time and IP address, to protect your account. These records never contain passwords or health values.</li>
-                </ul>
-                <p class="mb-0">We only ask for what the service needs. Optional fields can be left empty.</p>
+    <div class="split doc-split">
+        <nav class="aside doc-toc" aria-label="On this page">
+            <span class="eyebrow">On this page</span>
+            <div class="ht-nav">
+                <a href="#collect" class="is-active">What we collect</a>
+                <a href="#protect">How it's protected</a>
+                <a href="#access">Who can see what</a>
+                <a href="#rights">Your rights</a>
+                <a href="#cookies">Cookies</a>
             </div>
-        </div>
+        </nav>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h5">How your data is protected</h2>
-                <ul class="mb-0">
-                    <li>Health conditions, allergies, medications, measurement notes, appointment reasons and consultation notes are <strong>encrypted</strong> before they are stored.</li>
-                    <li>Every page needs you to be signed in, and the connection is always encrypted (HTTPS).</li>
-                    <li>Accounts are locked for 15 minutes after 5 wrong passwords, and you are signed out after 30 minutes of inactivity.</li>
+        <div class="main doc-body">
+            <section id="collect" class="card form-card">
+                <div class="vs gp-6">
+                    <h2 class="h2">What we collect and why</h2>
+                    <p class="muted">We only ask for what the service needs. Optional fields can always be left empty.</p>
+                </div>
+                <div class="grid g-2 tight">
+                    <div class="tile-note"><span class="strong">Account details</span><span class="small muted">Your name, email, password (stored only as a salted hash), date of birth, gender and phone number — so you can sign in and we can confirm you're 16 or older.</span></div>
+                    <div class="tile-note"><span class="strong">Health profile <span class="badge ml-6">Clients</span></span><span class="small muted">Your goal, activity level, target weight, health conditions, allergies, medications and an emergency contact — so your plans and calorie targets suit you.</span></div>
+                    <div class="tile-note"><span class="strong">Activity and measurements <span class="badge ml-6">Clients</span></span><span class="small muted">The workouts, meals, weight, height and vital signs you record — so you and your trainer can follow your progress.</span></div>
+                    <div class="tile-note"><span class="strong">Professional details <span class="badge ml-6">Trainers</span></span><span class="small muted">Your profession, specialisation, qualifications, licence number and experience — so we can approve your account and clients can choose you.</span></div>
+                    <div class="tile-note"><span class="strong">Appointments and feedback</span><span class="small muted">Your bookings, the reason you give for a booking, and your professional's consultation notes.</span></div>
+                    <div class="tile-note"><span class="strong">Security records</span><span class="small muted">Sign-ins, failed sign-ins and important changes, with the time and IP address. These never contain passwords or health values.</span></div>
+                </div>
+            </section>
+
+            <section id="protect" class="card form-card">
+                <h2 class="h2">How your data is protected</h2>
+                <ul class="list">
+                    <li class="hrow items-start"><span class="stat-icon i-accent">@Icons.Svg("lock", 18)</span><div><div class="strong">Encrypted before it's stored</div><p class="small muted">Health conditions, allergies, medications, measurement notes, appointment reasons and consultation notes are encrypted at rest.</p></div></li>
+                    <li class="hrow items-start"><span class="stat-icon i-accent">@Icons.Svg("shield-check", 18)</span><div><div class="strong">Signed in, always encrypted in transit</div><p class="small muted">Every page needs you to be signed in, and the connection always uses HTTPS.</p></div></li>
+                    <li class="hrow items-start"><span class="stat-icon i-accent">@Icons.Svg("clock", 18)</span><div><div class="strong">Lockouts and time-outs</div><p class="small muted">Accounts lock for 15 minutes after 5 wrong passwords, and you're signed out after 30 minutes of inactivity.</p></div></li>
                 </ul>
-            </div>
-        </div>
+            </section>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h5">Who can see what</h2>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-2">
-                        <thead>
-                            <tr>
-                                <th scope="col">Who</th>
-                                <th scope="col">What they can see</th>
-                            </tr>
-                        </thead>
+            <section id="access" class="card flush">
+                <div class="card-head pad"><h2 class="h2">Who can see what</h2></div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead><tr><th scope="col">Who</th><th scope="col">What they can see</th></tr></thead>
                         <tbody>
-                            <tr>
-                                <td>You</td>
-                                <td>Everything in your own account.</td>
-                            </tr>
-                            <tr>
-                                <td>Your assigned trainer</td>
-                                <td>Your plans, logs, measurements and progress while they are assigned to you. Your medical details only if you allow it.</td>
-                            </tr>
-                            <tr>
-                                <td>A professional you book</td>
-                                <td>The appointment and the reason you gave for it.</td>
-                            </tr>
-                            <tr>
-                                <td>Administrators</td>
-                                <td>Account details and activity totals, to run the service. Never your clinical notes or measurement values.</td>
-                            </tr>
+                            <tr><th scope="row">You</th><td class="muted">Everything in your own account.</td></tr>
+                            <tr><th scope="row">Your assigned trainer</th><td class="muted">Your plans, logs, measurements and progress while they're assigned to you. Your medical details only if you allow it.</td></tr>
+                            <tr><th scope="row">A professional you book</th><td class="muted">The appointment and the reason you gave for it.</td></tr>
+                            <tr><th scope="row">Administrators</th><td class="muted">Account details and activity totals, to run the service. Never your clinical notes or measurement values.</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="mb-0">
-                    <strong>Sharing medical details:</strong> in your health profile you can turn off
-                    &ldquo;Share my medical details with my trainer&rdquo;. Your trainer then no longer sees your health conditions,
-                    allergies or medications.
-                </p>
-            </div>
-        </div>
+                <div class="card-pad-bottom">
+                    <div class="alert alert-info">@Icons.Svg("info", 18)<span><strong>Sharing medical details is your choice.</strong> <span class="muted">Turn off “Let my trainer see my medical details” in your health profile and your trainer no longer sees your conditions, allergies or medications.</span></span></div>
+                </div>
+            </section>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h2 class="h5">Your rights</h2>
-                <ul class="mb-0">
-                    <li><strong>See and correct your data:</strong> edit your details and health profile at any time.</li>
-                    <li><strong>Download your data:</strong> clients can download everything we hold about them as a JSON file, under Health profile → Your data.</li>
-                    <li><strong>Delete your account:</strong> clients can delete their account from the same place, after confirming their password. Your health records are removed and your account is anonymised; security records are kept without your name.</li>
-                    <li><strong>Reminders and email:</strong> choose which reminders you receive and whether copies are sent by email.</li>
-                </ul>
-            </div>
-        </div>
+            <section id="rights" class="card form-card">
+                <h2 class="h2">Your rights</h2>
+                <div class="grid g-2 tight">
+                    <div class="icon-text"><span class="stat-icon">@Icons.Svg("pencil", 18)</span><div><div class="strong">See and correct your data</div><p class="small muted">Edit your details and health profile at any time.</p></div></div>
+                    <div class="icon-text"><span class="stat-icon">@Icons.Svg("download", 18)</span><div><div class="strong">Download your data</div><p class="small muted">Clients can download everything we hold about them as a JSON file, under Health profile → Your data.</p></div></div>
+                    <div class="icon-text"><span class="stat-icon">@Icons.Svg("trash", 18)</span><div><div class="strong">Delete your account</div><p class="small muted">After confirming your password, your health records are removed and your account is anonymised. Security records are kept without your name.</p></div></div>
+                    <div class="icon-text"><span class="stat-icon">@Icons.Svg("bell", 18)</span><div><div class="strong">Choose your reminders</div><p class="small muted">Pick which reminders you get, and whether copies are sent by email.</p></div></div>
+                </div>
+            </section>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">Cookies</h2>
-                <p class="mb-0">
-                    HealthTrack uses only the cookies it needs to work: one that keeps you signed in, one that protects forms
-                    against forgery, and one that carries short messages between pages. There are no advertising or tracking cookies.
-                </p>
-            </div>
+            <section id="cookies" class="card vs gp-18">
+                <h2 class="h2">Cookies</h2>
+                <p class="muted">HealthTrack only uses the cookies it needs to work. There are no advertising or tracking cookies.</p>
+                <div class="actions">
+                    <span class="badge b-accent">Keeps you signed in</span>
+                    <span class="badge b-accent">Protects forms against forgery</span>
+                    <span class="badge b-accent">Carries short messages between pages</span>
+                </div>
+            </section>
         </div>
     </div>
 </div>

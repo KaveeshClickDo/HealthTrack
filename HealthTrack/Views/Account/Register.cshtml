@@ -1,46 +1,50 @@
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Create an account";
+    ViewData["PublicShell"] = "register";
 }
 
-<div class="d-flex flex-column gap-5">
-    <div class="d-flex flex-column align-items-center text-center gap-3">
-        <span class="eyebrow text-primary">Get started</span>
-        <h1 class="display register-hero mb-0">Create your HealthTrack account</h1>
-        <p class="lead register-lead mb-0">Choose the account that fits you. It only takes a couple of minutes. Already registered? <a asp-action="Login">Log in</a>.</p>
+<div class="container choose">
+    <div class="choose-head">
+        <span class="eyebrow">Get started</span>
+        <h1 class="display choose-title">Create your HealthTrack account</h1>
+        <p class="lead">Choose the account that fits you. It only takes a couple of minutes.</p>
     </div>
 
-    <div class="row g-4 register-choices mx-auto">
-        <div class="col-md-6">
-            <div class="card h-100 choice-card">
-                <div class="card-body d-flex flex-column gap-3 p-4">
-                    <span class="choice-icon">@Icons.Svg("activity", 24)</span>
-                    <span class="badge text-bg-success align-self-start">Ready straight away</span>
-                    <h2 class="h3 mb-0">I'm a client</h2>
-                    <p class="text-muted mb-0">Track your workouts, meals and measurements, follow plans from your trainer and book appointments.</p>
-                    <ul class="choice-points">
-                        <li>Workout and diet plans from a professional</li>
-                        <li>Charts of your weight, BMI and vitals</li>
-                        <li>Reminders for workouts, meals and sessions</li>
-                    </ul>
-                    <a class="btn btn-primary btn-lg w-100 mt-auto stretched-link" asp-action="RegisterClient">Register as a client</a>
-                </div>
+    <div class="choose-grid">
+        <article class="card flush choose-card">
+            <div class="frame choose-photo">
+                <img class="photo" src="@ExercisePhotos.For("Push-up")" alt="Man doing a push-up on a gym floor" />
+                <div class="shade"></div>
+                <span class="badge b-green"><span class="dot"></span>Ready straight away</span>
             </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 choice-card">
-                <div class="card-body d-flex flex-column gap-3 p-4">
-                    <span class="choice-icon">@Icons.Svg("stethoscope", 24)</span>
-                    <span class="badge text-bg-warning align-self-start">Checked by our team first</span>
-                    <h2 class="h3 mb-0">I'm a trainer or health professional</h2>
-                    <p class="text-muted mb-0">Fitness trainers, nutritionists, physiotherapists and medical doctors coach clients and take appointments.</p>
-                    <ul class="choice-points">
-                        <li>Plans, templates and feedback for your clients</li>
-                        <li>Bookings only inside your availability</li>
-                        <li>An administrator approves you before your first login</li>
-                    </ul>
-                    <a class="btn btn-outline-primary btn-lg w-100 mt-auto stretched-link" asp-action="RegisterTrainer">Register as a professional</a>
-                </div>
+            <div class="choose-body">
+                <h2 class="h2">I want to get fitter</h2>
+                <p class="muted">Track your workouts, meals and measurements, follow plans from your trainer and book sessions when you need them.</p>
+                <ul class="checklist">
+                    <li class="hrow small">@Icons.Svg("check", 18)Workout and diet plans from a professional</li>
+                    <li class="hrow small">@Icons.Svg("check", 18)Charts of your weight, BMI and vitals</li>
+                    <li class="hrow small">@Icons.Svg("check", 18)Reminders for workouts, meals and sessions</li>
+                </ul>
+                <a class="btn btn-primary btn-lg btn-block mt-auto-btn" asp-action="RegisterClient">Register as a client</a>
             </div>
-        </div>
+        </article>
+
+        <article class="card flush choose-card">
+            <div class="frame choose-photo">
+                <img class="photo" src="@ExercisePhotos.Hero("kettlebell")" alt="Man getting ready to swing a kettlebell in a gym" />
+                <div class="shade"></div>
+                <span class="badge b-amber"><span class="dot"></span>Checked by our team first</span>
+            </div>
+            <div class="choose-body">
+                <h2 class="h2">I'm a trainer or health professional</h2>
+                <p class="muted">Fitness trainers, nutritionists, physiotherapists and medical doctors coach clients and take appointments here.</p>
+                <ul class="checklist">
+                    <li class="hrow small">@Icons.Svg("check", 18)Plans, templates and feedback for your clients</li>
+                    <li class="hrow small">@Icons.Svg("check", 18)Bookings only inside your availability</li>
+                    <li class="hrow small">@Icons.Svg("check", 18)An administrator approves you before your first login</li>
+                </ul>
+                <a class="btn btn-secondary btn-lg btn-block mt-auto-btn" asp-action="RegisterTrainer">Register as a professional</a>
+            </div>
+        </article>
     </div>
 </div>

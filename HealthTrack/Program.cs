@@ -50,7 +50,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         options.Lockout.AllowedForNewUsers = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddClaimsPrincipalFactory<HealthTrackClaimsPrincipalFactory>();
 
 // PBKDF2 with HMAC-SHA512 and a random salt; 100,000 iterations is the .NET default, stated explicitly.
 builder.Services.Configure<PasswordHasherOptions>(options => options.IterationCount = 100_000);
@@ -123,6 +124,7 @@ builder.Services.AddScoped<IDietService, DietService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<INavigationService, NavigationService>();
 
 // UC34: creates due reminders for everyone every minute, even when nobody is signed in.
 builder.Services.AddHostedService<ReminderBackgroundService>();
