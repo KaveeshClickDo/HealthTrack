@@ -1,43 +1,71 @@
 @model IEnumerable<AppointmentListItemViewModel>
 @{
     var today = ViewData["Today"] as DateTime?;
+    // "rows": date-tile rows for requests and what's coming up; otherwise a table (the past).
+    var asRows = ViewData["AsRows"] as bool? == true;
 }
-@* One table of the professional's appointments; each row opens the appointment, where the actions are. *@
-<div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-            <tr>
-                <th scope="col">When</th>
-                <th scope="col">Client</th>
-                <th scope="col">Type</th>
-                <th scope="col">Status</th>
-                <th scope="col"><span class="visually-hidden">Open</span></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var appointment in Model)
-            {
-                <tr>
-                    <td class="text-nowrap">
-                        @appointment.StartDateTime.ToString("ddd dd MMM yyyy")
-                        @if (appointment.StartDateTime.Date == today)
+@* The professional's appointments; each one opens the appointment, where the decisions are made. *@
+@if (asRows)
+{
+    <ul class="appt-rows">
+        @foreach (var appointment in Model)
+        {
+            var isToday = appointment.StartDateTime.Date == today;
+            var pending = appointment.Status == AppointmentStatus.Pending;
+            var canMove = appointment.Status is AppointmentStatus.Approved or AppointmentStatus.Rescheduled;
+            <li>
+                <span class="date-tile @(pending ? "is-pending" : isToday ? "is-next" : string.Empty)">
+                    <span class="xs dow">@(isToday ? "Today" : appointment.StartDateTime.ToString("ddd"))</span>
+                    <span class="h2">@appointment.StartDateTime.Day</span>
+                    <span class="xs subtle">@appointment.StartDateTime.ToString("MMM")</span>
+                </span>
+                <div class="appt-what">
+                    <span class="strong title">@appointment.AppointmentType.GetDisplayName()</span>
+                    <span class="small muted hrow wrap appt-meta">
+                        <span>@appointment.StartDateTime.ToString("HH:mm") – @appointment.EndDateTime.ToString("HH:mm") · @appointment.DurationMinutes min</span>
+                        <span class="hrow gp-6">@Icons.Svg(appointment.Mode == AppointmentMode.Online ? "video" : "map-pin", 16)@(appointment.Mode == AppointmentMode.Online ? "Online" : "In person" + (appointment.Location is { } place ? " · " + place : string.Empty))</span>
+                    </span>
+                </div>
+                <div class="hrow appt-who">
+                    <span class="avatar av-sm av-client">@appointment.ClientName.Initials()</span>
+                    <div class="meal-line"><span class="small strong">@appointment.ClientName</span>@if (!string.IsNullOrWhiteSpace(appointment.ClientReason)) {<span class="xs subtle truncate">“@appointment.ClientReason”</span>}</div>
+                </div>
+                <span class="badge @StatusBadges.For(appointment.Status)"><span class="dot"></span>@appointment.Status.GetDisplayName()</span>
+                <div class="actions">
+                    @if (pending)
+                    {
+                        <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-id="@appointment.AppointmentId">Review</a>
+                    }
+                    else
+                    {
+                        @if (canMove && !isToday)
                         {
-                            <span class="badge text-bg-info ms-1">Today</span>
+                            <a class="btn btn-secondary btn-sm" asp-action="Reschedule" asp-route-id="@appointment.AppointmentId">Reschedule</a>
                         }
-                        <div class="small text-muted">@appointment.StartDateTime.ToString("HH:mm")&ndash;@appointment.EndDateTime.ToString("HH:mm")</div>
-                    </td>
-                    <td>@appointment.ClientName</td>
-                    <td>
-                        @appointment.AppointmentType.GetDisplayName()
-                        <div class="small text-muted">@appointment.Mode.GetDisplayName()</div>
-                    </td>
-                    <td><span class="badge @StatusBadges.For(appointment.Status)">@appointment.Status.GetDisplayName()</span></td>
-                    <td class="text-end">
-                        <a class="btn btn-sm @(appointment.Status == AppointmentStatus.Pending ? "btn-primary" : "btn-outline-primary")"
-                           asp-action="Details" asp-route-id="@appointment.AppointmentId">@(appointment.Status == AppointmentStatus.Pending ? "Review" : "Open")</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+                        <a class="btn @(canMove && !isToday ? "btn-ghost" : "btn-secondary") btn-sm" asp-action="Details" asp-route-id="@appointment.AppointmentId">Open</a>
+                    }
+                </div>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <div class="table-wrap">
+        <table class="table">
+            <thead><tr><th scope="col">When</th><th scope="col">Client</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
+            <tbody>
+                @foreach (var appointment in Model)
+                {
+                    <tr>
+                        <td class="nowrap">@appointment.StartDateTime.ToString("ddd d MMM yyyy")<span class="sub">@appointment.StartDateTime.ToString("HH:mm") – @appointment.EndDateTime.ToString("HH:mm")</span></td>
+                        <td><span class="cell-person"><span class="avatar av-sm av-client">@appointment.ClientName.Initials()</span>@appointment.ClientName</span></td>
+                        <td>@appointment.AppointmentType.GetDisplayName()<span class="sub">@appointment.Mode.GetDisplayName()@(appointment.Location is { } where && appointment.Mode == AppointmentMode.InPerson ? " · " + where : string.Empty)</span></td>
+                        <td><span class="badge @StatusBadges.For(appointment.Status)">@(appointment.Status == AppointmentStatus.CancelledByTrainer ? "Cancelled by you" : appointment.Status == AppointmentStatus.Rejected ? "Declined" : appointment.Status.GetDisplayName())</span></td>
+                        <td class="r"><a class="btn btn-ghost btn-sm" asp-action="Details" asp-route-id="@appointment.AppointmentId">Open</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

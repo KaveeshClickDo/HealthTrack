@@ -1197,3 +1197,29 @@ input.switch[type="checkbox"] { width: 46px; height: 28px; }
 .alert.suggest { flex: 1 1 280px; background: rgba(61, 219, 179, .07); border-color: var(--accent-line); }
 .alert.suggest .ico { color: var(--accent); }
 .form-grid.macros { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+
+/* Trainer: appointments */
+.card.waiting { border-color: rgba(242, 193, 78, .45); }
+.date-tile.is-pending { background: rgba(242, 193, 78, .08); border-color: rgba(242, 193, 78, .4); }
+.date-tile.is-pending .dow { color: var(--amber); }
+.appt-who .xs { display: block; }
+.badge.count-chip { height: 22px; min-width: 22px; padding: 0 7px; justify-content: center; }
+.appt-who .small.strong { display: block; }
+
+/* Trainer: availability as a week of day columns */
+.week-cols { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+.week-col { display: flex; flex-direction: column; gap: 8px; min-height: 260px; padding: 8px; border-radius: 14px; background: var(--surface-2); }
+.week-col .day { text-align: center; font-size: 12.5px; font-weight: 650; color: var(--text-2); padding: 4px 0; }
+.week-col .off { margin: auto; font-size: 12.5px; color: var(--text-3); }
+.window-chip { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 10px 40px; border-radius: 12px; background: rgba(61, 219, 179, .1); border: 1px solid var(--accent-line); color: var(--accent); font-weight: 650; font-size: 13px; font-variant-numeric: tabular-nums; }
+.window-chip form { position: absolute; left: 10px; bottom: 8px; }
+.window-chip .icon-btn { width: 28px; height: 28px; border-radius: 8px; }
+@media (max-width: 900px) {
+  .week-cols { grid-template-columns: 1fr; }
+  .week-col { min-height: 0; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .week-col .day { width: 44px; text-align: left; }
+  .week-col .off { margin: 0; }
+  .window-chip { flex-direction: row; gap: 6px; padding: 8px 44px 8px 10px; }
+  .window-chip form { left: auto; right: 6px; bottom: 50%; transform: translateY(50%); }
+}
+.pill.wide label { min-width: 64px; } .pill label .ico { margin-right: 6px; }

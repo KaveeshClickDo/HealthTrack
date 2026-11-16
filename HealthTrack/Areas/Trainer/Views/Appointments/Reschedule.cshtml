@@ -2,75 +2,83 @@
 @{
     var appointment = Model.Appointment;
     ViewData["Title"] = "Reschedule";
+    ViewData["Parent"] = "Appointments";
+    ViewData["ParentUrl"] = Url.Action("Index");
     var summaryData = new ViewDataDictionary(ViewData) { ["ShowClient"] = true };
     var date = Model.Date ?? appointment.StartDateTime.Date;
+    var groups = Model.Slots.GroupBy(s => s.Hours < 12 ? "Morning" : s.Hours < 17 ? "Afternoon" : "Evening").ToList();
 }
 
-<p><a asp-action="Details" asp-route-id="@appointment.AppointmentId">&larr; The appointment</a></p>
-<h1 class="h2 mb-3">Reschedule the appointment with @appointment.ClientName</h1>
-
-<div class="row g-3">
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6">Now</h2>
-                <partial name="_AppointmentSummary" model="appointment" view-data="summaryData" />
-            </div>
-        </div>
+<a class="back" asp-action="Details" asp-route-id="@appointment.AppointmentId">@Icons.Svg("arrow-left", 16)The appointment</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Reschedule the appointment with @appointment.ClientName</h1>
+        <p>Pick another free time inside your availability. @appointment.ClientName.Split(' ')[0] is told straight away.</p>
     </div>
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6">Move to</h2>
-                @* Changing the day or length reloads the page with that day's free times (healthtrack.js, data-auto-submit). *@
-                <form asp-action="Reschedule" asp-route-id="@appointment.AppointmentId" method="get" class="row g-2 align-items-end mb-3">
-                    <div class="col-7">
-                        <label for="date" class="form-label">Day</label>
-                        <input type="date" id="date" name="date" value="@date.ToString("yyyy-MM-dd")" class="form-control"
-                               min="@Model.EarliestDate.ToString("yyyy-MM-dd")" max="@Model.LatestDate.ToString("yyyy-MM-dd")" data-auto-submit />
-                    </div>
-                    <div class="col-5">
-                        <label for="minutes" class="form-label">Length</label>
-                        <select id="minutes" name="minutes" class="form-select" data-auto-submit>
-                            @foreach (var length in HealthTrack.Models.Entities.Appointment.AllowedDurations)
-                            {
-                                <option value="@length" selected="@(length == Model.DurationMinutes)">@length minutes</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-sm btn-outline-secondary">Show free times</button>
-                    </div>
-                </form>
+</div>
 
-                <form asp-action="Reschedule" asp-route-id="@appointment.AppointmentId" method="post">
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-                    <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
-                    <input type="hidden" name="Date" value="@date.ToString("yyyy-MM-dd")" />
-                    <input type="hidden" name="DurationMinutes" value="@Model.DurationMinutes" />
-                    @if (Model.Slots.Count == 0)
-                    {
-                        <p class="text-muted">
-                            No free times on @date.ToString("dddd dd MMM yyyy") for @Model.DurationMinutes minutes. Try another day,
-                            a shorter length, or add <a asp-controller="Availability" asp-action="Index">availability</a> for that weekday.
-                        </p>
-                    }
-                    else
-                    {
-                        <label asp-for="StartTime" class="form-label">Free times on @date.ToString("dddd dd MMM yyyy")</label>
-                        @* A plain select: the tag helper would compare "09:15" with "09:15:00" and lose the choice. *@
-                        <select id="StartTime" name="StartTime" class="form-select mb-2" required>
-                            <option value="">Choose a time…</option>
-                            @foreach (var slot in Model.Slots)
-                            {
-                                <option value="@slot.ToString("hh\\:mm")" selected="@(slot == Model.StartTime)">@slot.ToString("hh\\:mm")&ndash;@slot.Add(TimeSpan.FromMinutes(Model.DurationMinutes ?? 0)).ToString("hh\\:mm")</option>
-                            }
-                        </select>
-                        <span asp-validation-for="StartTime" class="text-danger small d-block mb-2"></span>
-                        <button type="submit" class="btn btn-primary">Move the appointment</button>
-                    }
-                </form>
+<div class="split">
+    <section class="aside card gp-20">
+        <h2 class="h3">Now</h2>
+        <partial name="_AppointmentSummary" model="appointment" view-data="summaryData" />
+    </section>
+
+    <section class="main card gp-20">
+        <h2 class="h2">Move to</h2>
+        @* Changing the day or length reloads the page with that day's free times (healthtrack.js, data-auto-submit). *@
+        <form class="form-grid" asp-action="Reschedule" asp-route-id="@appointment.AppointmentId" method="get">
+            <div class="field">
+                <label for="date" class="label">Day</label>
+                <input type="date" id="date" name="date" value="@date.ToString("yyyy-MM-dd")" class="input"
+                       min="@Model.EarliestDate.ToString("yyyy-MM-dd")" max="@Model.LatestDate.ToString("yyyy-MM-dd")" data-auto-submit />
             </div>
-        </div>
-    </div>
+            <div class="field">
+                <label for="minutes" class="label">Length</label>
+                <select id="minutes" name="minutes" class="select" data-auto-submit>
+                    @foreach (var length in HealthTrack.Models.Entities.Appointment.AllowedDurations)
+                    {
+                        <option value="@length" selected="@(length == Model.DurationMinutes)">@length minutes</option>
+                    }
+                </select>
+            </div>
+            <noscript><button type="submit" class="btn btn-secondary btn-sm">Show free times</button></noscript>
+        </form>
+
+        <form class="vs gp-16" asp-action="Reschedule" asp-route-id="@appointment.AppointmentId" method="post">
+            <div asp-validation-summary="All" role="alert"></div>
+            <input type="hidden" name="RowVersion" value="@Model.RowVersion" />
+            <input type="hidden" name="Date" value="@date.ToString("yyyy-MM-dd")" />
+            <input type="hidden" name="DurationMinutes" value="@Model.DurationMinutes" />
+            @if (Model.Slots.Count == 0)
+            {
+                <div class="empty sm">
+                    <span class="icon">@Icons.Svg("calendar-x", 24)</span>
+                    <p>No free times on @date.ToString("dddd d MMMM") for @Model.DurationMinutes minutes. Try another day, a shorter length, or add <a asp-controller="Availability" asp-action="Index">availability</a> for that weekday.</p>
+                </div>
+            }
+            else
+            {
+                <span class="label">Free times on @date.ToString("dddd d MMMM")</span>
+                @foreach (var group in groups)
+                {
+                    <div class="slot-group">
+                        <span class="eyebrow">@group.Key</span>
+                        <div class="slot-grid">
+                            @foreach (var slot in group)
+                            {
+                                var value = slot.ToString("hh\\:mm");
+                                var id = "slot-" + value.Replace(":", string.Empty);
+                                <span class="pill">
+                                    <input type="radio" name="StartTime" id="@id" value="@value" checked="@(slot == Model.StartTime)" required />
+                                    <label for="@id">@value</label>
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+                <span asp-validation-for="StartTime" class="error-text"></span>
+                <div><button type="submit" class="btn btn-primary">@Icons.Svg("calendar-check", 18)Move the appointment</button></div>
+            }
+        </form>
+    </section>
 </div>

@@ -1,97 +1,88 @@
 @model AvailabilityPageViewModel
 @{
     ViewData["Title"] = "Availability";
+    ViewData["Parent"] = "Coaching";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Availability</h1>
-        <p class="text-muted mb-0">Clients can book you only inside these weekly windows, at least 2 hours and at most 60 days ahead.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Availability</h1>
+        <p>Clients can book you only inside these weekly windows, from 2 hours to 60 days ahead.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-controller="Appointments" asp-action="Index">Appointments</a>
+    <div class="actions"><a class="btn btn-secondary" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar", 18)Appointments</a></div>
 </div>
 
-<div class="row g-3">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">Weekly windows</h2>
-                    <span class="small text-muted">@Model.WeeklyHours.ToString("0.#") hours a week</span>
+<div class="split">
+    <section class="main card gp-18">
+        <div class="card-head">
+            <h2 class="h2">Weekly windows</h2>
+            <div class="hrow gp-8">
+                <span class="badge b-accent">@Model.WeeklyHours.ToString("0.#") hours a week</span>
+                <span class="small subtle">@Model.Windows.Count @(Model.Windows.Count == 1 ? "window" : "windows")</span>
+            </div>
+        </div>
+        @if (Model.Windows.Count == 0)
+        {
+            <div class="alert alert-info">@Icons.Svg("info", 18)<span>You haven't published any availability yet, so clients can't book you. Add your first window.</span></div>
+        }
+        <div class="week-cols">
+            @foreach (var day in WorkoutText.WeekFromMonday)
+            {
+                var windows = Model.Windows.Where(w => w.DayOfWeek == day).OrderBy(w => w.StartTime).ToList();
+                <div class="week-col">
+                    <span class="day">@day.ToString()[..3]</span>
+                    @if (windows.Count == 0)
+                    {
+                        <span class="off">Off</span>
+                    }
+                    @foreach (var window in windows)
+                    {
+                        <div class="window-chip">
+                            <span>@window.StartTime.ToString("hh\\:mm")</span>
+                            <span>@window.EndTime.ToString("hh\\:mm")</span>
+                            <form asp-action="Delete" asp-route-id="@window.AvailabilityId" method="post"
+                                  data-confirm="Remove the @day @window.StartTime.ToString("hh\\:mm")–@window.EndTime.ToString("hh\\:mm") window? Appointments already booked in it are kept.">
+                                <button type="submit" class="icon-btn" aria-label="Remove the @day @window.StartTime.ToString("hh\\:mm") window">@Icons.Svg("x", 14)</button>
+                            </form>
+                        </div>
+                    }
                 </div>
-                @if (Model.Windows.Count == 0)
-                {
-                    <p class="text-muted mb-0">You haven't published any availability yet, so clients can't book you. Add your first window.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Day</th>
-                                    <th scope="col">From</th>
-                                    <th scope="col">To</th>
-                                    <th scope="col"><span class="visually-hidden">Remove</span></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var window in Model.Windows)
-                                {
-                                    <tr>
-                                        <td>@window.DayOfWeek</td>
-                                        <td>@window.StartTime.ToString("hh\\:mm")</td>
-                                        <td>@window.EndTime.ToString("hh\\:mm")</td>
-                                        <td class="text-end">
-                                            <form asp-action="Delete" asp-route-id="@window.AvailabilityId" method="post"
-                                                  data-confirm="Remove the @window.DayOfWeek window? Appointments already booked in it are kept.">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
+            }
         </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h5">Add a window</h2>
-                <form asp-action="Create" method="post">
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-                    <div class="mb-3">
-                        <label asp-for="NewWindow.DayOfWeek" class="form-label"></label>
-                        <select asp-for="NewWindow.DayOfWeek" class="form-select">
-                            <option value="">Choose…</option>
-                            @foreach (var day in WorkoutText.WeekFromMonday)
-                            {
-                                <option value="@((int)day)">@day</option>
-                            }
-                        </select>
-                        <span asp-validation-for="NewWindow.DayOfWeek" class="text-danger small"></span>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-6">
-                            <label asp-for="NewWindow.StartTime" class="form-label"></label>
-                            <input asp-for="NewWindow.StartTime" type="time" step="900" asp-format="{0:hh\:mm}" class="form-control" />
-                            <span asp-validation-for="NewWindow.StartTime" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6">
-                            <label asp-for="NewWindow.EndTime" class="form-label"></label>
-                            <input asp-for="NewWindow.EndTime" type="time" step="900" asp-format="{0:hh\:mm}" class="form-control" />
-                            <span asp-validation-for="NewWindow.EndTime" class="text-danger small"></span>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add window</button>
-                    <div class="form-text">Windows on the same day can't overlap. Start times are offered every 15 minutes.</div>
-                </form>
+        <p class="small subtle hrow gp-8">@Icons.Svg("info", 16)Removing a window keeps any appointments already booked in it.</p>
+    </section>
+
+    <aside class="aside">
+        <form class="card vs gp-16" asp-action="Create" method="post">
+            <h2 class="h3">Add a window</h2>
+            <div asp-validation-summary="All" role="alert"></div>
+            <div class="field">
+                <label asp-for="NewWindow.DayOfWeek" class="label"></label>
+                <select asp-for="NewWindow.DayOfWeek" class="select">
+                    <option value="">Choose…</option>
+                    @foreach (var day in WorkoutText.WeekFromMonday)
+                    {
+                        <option value="@((int)day)">@day</option>
+                    }
+                </select>
+                <span asp-validation-for="NewWindow.DayOfWeek" class="error-text"></span>
             </div>
-        </div>
-    </div>
+            <div class="form-grid macros">
+                <div class="field">
+                    <label asp-for="NewWindow.StartTime" class="label"></label>
+                    <input asp-for="NewWindow.StartTime" type="time" step="900" asp-format="{0:hh\:mm}" class="input" />
+                    <span asp-validation-for="NewWindow.StartTime" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="NewWindow.EndTime" class="label"></label>
+                    <input asp-for="NewWindow.EndTime" type="time" step="900" asp-format="{0:hh\:mm}" class="input" />
+                    <span asp-validation-for="NewWindow.EndTime" class="error-text"></span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">@Icons.Svg("plus", 18)Add window</button>
+            <p class="xs subtle">Windows on the same day can't overlap. Start times are offered every 15 minutes.</p>
+        </form>
+    </aside>
 </div>
 
 @section Scripts {

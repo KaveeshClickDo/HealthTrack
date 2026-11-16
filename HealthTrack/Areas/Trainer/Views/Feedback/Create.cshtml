@@ -1,94 +1,113 @@
 @model FeedbackViewModel
 @{
     ViewData["Title"] = "Give feedback";
+    ViewData["Parent"] = "Coaching";
     var clients = new SelectList(Model.ClientOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
     var sessions = new SelectList(Model.SessionOptions, nameof(SelectOptionViewModel.Id), nameof(SelectOptionViewModel.Label));
+    var categoryIcons = new Dictionary<FeedbackCategory, string>
+    {
+        [FeedbackCategory.Workout] = "dumbbell",
+        [FeedbackCategory.Diet] = "apple",
+        [FeedbackCategory.Progress] = "trending-up",
+        [FeedbackCategory.General] = "message"
+    };
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <p><a asp-controller="Clients" asp-action="Index">&larr; My clients</a></p>
-        <h1 class="h2 mb-4">@(Model.ClientName is null ? "Give feedback" : "Give feedback to " + Model.ClientName)</h1>
+<a class="back" asp-controller="Clients" asp-action="Index">@Icons.Svg("arrow-left", 16)My clients</a>
+<div class="page-head">
+    @if (Model.ClientName is null)
+    {
+        <div class="intro">
+            <h1 class="h1">Give feedback</h1>
+            <p>Choose the client first, so their logged sessions can be listed.</p>
+        </div>
+    }
+    else
+    {
+        <div class="hrow gp-16">
+            <span class="avatar av-lg av-@((Model.ClientId ?? 0) % 6 + 1)">@Model.ClientName.Initials()</span>
+            <div class="intro"><h1 class="h1">Give feedback to @Model.ClientName</h1><p>About one session, or their training, eating and progress in general.</p></div>
+        </div>
+        <div class="actions"><a class="btn btn-ghost" asp-action="Create">@Icons.Svg("users", 18)Choose another client</a></div>
+    }
+</div>
 
-        @if (Model.ClientName is null)
+@if (Model.ClientName is null)
+{
+    @* Choose the client first, so their sessions can be listed. *@
+    <section class="card form-card">
+        @if (Model.ClientOptions.Count == 0)
         {
-            @* Choose the client first, so their sessions can be listed. *@
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    @if (Model.ClientOptions.Count == 0)
-                    {
-                        <p class="text-muted mb-0">No clients are assigned to you yet, so there is nobody to give feedback to.</p>
-                    }
-                    else
-                    {
-                        <form asp-action="Create" method="get" class="row g-2 align-items-end">
-                            <div class="col-md-8">
-                                <label for="clientId" class="form-label">Client</label>
-                                <select id="clientId" name="clientId" class="form-select" asp-items="clients" required>
-                                    <option value="">Choose a client…</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 d-grid">
-                                <button type="submit" class="btn btn-primary">Continue</button>
-                            </div>
-                        </form>
-                    }
-                </div>
-            </div>
+            <div class="empty sm"><span class="icon">@Icons.Svg("users", 24)</span><p>No clients are assigned to you yet, so there is nobody to give feedback to.</p></div>
         }
         else
         {
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <form asp-action="Create" method="post">
-                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-                        <input asp-for="ClientId" type="hidden" />
-
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label asp-for="WorkoutLogId" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                                <select asp-for="WorkoutLogId" asp-items="sessions" class="form-select">
-                                    <option value="">General feedback, not about one session</option>
-                                </select>
-                                @if (Model.SessionOptions.Count == 0)
-                                {
-                                    <div class="form-text">@Model.ClientName hasn't logged any sessions yet.</div>
-                                }
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="Category" class="form-label"></label>
-                                <select asp-for="Category" asp-items="Html.GetEnumSelectList<FeedbackCategory>()" class="form-select"></select>
-                                <span asp-validation-for="Category" class="text-danger small"></span>
-                            </div>
-                            <div class="col-12">
-                                <label asp-for="Message" class="form-label"></label>
-                                <textarea asp-for="Message" class="form-control" rows="4"
-                                          placeholder="What went well, and what to focus on next"></textarea>
-                                <span asp-validation-for="Message" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="Rating" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                                <select asp-for="Rating" class="form-select">
-                                    <option value="">No rating</option>
-                                    @for (var stars = 5; stars >= 1; stars--)
-                                    {
-                                        <option value="@stars">@(new string('★', stars)) (@stars of 5)</option>
-                                    }
-                                </select>
-                                <span asp-validation-for="Rating" class="text-danger small"></span>
-                            </div>
-                        </div>
-
-                        <div class="d-flex gap-2 mt-4">
-                            <button type="submit" class="btn btn-primary">Send feedback</button>
-                            <a class="btn btn-outline-secondary" asp-controller="Clients" asp-action="Index">Cancel</a>
-                        </div>
-                    </form>
+            <form class="field-row items-end" asp-action="Create" method="get">
+                <div class="field f-3">
+                    <label for="clientId" class="label">Client</label>
+                    <select id="clientId" name="clientId" class="select" asp-items="clients" required>
+                        <option value="">Choose a client…</option>
+                    </select>
                 </div>
-            </div>
+                <div><button type="submit" class="btn btn-primary">Continue @Icons.Svg("arrow-right", 18)</button></div>
+            </form>
         }
-    </div>
-</div>
+    </section>
+}
+else
+{
+    <form class="card form-card" asp-action="Create" method="post">
+        <div asp-validation-summary="All" role="alert"></div>
+        <input asp-for="ClientId" type="hidden" />
+        <div class="field">
+            <label asp-for="WorkoutLogId" class="label">About a session <span class="opt">Optional</span></label>
+            <select asp-for="WorkoutLogId" asp-items="sessions" class="select">
+                <option value="">General feedback, not about one session</option>
+            </select>
+            @if (Model.SessionOptions.Count == 0)
+            {
+                <span class="hint">@Model.ClientName hasn't logged any sessions yet.</span>
+            }
+        </div>
+        <fieldset class="field">
+            <legend class="label legend-gap">Category</legend>
+            <div class="pill-grid">
+                @foreach (var category in Enum.GetValues<FeedbackCategory>())
+                {
+                    <span class="pill">
+                        <input type="radio" asp-for="Category" value="@category" id="category-@category" />
+                        <label for="category-@category">@Icons.Svg(categoryIcons.GetValueOrDefault(category, "message"), 16)@category.GetDisplayName()</label>
+                    </span>
+                }
+            </div>
+            <span asp-validation-for="Category" class="error-text"></span>
+        </fieldset>
+        <div class="field">
+            <label asp-for="Message" class="label">Feedback</label>
+            <textarea asp-for="Message" class="textarea" placeholder="What went well, and what to focus on next"></textarea>
+            <span asp-validation-for="Message" class="error-text"></span>
+        </div>
+        <fieldset class="field">
+            <legend class="label legend-gap">Progress rating <span class="opt">Optional</span></legend>
+            <div class="pill-grid">
+                <span class="pill"><input type="radio" name="Rating" value="" id="rating-none" checked="@(Model.Rating is null)" /><label for="rating-none">No rating</label></span>
+                @for (var stars = 1; stars <= 5; stars++)
+                {
+                    <span class="pill wide"><input type="radio" name="Rating" value="@stars" id="rating-@stars" checked="@(Model.Rating == stars)" /><label for="rating-@stars">@stars ★</label></span>
+                }
+            </div>
+            <span asp-validation-for="Rating" class="error-text"></span>
+        </fieldset>
+        <div class="divider"></div>
+        <div class="between wrap">
+            <span class="small subtle hrow gp-8">@Icons.Svg("bell", 16)@Model.ClientName.Split(' ')[0] gets a notification</span>
+            <div class="actions">
+                <a class="btn btn-ghost" asp-controller="Clients" asp-action="Index">Cancel</a>
+                <button type="submit" class="btn btn-primary">@Icons.Svg("send", 18)Send feedback</button>
+            </div>
+        </div>
+    </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

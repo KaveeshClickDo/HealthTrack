@@ -1,63 +1,56 @@
 @model TrainerAppointmentsViewModel
 @{
     ViewData["Title"] = "Appointments";
+    ViewData["Parent"] = "Coaching";
     ViewData["Today"] = Model.Today;
     var pager = new PagerViewModel(Model.Past.Page, Model.Past.TotalPages, Model.Past.TotalCount, new Dictionary<string, string?>());
+    var rows = new ViewDataDictionary(ViewData) { ["AsRows"] = true };
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Appointments</h1>
-    <a class="btn btn-outline-primary" asp-controller="Availability" asp-action="Index">My availability</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Appointments</h1>
+        <p>Requests to answer, today's sessions and everything coming up.</p>
+    </div>
+    <div class="actions"><a class="btn btn-secondary" asp-controller="Availability" asp-action="Index">@Icons.Svg("calendar-clock", 18)My availability</a></div>
 </div>
 
-<section class="card shadow-sm mb-4">
-    <div class="card-body pb-0">
-        <h2 class="h5">
-            Requests waiting for you
-            @if (Model.Pending.Count > 0)
-            {
-                <span class="badge text-bg-secondary ms-1">@Model.Pending.Count</span>
-            }
-        </h2>
+<section class="card flush @(Model.Pending.Count > 0 ? "waiting" : string.Empty)">
+    <div class="card-head pad">
+        <div class="hrow gap-10"><h2 class="h2">Requests waiting for you</h2>@if (Model.Pending.Count > 0) {<span class="badge b-amber count-chip">@Model.Pending.Count</span>}</div>
+        <span class="small subtle">Clients are told as soon as you decide</span>
     </div>
     @if (Model.Pending.Count == 0)
     {
-        <p class="text-muted px-3 pb-3 mb-0">No requests to decide on. New bookings appear here and in your notifications.</p>
+        <p class="small muted card-pad-bottom">No requests to decide on. New bookings appear here and in your notifications.</p>
     }
     else
     {
-        <partial name="_AppointmentTable" model="Model.Pending" />
+        <partial name="_AppointmentTable" model="Model.Pending" view-data="rows" />
     }
 </section>
 
-<section class="card shadow-sm mb-4">
-    <div class="card-body pb-0">
-        <h2 class="h5">Today and upcoming</h2>
-    </div>
+<section class="card flush">
+    <div class="card-head pad"><h2 class="h2">Today and upcoming</h2><span class="small subtle">@Model.Upcoming.Count(a => a.IsOpen) booked@(Model.Upcoming.Any(a => !a.IsOpen) ? " · " + Model.Upcoming.Count(a => !a.IsOpen) + " cancelled" : string.Empty)</span></div>
     @if (Model.Upcoming.Count == 0)
     {
-        <p class="text-muted px-3 pb-3 mb-0">
-            Nothing booked from today on. Clients can book you inside your <a asp-controller="Availability" asp-action="Index">availability windows</a>.
-        </p>
+        <p class="small muted card-pad-bottom">Nothing booked from today on. Clients can book you inside your <a asp-controller="Availability" asp-action="Index">availability windows</a>.</p>
     }
     else
     {
-        <partial name="_AppointmentTable" model="Model.Upcoming" />
+        <partial name="_AppointmentTable" model="Model.Upcoming" view-data="rows" />
     }
 </section>
 
-<section class="card shadow-sm">
-    <div class="card-body pb-0">
-        <h2 class="h5">Past</h2>
-    </div>
+<section class="card flush">
+    <div class="card-head pad"><h2 class="h2">Past</h2></div>
     @if (Model.Past.TotalCount == 0)
     {
-        <p class="text-muted px-3 pb-3 mb-0">No past appointments yet.</p>
+        <p class="small muted card-pad-bottom">No past appointments yet.</p>
     }
     else
     {
         <partial name="_AppointmentTable" model="Model.Past.Items" />
+        <partial name="_Pager" model="pager" />
     }
 </section>
-
-<partial name="_Pager" model="pager" />
