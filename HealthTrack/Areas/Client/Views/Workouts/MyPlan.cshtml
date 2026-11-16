@@ -1,39 +1,93 @@
 @model WorkoutWeekViewModel
 @{
-    ViewData["Title"] = "My workout plan";
+    ViewData["Title"] = "Workout plan";
+    ViewData["Parent"] = "Training";
+    var training = Model.Days.Where(d => !d.IsRestDay).ToList();
+    var restDays = Model.Days.Where(d => d.IsRestDay).Select(d => d.DayOfWeek.ToString()).ToList();
+    var first = Model.Days.FirstOrDefault()?.Date;
+    var last = Model.Days.LastOrDefault()?.Date;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">My workout plan</h1>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">My workout plan</span>
+        <h1 class="h1 page-title">@(Model.HasPlan ? Model.Title : "Workout plan")</h1>
         @if (Model.HasPlan)
         {
-            <p class="text-muted mb-0">
-                <strong>@Model.Title</strong> &middot; @Model.Difficulty.GetDisplayName() &middot; from @Model.TrainerName
-                &middot; @Model.StartDate?.ToString("dd MMM yyyy")@(Model.EndDate is { } end ? " to " + end.ToString("dd MMM yyyy") : string.Empty)
-            </p>
+            <div class="hrow wrap gp-8">
+                <span class="badge b-green"><span class="dot"></span>Active</span>
+                <span class="badge">@Model.Difficulty.GetDisplayName()</span>
+                <span class="small subtle">From @Model.TrainerName · since @Model.StartDate?.ToString("d MMM yyyy")@(Model.EndDate is { } end ? " to " + end.ToString("d MMM yyyy") : string.Empty)</span>
+            </div>
         }
     </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-primary" asp-action="Today">Today's workout</a>
-        <a class="btn btn-outline-primary" asp-action="Log">Log a free workout</a>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="Log">Log a free workout</a>
+        <a class="btn btn-primary" asp-action="Today">@Icons.Svg("play", 18)Today's workout</a>
     </div>
 </div>
 
 @if (!Model.HasPlan)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            You don't have an active workout plan yet. Your trainer sets one up for you; until then you can
-            <a asp-action="Log">log a free workout</a>.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("clipboard", 24)</span>
+        <p><span class="strong">You don't have an active workout plan yet.</span> Your trainer sets one up for you; until then you can log any workout.</p>
+        <a class="btn btn-primary" asp-action="Log">Log a free workout</a>
     </div>
 }
 else
 {
     @if (!string.IsNullOrEmpty(Model.Description))
     {
-        <p class="mb-3">@Model.Description</p>
+        <div class="alert on-surface">
+            @Icons.Svg("message", 18)
+            <span><span class="strong">From your trainer: </span><span class="muted text-prewrap">@Model.Description</span></span>
+        </div>
     }
+
+    <section class="card vs gp-16">
+        <div class="card-head">
+            <h2 class="h3">This week</h2>
+            <span class="small subtle">@first?.ToString("d MMM") – @last?.ToString("d MMM") · @training.Count(d => d.IsLogged) of @training.Count sessions done</span>
+        </div>
+        <ol class="week-strip">
+            @foreach (var day in Model.Days)
+            {
+                var state = day.IsToday ? "is-today" : day.IsLogged ? "is-done" : day.IsRestDay ? string.Empty : "is-training";
+                <li class="@state">
+                    @if (day.IsToday)
+                    {
+                        <span class="xs today-label">Today</span>
+                    }
+                    else
+                    {
+                        <span class="xs subtle">@day.DayOfWeek.ToString()[..3]</span>
+                    }
+                    <span class="strong num-lg">@day.Date?.Day</span>
+                    @if (day.IsLogged)
+                    {
+                        <span class="xs status done-label">@Icons.Svg("check", 12)Done</span>
+                    }
+                    else if (day.IsRestDay)
+                    {
+                        <span class="xs status subtle">Rest</span>
+                    }
+                    else
+                    {
+                        <span class="xs status @(day.IsToday ? "accent" : "muted")">@day.Lines.Count exercise@(day.Lines.Count == 1 ? string.Empty : "s")</span>
+                    }
+                </li>
+            }
+        </ol>
+    </section>
+
     <partial name="_PlanDays" model="Model.Days" />
+
+    @if (restDays.Count > 0)
+    {
+        <p class="small subtle">
+            @string.Join(", ", restDays.Take(restDays.Count - 1))@(restDays.Count > 1 ? " and " : string.Empty)@restDays[^1]
+            @(restDays.Count == 1 ? "is a rest day" : "are rest days"). Recovery is part of the plan — fancy a walk anyway? <a asp-action="Log">Log it</a>.
+        </p>
+    }
 }

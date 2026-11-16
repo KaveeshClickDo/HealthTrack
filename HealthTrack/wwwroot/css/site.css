@@ -92,7 +92,7 @@
 }
 
 /* Bootstrap defaults that differ from the kit, reset before the kit so the kit's own rules (.stat, chips) win. */
-.card { display: block; word-wrap: normal; background-clip: padding-box; }
+.card { display: block; flex-direction: row; word-wrap: normal; background-clip: padding-box; }
 
 /* ======================================== Design kit ======================================== */
 :root {
@@ -820,3 +820,189 @@ span.btn[disabled] { opacity: .45; pointer-events: none; }
   .error-code { font-size: 96px; }
   .error-box .h1 { font-size: 28px; }
 }
+
+/* =====================================================================================================================
+   Signed-in pages
+   ===================================================================================================================== */
+.page-title { font-size: 34px; }
+.kpi-md { font-size: 26px; }
+.kpi.c-green, .stat-icon.c-green { color: var(--green); }
+.kpi.c-red { color: var(--red); }
+.stat-icon.i-green { color: var(--green); }
+.gap-10 { gap: 10px; }
+/* The kit's centred empty state; .sm is the compact one inside small cards. */
+.empty.sm { padding: 20px 8px; flex: 1; justify-content: center; }
+.empty .strong, .empty h3 { color: var(--text); }
+.text-prewrap { white-space: pre-wrap; }
+
+/* Calories and macros (the _NutritionBars partial) */
+.nutrition { gap: 18px; align-items: center; }
+.nutrition-figures { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ring-svg { flex: none; }
+.ring-track { fill: none; stroke: var(--surface-3); }
+.ring-value { fill: none; stroke: var(--accent); }
+.ring-value.over { stroke: var(--amber); }
+.ring-text { fill: var(--text); font-size: 22px; font-weight: 750; text-anchor: middle; font-family: var(--font); }
+.ring-sub { fill: var(--text-3); font-size: 11px; text-anchor: middle; font-family: var(--font); }
+
+/* Client dashboard */
+.tile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px; }
+.frame.tile-210 { height: 210px; }
+.tile-caption { position: absolute; left: 18px; right: 18px; bottom: 16px; display: flex; flex-direction: column; gap: 2px; }
+.tile-kicker { color: var(--accent); font-weight: 650; }
+.dash-meals { gap: 18px; }
+.meal-line { min-width: 0; }
+.appt-day { flex: none; width: 46px; text-align: center; padding: 6px 0; border-radius: 10px; }
+.appt-day .xs { display: block; }
+.appt-day .strong { font-size: 17px; }
+.row-link { flex: 1; min-width: 0; color: var(--text); }
+.row-link > .strong, .row-link > .small.strong { display: block; }
+.row-link:hover { color: var(--text); }
+.row-link:hover > .strong, .row-link:hover > .small.strong { color: var(--accent); }
+.quote-lg { font-size: 16px; line-height: 1.55; padding: 16px; border-radius: 14px; background: var(--surface-2); }
+.unread-dot { flex: none; width: 8px; height: 8px; margin-top: 7px; border-radius: 50%; background: var(--accent); }
+.stars svg { fill: currentColor; }
+
+/* Workout log (today's workout and a free workout) */
+.form-stack { display: flex; flex-direction: column; gap: 20px; }
+.field-row { display: flex; flex-wrap: wrap; gap: 18px 20px; }
+.field-row .f-1 { flex: 1 1 200px; } .field-row .f-date { flex: 1 1 220px; } .field-row .f-3 { flex: 3 1 320px; }
+.pill-grid.tight { gap: 8px; }
+.pill.num label { min-width: 48px; }
+.entry-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 20px 24px; border-top: 1px solid var(--line); }
+.entry-row.free { align-items: flex-end; gap: 16px 20px; }
+.entry-what { flex: 1 1 300px; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.entry-row.free .entry-what { flex: 1 1 320px; gap: 14px; align-items: flex-end; }
+.entry-what .check-lg { flex: none; width: 22px; height: 22px; accent-color: var(--accent); }
+.entry-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.entry-name > label.strong { display: block; }
+.entry-fields { flex: 999 1 420px; display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px; }
+.entry-fields .field { gap: 6px; }
+.entry-row .icon-btn { width: 40px; height: 40px; }
+.thumb:not([src]) { border: 1px dashed var(--line-2); background: transparent; }
+.card-foot-bar { padding: 16px 24px; border-top: 1px solid var(--line); }
+.btn-ghost.pl-10 { padding-left: 10px; }
+.save-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+.save-bar .note { gap: 14px; min-width: 0; flex: 1 1 360px; }
+.select.select-sm { height: 38px; padding: 0 34px 0 10px; font-size: 13.5px; border-radius: 10px; }
+
+/* Workout plan: the week strip and the day cards */
+.week-strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+.week-strip li { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; border-radius: 14px; background: var(--surface-2); text-align: center; }
+.week-strip li.is-training { border: 1px solid var(--line-2); }
+.week-strip li.is-done { background: rgba(94, 224, 155, .08); border: 1px solid rgba(94, 224, 155, .3); }
+.week-strip li.is-today { background: rgba(61, 219, 179, .1); box-shadow: inset 0 0 0 2px var(--accent); border: 0; }
+.week-strip .num-lg { font-size: 18px; }
+.week-strip .today-label { color: var(--accent); font-weight: 650; }
+.week-strip .done-label { color: var(--green); display: inline-flex; align-items: center; gap: 4px; }
+.card.is-today { border-color: var(--accent-line); box-shadow: 0 0 0 1px var(--accent-line); }
+.line-note { font-style: italic; }
+@media (max-width: 760px) {
+  .week-strip { gap: 4px; }
+  .week-strip li { padding: 10px 2px; border-radius: 10px; }
+  .week-strip .status { display: none; }
+  .week-strip .num-lg { font-size: 16px; }
+}
+
+/* A pager under a list of cards rather than inside one */
+.page-pager .card-foot { border-top: 0; padding: 4px 0; }
+.ht-content.narrow { max-width: 1100px; }
+
+/* Workout and meal history */
+.session { display: flex; flex-direction: column; gap: 18px; }
+.session-head { align-items: flex-start; }
+.table-wrap.boxed { border: 1px solid var(--line); border-radius: 14px; }
+.thumb.thumb-sm { width: 40px; height: 40px; border-radius: 10px; }
+.feedback-note { display: flex; gap: 14px; padding: 16px; border-radius: 14px; background: var(--surface-2); }
+.feedback-note .body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+/* Diet plan */
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.swatch.protein { background: #3987E5; } .swatch.carbs { background: #D95926; } .swatch.fat { background: #199E70; }
+.meal-time { width: 48px; flex: none; }
+.meal-kcal { font-weight: 400; }
+.card-head.mb-10 { margin-bottom: 10px; }
+.week-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 12px; }
+.day-card { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.day-card.is-today { border-color: var(--accent-line); box-shadow: 0 0 0 1px var(--accent-line); }
+.day-card ul { display: flex; flex-direction: column; gap: 6px; }
+.day-card .total { padding-top: 10px; border-top: 1px solid var(--line); }
+.badge.badge-xs { height: 20px; padding: 0 7px; }
+
+/* Log a meal: food rows as a grid that folds onto two lines on a phone (no sideways scrolling, UI-02) */
+.food-head, .food-row, .food-foot { display: grid; grid-template-columns: minmax(0, 1fr) 150px 110px 64px; align-items: center; gap: 0 16px; padding: 0 24px; }
+.food-head { padding-top: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); font-size: 11.5px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); }
+.food-row { padding-top: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.food-row:hover { background: rgba(255, 255, 255, .018); }
+.food-what { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.food-what .stat-icon { margin-top: 5px; }
+.food-what .field { flex: 1; min-width: 0; gap: 4px; }
+.food-row .field { gap: 4px; }
+.food-row .icon-btn { width: 38px; height: 38px; justify-self: end; }
+.food-kcal { text-align: right; font-weight: 650; }
+.food-foot { padding-top: 12px; padding-bottom: 16px; }
+.food-foot .total-label { grid-column: 2; text-align: right; font-size: 11.5px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); }
+.food-foot .total { text-align: right; }
+.r { text-align: right; }
+[data-tone="blue"] { color: var(--blue); } [data-tone="rose"] { color: var(--rose); } [data-tone="amber"] { color: var(--amber); }
+[data-tone="green"] { color: var(--green); } [data-tone="orange"] { color: var(--orange); } [data-tone="violet"] { color: var(--violet); }
+.search-pad { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+.save-bar .note-col { display: flex; flex-direction: column; gap: 4px; flex: 1 1 360px; }
+@media (max-width: 760px) {
+  .food-head { display: none; }
+  .food-row { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "what what what" "qty kcal remove"; gap: 10px 12px; padding: 16px; }
+  .food-row .food-what { grid-area: what; }
+  .food-row .food-qty { grid-area: qty; }
+  .food-row .food-kcal { grid-area: kcal; }
+  .food-row .icon-btn { grid-area: remove; }
+  .food-row .food-qty::before { content: "Servings"; display: block; font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+  .food-foot { grid-template-columns: 1fr auto; padding: 12px 16px 16px; }
+  .food-foot .total-label { grid-column: auto; display: none; }
+  .search-pad { padding: 18px 16px; }
+}
+.food-foot .btn { justify-self: start; }
+
+/* Meal history: a day per card */
+.day-head { padding: 22px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 18px 32px; border-bottom: 1px solid var(--line); }
+.day-figures { flex: 0 1 420px; min-width: 260px; display: flex; flex-direction: column; gap: 8px; }
+.bar > i.green { background: var(--green); } .bar > i.amber { background: var(--amber); }
+.meal-rows > li { display: flex; gap: 16px; padding: 16px 24px; border-bottom: 1px solid var(--line); }
+.meal-rows > li:last-child { border-bottom: 0; }
+.meal-rows .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+@media (max-width: 760px) {
+  .day-head, .meal-rows > li { padding-left: 16px; padding-right: 16px; }
+  .day-figures { min-width: 0; flex-basis: 100%; }
+}
+
+/* Measurements: the BMI scale (15 to 35) with a marker */
+.bmi-card { display: flex; flex-wrap: wrap; gap: 28px 40px; align-items: center; }
+.bmi-main { flex: 1 1 340px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.kpi.kpi-xl { font-size: 44px; }
+.bmi-scale { display: flex; flex-direction: column; gap: 8px; }
+.bmi-bands, .bmi-labels { display: grid; grid-template-columns: 17.5fr 32.5fr 25fr 25fr; gap: 3px; }
+.bmi-bands { position: relative; height: 10px; }
+.bmi-bands .under { border-radius: 999px 0 0 999px; background: #3987E5; opacity: .75; }
+.bmi-bands .healthy { background: var(--green); opacity: .8; }
+.bmi-bands .over { background: var(--amber); opacity: .85; }
+.bmi-bands .obese { border-radius: 0 999px 999px 0; background: var(--red); opacity: .8; }
+.bmi-marker { position: absolute; left: 0; top: -5px; width: 4px; height: 20px; margin-left: -2px; border-radius: 4px; background: var(--text); box-shadow: 0 0 0 2px var(--surface); }
+.figures { flex: 1 1 420px; display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 18px; }
+.figures > div { display: flex; flex-direction: column; gap: 4px; }
+.h2.c-green { color: var(--green); }
+.badge.ml-6 { margin-left: 6px; }
+@media (max-width: 760px) {
+  .kpi.kpi-xl { font-size: 36px; }
+  .bmi-labels { font-size: 10.5px; }
+}
+.ht-content.narrow-sm { max-width: 960px; }
+.form-grid.narrow-cols { grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
+.actions.end { justify-content: flex-end; }
+
+/* Progress: range bar, segmented control, chart tables */
+.range-bar { padding: 16px 20px; }
+.range-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.seg { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line-2); border-radius: 12px; }
+.seg .btn-check:checked + .btn { background: var(--surface-3); color: var(--text); }
+.items-end { align-items: flex-end; }
+.chart-table summary { cursor: pointer; font-weight: 600; color: var(--text-2); }
+.chart-table .table-wrap { margin-top: 10px; }

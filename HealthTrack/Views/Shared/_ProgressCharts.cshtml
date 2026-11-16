@@ -19,22 +19,22 @@
               Empty = "No blood-pressure readings in this range." }
     };
 }
-<div class="row g-3">
+<div class="grid g-2">
     @foreach (var chart in charts)
     {
-        <div class="col-lg-6">
-            <section class="card shadow-sm h-100" data-chart-card>
-                <div class="card-body">
-                    <h2 class="h6 mb-2">@chart.Title</h2>
+        <div>
+            <section class="card vs gp-14" data-chart-card>
+                <div>
+                    <h2 class="h3">@chart.Title</h2>
                     <div class="chart-box">
                         <canvas role="img" aria-label="@chart.Title chart; the data is also in the table below"
                                 data-chart data-key="@chart.Key" data-url="@chart.Url" data-series="@(chart.Url is null ? chart.Series : null)"
                                 data-datasets="@chart.Datasets" data-decimals="@chart.Decimals"></canvas>
                     </div>
-                    <p class="text-muted small mb-0" data-chart-empty hidden>@chart.Empty</p>
-                    <details class="mt-2 small" data-chart-table>
+                    <p class="small muted" data-chart-empty hidden>@chart.Empty</p>
+                    <details class="small chart-table" data-chart-table>
                         <summary>Show the data as a table</summary>
-                        <div class="table-responsive mt-2"></div>
+                        <div class="table-wrap"></div>
                     </details>
                 </div>
             </section>

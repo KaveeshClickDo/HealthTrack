@@ -12,34 +12,34 @@
     };
 }
 @* The range picker of the progress pages; wwwroot/js/progress-charts.js shows the custom dates and applies the range. *@
-<form method="get" id="progress-range" class="card shadow-sm mb-3" data-live-range="@(live ? "true" : null)">
+<form method="get" id="progress-range" class="card range-bar" data-live-range="@(live ? "true" : null)">
     @if (clientId is { } id)
     {
         <input type="hidden" name="clientId" value="@id" />
     }
-    <div class="card-body d-flex flex-wrap align-items-end gap-3">
-        <div>
-            <span class="form-label small d-block">Range</span>
-            <div class="btn-group" role="group" aria-label="Range">
+    <div class="range-row">
+        <div class="hrow gap-10">
+            <span class="small subtle">Show</span>
+            <div class="seg" role="group" aria-label="Range">
                 @foreach (var choice in choices)
                 {
                     <input type="radio" class="btn-check" name="range" id="range-@choice.Value" value="@choice.Value"
                            checked="@(Model.Range == choice.Value)" autocomplete="off" />
-                    <label class="btn btn-outline-primary btn-sm" for="range-@choice.Value">@choice.Text</label>
+                    <label class="btn btn-ghost btn-sm" for="range-@choice.Value">@choice.Text</label>
                 }
             </div>
         </div>
-        <div class="d-flex flex-wrap align-items-end gap-2" data-custom-range hidden="@(!custom)">
+        <div class="hrow wrap gp-8 items-end" data-custom-range hidden="@(!custom)">
             <div>
-                <label for="range-from" class="form-label small">From</label>
-                <input type="date" id="range-from" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="form-control form-control-sm" disabled="@(!custom)" />
+                <label for="range-from" class="xs subtle">From</label>
+                <input type="date" id="range-from" name="from" value="@Model.From.ToString("yyyy-MM-dd")" class="input input-sm" disabled="@(!custom)" />
             </div>
             <div>
-                <label for="range-to" class="form-label small">To</label>
-                <input type="date" id="range-to" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="form-control form-control-sm" disabled="@(!custom)" />
+                <label for="range-to" class="xs subtle">To</label>
+                <input type="date" id="range-to" name="to" value="@Model.To.ToString("yyyy-MM-dd")" class="input input-sm" disabled="@(!custom)" />
             </div>
             <button type="submit" class="btn btn-primary btn-sm">Apply</button>
         </div>
-        <span class="small text-muted ms-auto" data-range-text>@Model.From.ToString("dd MMM yyyy") &ndash; @Model.To.ToString("dd MMM yyyy")</span>
+        <span class="small muted ml-auto hrow gp-6">@Icons.Svg("calendar", 16)<span data-range-text>@Model.From.ToString("dd MMM yyyy") &ndash; @Model.To.ToString("dd MMM yyyy")</span></span>
     </div>
 </form>

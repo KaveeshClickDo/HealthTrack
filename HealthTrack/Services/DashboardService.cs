@@ -202,13 +202,22 @@ namespace HealthTrack.Services
                 .OrderByDescending(p => p.StartDate)
                 .FirstOrDefaultAsync();
 
+            var lines = plan?.GetExercisesFor(today.DayOfWeek) ?? [];
             return new TodayWorkoutViewModel
             {
                 HasPlan = plan is not null,
                 PlanTitle = plan?.Title,
-                Exercises = plan?.GetExercisesFor(today.DayOfWeek)
+                Exercises = lines
                     .Select(l => $"{l.Exercise.Name} – {WorkoutText.Prescription(l.Sets, l.Reps, l.DurationMinutes, l.RestSeconds)}")
-                    .ToList() ?? [],
+                    .ToList(),
+                Items = lines
+                    .Select(l => new TodayExerciseViewModel
+                    {
+                        Name = l.Exercise.Name,
+                        Category = l.Exercise.Category,
+                        Prescription = WorkoutText.Prescription(l.Sets, l.Reps, l.DurationMinutes, l.RestSeconds)
+                    })
+                    .ToList(),
                 LoggedToday = await _db.WorkoutLogs.AnyAsync(l => l.ClientId == clientId && l.WorkoutDate == today)
             };
         }

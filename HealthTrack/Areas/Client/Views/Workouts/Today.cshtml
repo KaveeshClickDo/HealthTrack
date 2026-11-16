@@ -1,42 +1,45 @@
 @model LogWorkoutViewModel
 @{
     ViewData["Title"] = "Today's workout";
+    ViewData["Parent"] = "Training";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Today's workout</h1>
-        <p class="text-muted mb-0">
-            @Model.WorkoutDate?.ToString("dddd dd MMM yyyy")@(Model.PlanTitle is null ? string.Empty : " · " + Model.PlanTitle)
-        </p>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">@Model.WorkoutDate?.ToString("dddd d MMMM")@(Model.PlanTitle is null ? string.Empty : " · " + Model.PlanTitle)</span>
+        <h1 class="h1">Today's workout</h1>
+        <p>Tick off what you did and change the numbers to match. Calories are worked out for you.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-action="MyPlan">My week</a>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="MyPlan">See my week</a>
+    </div>
 </div>
 
 @if (!Model.HasActivePlan)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            You don't have a workout plan for today. <a asp-action="Log">Log a free workout</a> instead, or check
-            <a asp-action="MyPlan">your plan</a>.
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("clipboard", 24)</span>
+        <p><span class="strong">No workout plan for today.</span> Your trainer sets your plan; until then you can log any workout.</p>
+        <div class="actions">
+            <a class="btn btn-primary" asp-action="Log">Log a free workout</a>
+            <a class="btn btn-secondary" asp-action="MyPlan">See your plan</a>
         </div>
     </div>
 }
 else if (Model.Entries.Count == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            Today is a rest day in your plan. Enjoy it, or <a asp-action="Log">log a free workout</a> if you trained anyway.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("clock", 24)</span>
+        <p><span class="strong">Today is a rest day in your plan.</span> Enjoy it — or log a free workout if you trained anyway.</p>
+        <a class="btn btn-secondary" asp-action="Log">Log a free workout</a>
     </div>
 }
 else
 {
     @if (Model.AlreadyLoggedToday)
     {
-        <div class="alert alert-info">You have already logged a session today. Saving again adds another session.</div>
+        <div class="alert alert-info">@Icons.Svg("info", 18)<span>You have already logged a session today. Saving again adds another session.</span></div>
     }
-    <p>Tick the exercises you did and adjust the minutes, sets, reps and load to what you actually did.</p>
     <partial name="_LogWorkoutForm" model="Model" />
 }
 

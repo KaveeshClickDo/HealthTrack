@@ -16,5 +16,11 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>Whether this is today, for highlighting.</summary>
         public bool IsToday { get; init; }
+
+        /// <summary>The day's date in the current week, on the client's own plan; null on a template preview.</summary>
+        public DateTime? Date { get; init; }
+
+        /// <summary>Whether the client logged a workout on that date.</summary>
+        public bool IsLogged { get; init; }
     }
 }

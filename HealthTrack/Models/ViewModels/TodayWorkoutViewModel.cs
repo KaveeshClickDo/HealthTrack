@@ -14,6 +14,9 @@ namespace HealthTrack.Models.ViewModels
         /// <summary>Today's exercises with their prescription, for example "Push-up – 3 × 8"; empty on a rest day.</summary>
         public IReadOnlyList<string> Exercises { get; init; } = [];
 
+        /// <summary>The same exercises with their category, for the photo tiles.</summary>
+        public IReadOnlyList<TodayExerciseViewModel> Items { get; init; } = [];
+
         /// <summary>Whether today is a rest day of the plan.</summary>
         public bool IsRestDay => HasPlan && Exercises.Count == 0;
 

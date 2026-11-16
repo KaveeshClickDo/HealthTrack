@@ -79,5 +79,18 @@ namespace HealthTrack.Helpers
         /// <param name="name">treadmill, trail-run, kettlebell or rowing.</param>
         /// <returns>A path such as "/images/hero/treadmill.jpg".</returns>
         public static string Hero(string name) => $"/images/hero/{name}.jpg";
+
+        /// <summary>
+        /// The photo for an exercise option whose category is known only by its display name (the exercise dropdowns).
+        /// </summary>
+        /// <param name="name">The exercise's name.</param>
+        /// <param name="categoryName">The category's display name, for example "Cardio".</param>
+        /// <returns>The photo's URL.</returns>
+        public static string ForOption(string? name, string? categoryName)
+        {
+            var category = Enum.GetValues<ExerciseCategory>()
+                .FirstOrDefault(c => string.Equals(c.GetDisplayName(), categoryName, StringComparison.OrdinalIgnoreCase), ExerciseCategory.Strength);
+            return For(name, category);
+        }
     }
 }

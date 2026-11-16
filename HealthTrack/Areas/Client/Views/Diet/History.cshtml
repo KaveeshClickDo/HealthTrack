@@ -1,62 +1,75 @@
 @model PagedResult<DailyNutritionViewModel>
 @{
     ViewData["Title"] = "Meal history";
+    ViewData["Parent"] = "Nutrition";
+    ViewData["ContentClass"] = "narrow";
     var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+
+    string Macro(string name, decimal eaten, int? target) =>
+        $"{name} {eaten:0}" + (target is { } grams ? $" of {grams}" : string.Empty) + " g";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Meal history</h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" asp-action="MyPlan">My diet plan</a>
-        <a class="btn btn-primary" asp-action="LogMeal">Log a meal</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Meal history</h1>
+        <p>Each day's meals, with calories and macros against your plan's targets.</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="MyPlan">My diet plan</a>
+        <a class="btn btn-primary" asp-action="LogMeal">@Icons.Svg("plus", 18)Log a meal</a>
     </div>
 </div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            You haven't logged any meals yet. <a asp-action="LogMeal">Log your first meal</a>; each day then shows here
-            with its calories and macros against your plan's targets.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("utensils", 24)</span>
+        <p><span class="strong">You haven't logged any meals yet.</span> Log your first meal; each day then shows here with its calories and macros against your plan's targets.</p>
+        <a class="btn btn-primary" asp-action="LogMeal">Log a meal</a>
     </div>
 }
 else
 {
     @foreach (var day in Model.Items)
     {
-        <section class="card shadow-sm mb-3">
-            <div class="card-header d-flex flex-wrap justify-content-between gap-2">
-                <h2 class="h6 mb-0">@day.Date.ToString("dddd dd MMM yyyy")</h2>
-                <span class="small text-muted">@day.Meals.Count @(day.Meals.Count == 1 ? "meal" : "meals")</span>
-            </div>
-            <div class="card-body">
-                <partial name="_NutritionBars" model="day" />
-                <ul class="list-group list-group-flush mt-3">
-                    @foreach (var meal in day.Meals)
+        var percent = day.PercentOfTarget;
+        <article class="card flush">
+            <header class="day-head">
+                <div><h2 class="h2">@day.Date.ToString("dddd d MMMM")</h2><span class="small subtle">@day.Meals.Count @(day.Meals.Count == 1 ? "meal" : "meals") · @day.Date.ToString("yyyy")</span></div>
+                <div class="day-figures">
+                    <div class="between small">
+                        <span><span class="strong num">@day.CaloriesEaten.ToString("N0")</span> <span class="muted">kcal eaten</span></span>
+                        <span class="subtle">@(day.CalorieTarget is { } target ? $"Target {target:N0} kcal · {percent}%" : "No diet plan that day")</span>
+                    </div>
+                    @if (percent is { } value)
                     {
-                        <li class="list-group-item px-0">
-                            <div class="d-flex justify-content-between gap-2">
-                                <strong>@meal.MealType.GetDisplayName()</strong>
-                                <span>@meal.TotalCalories.ToString("N0") kcal</span>
-                            </div>
+                        <div class="bar thick" role="progressbar" aria-label="Calories eaten against the target" aria-valuenow="@value" aria-valuemin="0" aria-valuemax="100"><i class="@(value > 110 ? "amber" : "green")" data-progress-width="@Math.Min(value, 100)"></i></div>
+                    }
+                    <div class="xs subtle">@Macro("Protein", day.ProteinG, day.ProteinTargetG) · @Macro("Carbohydrate", day.CarbsG, day.CarbsTargetG) · @Macro("Fat", day.FatG, day.FatTargetG)</div>
+                </div>
+            </header>
+            <ul class="meal-rows">
+                @foreach (var meal in day.Meals)
+                {
+                    <li>
+                        <partial name="_MealIcon" model="meal.MealType" />
+                        <div class="body">
+                            <div class="between"><span class="strong">@meal.MealType.GetDisplayName()</span><span class="num strong">@meal.TotalCalories.ToString("N0") kcal</span></div>
+                            <span class="small muted">@string.Join(" · ", meal.Items.Select(i => $"{i.FoodName} × {i.Quantity:0.##}"))</span>
                             @if (meal.PlannedDescription is not null)
                             {
-                                <div class="small text-muted">Planned: @meal.PlannedDescription</div>
+                                <span class="xs subtle">Planned: @meal.PlannedDescription</span>
                             }
-                            <div class="small">
-                                @string.Join(", ", meal.Items.Select(i => $"{i.FoodName} × {i.Quantity:0.##} ({i.Calories:0} kcal)"))
-                            </div>
                             @if (!string.IsNullOrWhiteSpace(meal.Notes))
                             {
-                                <div class="small text-muted fst-italic">@meal.Notes</div>
+                                <span class="xs subtle line-note">@meal.Notes</span>
                             }
-                        </li>
-                    }
-                </ul>
-            </div>
-        </section>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </article>
     }
-}
 
-<partial name="_Pager" model="pager" />
+    <div class="page-pager"><partial name="_Pager" model="pager" /></div>
+}

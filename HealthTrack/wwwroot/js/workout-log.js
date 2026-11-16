@@ -1,5 +1,6 @@
 // Workout log form (today's workout and free workouts): adds and removes exercise rows, and keeps the input names
-// numbered Entries[0..n-1] so MVC model binding sees every row. Validation is re-parsed after each change.
+// numbered Entries[0..n-1] so MVC model binding sees every row. Validation is re-parsed after each change. Choosing an
+// exercise shows its photo (each option carries it in data-photo).
 (function ($) {
     'use strict';
 
@@ -9,11 +10,11 @@
             return;
         }
 
-        var body = form.querySelector('#entry-table tbody');
+        var body = form.querySelector('[data-entry-list]');
         var addButton = document.getElementById('add-entry');
 
         function rows() {
-            return body.querySelectorAll('tr.entry-row');
+            return body.querySelectorAll('.entry-row');
         }
 
         function renumber() {
@@ -46,6 +47,11 @@
 
         function clear(row) {
             row.querySelectorAll('input').forEach(function (input) {
+                // A free row's hidden Include stays true.
+                if (input.type === 'hidden' && /\.Include$/.test(input.name)) {
+                    return;
+                }
+
                 if (input.type === 'checkbox') {
                     input.checked = true;
                 } else {
@@ -61,8 +67,19 @@
                 message.textContent = '';
                 message.classList.replace('field-validation-error', 'field-validation-valid');
             });
+
+            // A copy of a planned row becomes a free row: no planned name, and the exercise dropdown in sight.
             row.querySelectorAll('[data-planned]').forEach(function (planned) {
                 planned.remove();
+            });
+            row.querySelectorAll('[data-free-label]').forEach(function (label) {
+                label.removeAttribute('hidden');
+            });
+            row.querySelectorAll('[data-exercise-select]').forEach(function (select) {
+                select.classList.remove('visually-hidden');
+            });
+            row.querySelectorAll('[data-thumb]').forEach(function (thumb) {
+                thumb.removeAttribute('src');
             });
         }
 
@@ -80,13 +97,29 @@
             });
         }
 
+        body.addEventListener('change', function (event) {
+            var select = event.target.closest('[data-exercise-select]');
+            if (!select) {
+                return;
+            }
+
+            var thumb = select.closest('.entry-row').querySelector('[data-thumb]');
+            var option = select.options[select.selectedIndex];
+            var photo = option ? option.getAttribute('data-photo') : null;
+            if (thumb && photo) {
+                thumb.setAttribute('src', photo);
+            } else if (thumb) {
+                thumb.removeAttribute('src');
+            }
+        });
+
         body.addEventListener('click', function (event) {
             var button = event.target.closest('[data-remove-row]');
             if (!button) {
                 return;
             }
 
-            var row = button.closest('tr.entry-row');
+            var row = button.closest('.entry-row');
             // The last row is cleared rather than removed, so there is always one to copy.
             if (rows().length > 1) {
                 row.remove();

@@ -1,88 +1,97 @@
 @model MeasurementViewModel
 @{
     ViewData["Title"] = "Add a measurement";
+    ViewData["Parent"] = "Measurements";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["ContentClass"] = "narrow-sm";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <p><a asp-action="Index">&larr; Measurements</a></p>
-        <h1 class="h2 mb-1">Add a measurement</h1>
-        <p class="text-muted mb-4">Weight and height are required; the rest are optional. Your BMI is worked out for you.</p>
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form asp-action="Create" method="post">
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label asp-for="MeasuredAt" class="form-label"></label>
-                            <input asp-for="MeasuredAt" class="form-control" />
-                            <span asp-validation-for="MeasuredAt" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <label asp-for="WeightKg" class="form-label"></label>
-                            <input asp-for="WeightKg" type="number" min="20" max="350" step="0.1" class="form-control" />
-                            <span asp-validation-for="WeightKg" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <label asp-for="HeightCm" class="form-label"></label>
-                            <input asp-for="HeightCm" type="number" min="50" max="250" step="0.1" class="form-control" />
-                            <span asp-validation-for="HeightCm" class="text-danger small"></span>
-                            @if (Model.HeightCm is not null)
-                            {
-                                <div class="form-text">From your last reading.</div>
-                            }
-                        </div>
-
-                        <div class="col-12"><h2 class="h6 mt-2 mb-0">Optional readings</h2></div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="BodyFatPercent" class="form-label small"></label>
-                            <input asp-for="BodyFatPercent" type="number" min="2" max="70" step="0.1" class="form-control" />
-                            <span asp-validation-for="BodyFatPercent" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="WaistCm" class="form-label small"></label>
-                            <input asp-for="WaistCm" type="number" min="30" max="250" step="0.1" class="form-control" />
-                            <span asp-validation-for="WaistCm" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="RestingHeartRate" class="form-label small"></label>
-                            <input asp-for="RestingHeartRate" type="number" min="30" max="220" class="form-control" />
-                            <span asp-validation-for="RestingHeartRate" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="BloodGlucose" class="form-label small"></label>
-                            <input asp-for="BloodGlucose" type="number" min="20" max="600" step="0.1" class="form-control" />
-                            <span asp-validation-for="BloodGlucose" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="SystolicBp" class="form-label small"></label>
-                            <input asp-for="SystolicBp" type="number" min="70" max="250" class="form-control" />
-                            <span asp-validation-for="SystolicBp" class="text-danger small"></span>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <label asp-for="DiastolicBp" class="form-label small"></label>
-                            <input asp-for="DiastolicBp" type="number" min="40" max="150" class="form-control" />
-                            <span asp-validation-for="DiastolicBp" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Notes" class="form-label small"></label>
-                            <textarea asp-for="Notes" class="form-control" rows="2" placeholder="For example, measured after a rest day"></textarea>
-                            <span asp-validation-for="Notes" class="text-danger small"></span>
-                            <div class="form-text">Notes are stored encrypted.</div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">Save measurement</button>
-                        <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)Measurements</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Add a measurement</h1>
+        <p>Weight and height are required — everything else is optional. Your BMI is worked out for you.</p>
     </div>
 </div>
+
+<form asp-action="Create" method="post" class="form-stack">
+    <div asp-validation-summary="All" role="alert"></div>
+
+    <section class="card form-stack">
+        <h2 class="h3">The basics</h2>
+        <div class="form-grid">
+            <div class="field">
+                <label asp-for="MeasuredAt" class="label"></label>
+                <input asp-for="MeasuredAt" class="input" />
+                <span asp-validation-for="MeasuredAt" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="WeightKg" class="label">Weight</label>
+                <div class="input-wrap"><input asp-for="WeightKg" type="number" min="20" max="350" step="0.1" class="input" /><span class="unit">kg</span></div>
+                <span asp-validation-for="WeightKg" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="HeightCm" class="label">Height</label>
+                <div class="input-wrap"><input asp-for="HeightCm" type="number" min="50" max="250" step="0.1" class="input" /><span class="unit">cm</span></div>
+                @if (Model.HeightCm is not null)
+                {
+                    <span class="hint">From your last reading.</span>
+                }
+                <span asp-validation-for="HeightCm" class="error-text"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="card form-stack">
+        <div>
+            <h2 class="h3">More readings <span class="subtle small meal-kcal">· optional</span></h2>
+            <p class="small subtle">Add whatever you measured today — they all show up on your progress charts.</p>
+        </div>
+        <div class="form-grid narrow-cols">
+            <div class="field">
+                <label asp-for="BodyFatPercent" class="label">Body fat</label>
+                <div class="input-wrap"><input asp-for="BodyFatPercent" type="number" min="2" max="70" step="0.1" class="input" /><span class="unit">%</span></div>
+                <span asp-validation-for="BodyFatPercent" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="WaistCm" class="label">Waist</label>
+                <div class="input-wrap"><input asp-for="WaistCm" type="number" min="30" max="250" step="0.1" class="input" /><span class="unit">cm</span></div>
+                <span asp-validation-for="WaistCm" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="RestingHeartRate" class="label">Resting heart rate</label>
+                <div class="input-wrap"><input asp-for="RestingHeartRate" type="number" min="30" max="220" class="input" /><span class="unit">bpm</span></div>
+                <span asp-validation-for="RestingHeartRate" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="BloodGlucose" class="label">Blood glucose</label>
+                <div class="input-wrap"><input asp-for="BloodGlucose" type="number" min="20" max="600" step="0.1" class="input" placeholder="–" /><span class="unit">mg/dL</span></div>
+                <span asp-validation-for="BloodGlucose" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="SystolicBp" class="label">Blood pressure — systolic</label>
+                <div class="input-wrap"><input asp-for="SystolicBp" type="number" min="70" max="250" class="input" /><span class="unit">mmHg</span></div>
+                <span asp-validation-for="SystolicBp" class="error-text"></span>
+            </div>
+            <div class="field">
+                <label asp-for="DiastolicBp" class="label">Blood pressure — diastolic</label>
+                <div class="input-wrap"><input asp-for="DiastolicBp" type="number" min="40" max="150" class="input" /><span class="unit">mmHg</span></div>
+                <span asp-validation-for="DiastolicBp" class="error-text"></span>
+            </div>
+            <div class="field full">
+                <label asp-for="Notes" class="label"></label>
+                <textarea asp-for="Notes" class="textarea" placeholder="For example, measured after a rest day"></textarea>
+                <span class="hint hrow gp-6">@Icons.Svg("lock", 14)Notes are stored encrypted.</span>
+                <span asp-validation-for="Notes" class="error-text"></span>
+            </div>
+        </div>
+    </section>
+
+    <div class="actions end">
+        <a class="btn btn-ghost" asp-action="Index">Cancel</a>
+        <button type="submit" class="btn btn-primary btn-lg">Save measurement</button>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

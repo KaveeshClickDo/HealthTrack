@@ -1,24 +1,44 @@
 @model DailyNutritionViewModel
-@* One day's eating against the plan's targets: kcal as a bar, the macros as text. *@
+@* One day's eating against the plan's targets: a ring for the calories (when there is a target) and a bar per macro. *@
 @{
     var percent = Model.PercentOfTarget;
     var over = percent > 110;
+    const double Circumference = 2 * Math.PI * 50;
+    var dash = percent is { } p ? Math.Min(p, 100) / 100.0 * Circumference : 0;
 
-    string Macro(string name, decimal eaten, int? target) =>
-        $"{name} {eaten:0} g" + (target is { } grams ? $" of {grams} g" : string.Empty);
+    string Share(decimal eaten, int? target) =>
+        target is > 0 ? Math.Min(100, (int)Math.Round(eaten * 100m / target.Value)).ToString() : "0";
 }
-<div class="d-flex justify-content-between small mb-1">
-    <span><strong>@Model.CaloriesEaten.ToString("N0")</strong> kcal eaten</span>
-    <span class="text-muted">@(Model.CalorieTarget is { } target ? "Target " + target.ToString("N0") + " kcal" : "No diet plan that day")</span>
-</div>
-@if (percent is { } value)
-{
-    <div class="progress mb-2" role="progressbar" aria-label="Calories eaten against the target" aria-valuenow="@value" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar @(over ? "bg-warning" : "bg-success")" data-progress-width="@Math.Min(value, 100)">@value%</div>
+<div class="hrow nutrition">
+    @if (percent is { } value)
+    {
+        <svg class="ring-svg" width="112" height="112" viewBox="0 0 120 120" role="img" aria-label="@Model.CaloriesEaten.ToString("N0") of @Model.CalorieTarget?.ToString("N0") kcal eaten, @value percent of the target">
+            <circle class="ring-track" cx="60" cy="60" r="50" stroke-width="12"></circle>
+            @if (dash > 0)
+            {
+                <circle class="ring-value@(over ? " over" : string.Empty)" cx="60" cy="60" r="50" stroke-width="12" stroke-linecap="round"
+                        transform="rotate(-90 60 60)" stroke-dasharray="@dash.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) @Circumference.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)"></circle>
+            }
+            <text class="ring-text" x="60" y="58">@value%</text>
+            <text class="ring-sub" x="60" y="77">of target</text>
+        </svg>
+    }
+    <div class="nutrition-figures">
+        <div>
+            <span class="kpi kpi-md">@Model.CaloriesEaten.ToString("N0")</span>
+            <span class="muted small">@(Model.CalorieTarget is { } target ? $" of {target:N0} kcal" : " kcal · no diet plan that day")</span>
+        </div>
+        <div class="vs gp-4">
+            <div class="between xs"><span class="muted">Protein</span><span class="num">@Model.ProteinG.ToString("0")@(Model.ProteinTargetG is { } pt ? $" / {pt}" : string.Empty) g</span></div>
+            <div class="bar"><i class="protein" data-progress-width="@Share(Model.ProteinG, Model.ProteinTargetG)"></i></div>
+        </div>
+        <div class="vs gp-4">
+            <div class="between xs"><span class="muted">Carbohydrate</span><span class="num">@Model.CarbsG.ToString("0")@(Model.CarbsTargetG is { } ct ? $" / {ct}" : string.Empty) g</span></div>
+            <div class="bar"><i class="carbs" data-progress-width="@Share(Model.CarbsG, Model.CarbsTargetG)"></i></div>
+        </div>
+        <div class="vs gp-4">
+            <div class="between xs"><span class="muted">Fat</span><span class="num">@Model.FatG.ToString("0")@(Model.FatTargetG is { } ft ? $" / {ft}" : string.Empty) g</span></div>
+            <div class="bar"><i class="fat" data-progress-width="@Share(Model.FatG, Model.FatTargetG)"></i></div>
+        </div>
     </div>
-}
-<div class="small text-muted">
-    @Macro("Protein", Model.ProteinG, Model.ProteinTargetG) &middot;
-    @Macro("Carbohydrate", Model.CarbsG, Model.CarbsTargetG) &middot;
-    @Macro("Fat", Model.FatG, Model.FatTargetG)
 </div>

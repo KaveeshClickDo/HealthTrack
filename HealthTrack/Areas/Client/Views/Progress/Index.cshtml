@@ -1,6 +1,7 @@
 @model ClientProgressViewModel
 @{
     ViewData["Title"] = "Progress";
+    ViewData["Parent"] = "Health";
     ViewData["LiveRange"] = true;
     var charts = new ProgressChartsViewModel
     {
@@ -13,63 +14,52 @@
         : (decimal?)null;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Progress</h1>
-        <p class="text-muted mb-0">Your weight, BMI, calories and vital signs over time.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Progress</h1>
+        <p>Your weight, BMI, calories and vital signs over time.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" asp-controller="Measurements" asp-action="Index">Measurements</a>
-        <a class="btn btn-primary" asp-controller="Measurements" asp-action="Create">Add a measurement</a>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-controller="Measurements" asp-action="Index">Measurements</a>
+        <a class="btn btn-primary" asp-controller="Measurements" asp-action="Create">@Icons.Svg("plus", 18)Add a measurement</a>
     </div>
 </div>
 
 @if (Model.Latest is null)
 {
-    <div class="alert alert-info">
-        You haven't recorded a measurement yet. <a asp-controller="Measurements" asp-action="Create" class="alert-link">Add your weight and height</a>
-        to start your weight and BMI charts; workouts and meals you log appear in the calories chart.
-    </div>
+    <div class="alert alert-info">@Icons.Svg("info", 18)<span>You haven't recorded a measurement yet. <a asp-controller="Measurements" asp-action="Create">Add your weight and height</a> to start your weight and BMI charts; workouts and meals you log appear in the calories charts.</span></div>
 }
 else
 {
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
-            <div class="card shadow-sm h-100"><div class="card-body">
-                <div class="small text-muted">Latest weight</div>
-                <div class="fs-4 fw-semibold">@Model.Latest.WeightKg.ToString("0.0") kg</div>
-                <div class="small text-muted">@Model.Latest.MeasuredAt.ToString("dd MMM yyyy")</div>
-            </div></div>
+    <div class="grid g-4">
+        <div class="card stat">
+            <span class="stat-label">Latest weight</span>
+            <span class="kpi">@Model.Latest.WeightKg.ToString("0.0")<small>kg</small></span>
+            <span class="stat-meta">@Model.Latest.MeasuredAt.ToString("dd MMM yyyy")</span>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="card shadow-sm h-100"><div class="card-body">
-                <div class="small text-muted">BMI</div>
-                <div class="fs-4 fw-semibold">@Model.Latest.Bmi.ToString("0.0")</div>
-                <span class="badge @StatusBadges.For(Model.Latest.BmiCategory)">@Model.Latest.BmiCategory.GetDisplayName()</span>
-            </div></div>
+        <div class="card stat">
+            <span class="stat-label">BMI</span>
+            <div class="hrow gap-10"><span class="kpi">@Model.Latest.Bmi.ToString("0.0")</span><span class="badge @StatusBadges.For(Model.Latest.BmiCategory)">@Model.Latest.BmiCategory.GetDisplayName()</span></div>
+            <span class="stat-meta">Healthy range 18.5–24.9</span>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="card shadow-sm h-100"><div class="card-body">
-                <div class="small text-muted">Change since your first weigh-in</div>
-                <div class="fs-4 fw-semibold">@(change is { } kg ? (kg > 0 ? "+" : string.Empty) + kg.ToString("0.0") + " kg" : "–")</div>
-                <div class="small text-muted">@(Model.First is { } start ? "Since " + start.MeasuredAt.ToString("dd MMM yyyy") : string.Empty)</div>
-            </div></div>
+        <div class="card stat">
+            <span class="stat-label">Since your first weigh-in</span>
+            <span class="kpi @(change < 0 ? "c-green" : string.Empty)">@(change is { } kg ? (kg > 0 ? "+" : kg < 0 ? "−" : string.Empty) + Math.Abs(kg).ToString("0.0") : "–")<small>kg</small></span>
+            <span class="stat-meta">@(Model.First is { } start ? "Since " + start.MeasuredAt.ToString("dd MMM yyyy") : string.Empty)</span>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="card shadow-sm h-100"><div class="card-body">
-                <div class="small text-muted">Target weight</div>
-                @if (Model.TargetWeightKg is { } target)
-                {
-                    <div class="fs-4 fw-semibold">@target.ToString("0.0") kg</div>
-                    var gap = Model.Latest.WeightKg - target;
-                    <div class="small text-muted">@(gap == 0 ? "Reached" : Math.Abs(gap).ToString("0.0") + " kg to " + (gap > 0 ? "lose" : "gain"))</div>
-                }
-                else
-                {
-                    <div class="fs-4 fw-semibold">–</div>
-                    <a class="small" asp-controller="Profile" asp-action="Edit">Set a target</a>
-                }
-            </div></div>
+        <div class="card stat">
+            <span class="stat-label">Target weight</span>
+            @if (Model.TargetWeightKg is { } target)
+            {
+                var gap = Model.Latest.WeightKg - target;
+                <span class="kpi">@target.ToString("0.0")<small>kg</small></span>
+                <span class="stat-meta">@(gap == 0 ? "Reached" : Math.Abs(gap).ToString("0.0") + " kg to " + (gap > 0 ? "lose" : "gain"))</span>
+            }
+            else
+            {
+                <span class="kpi">–</span>
+                <a class="link-sm" asp-controller="Profile" asp-action="Edit">Set a target</a>
+            }
         </div>
     </div>
 }

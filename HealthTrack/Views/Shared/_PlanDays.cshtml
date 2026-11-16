@@ -1,42 +1,57 @@
 @model IReadOnlyList<PlanDayViewModel>
-@* A plan's weekdays as cards: the client's week grid and the trainer's template preview. *@
-<div class="week-grid">
-    @foreach (var day in Model)
+@inject IClock Clock
+@* A plan's training days as cards with photos: the client's week and the trainer's template preview. On the client's
+   own plan (days with a date) each card says whether the day is done, today or still to come. *@
+<div class="grid g-3">
+    @foreach (var day in Model.Where(d => !d.IsRestDay))
     {
-        <div class="card shadow-sm h-100 @(day.IsToday ? "border-primary today-card" : string.Empty)">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h3 class="h6 mb-0">@day.DayOfWeek</h3>
-                @if (day.IsToday)
+        <section class="card vs gp-16@(day.IsToday && day.Date is not null ? " is-today" : string.Empty)">
+            <div class="card-head">
+                <h2 class="h2">@day.DayOfWeek</h2>
+                @if (day.Date is { } date)
                 {
-                    <span class="badge text-bg-primary">Today</span>
+                    if (day.IsLogged)
+                    {
+                        <span class="badge b-green">@Icons.Svg("check", 14)Done</span>
+                    }
+                    else if (day.IsToday)
+                    {
+                        <span class="badge b-accent">Today</span>
+                    }
+                    else if (date > Clock.Today)
+                    {
+                        <span class="badge">Coming up</span>
+                    }
+                    else
+                    {
+                        <span class="badge">Not logged</span>
+                    }
                 }
             </div>
-            <div class="card-body">
-                @if (day.IsRestDay)
+            <ol class="list">
+                @foreach (var line in day.Lines)
                 {
-                    <p class="text-muted small mb-0">Rest day</p>
+                    <li class="hrow items-start">
+                        <img class="thumb" src="@ExercisePhotos.For(line.ExerciseName, line.Category)" alt="" />
+                        <div class="meal-line">
+                            <div class="strong">@line.ExerciseName</div>
+                            <div class="small muted">@line.Prescription</div>
+                            @if (!string.IsNullOrEmpty(line.Notes))
+                            {
+                                <div class="xs subtle line-note">@line.Notes</div>
+                            }
+                            else if (line.Equipment is not null)
+                            {
+                                <div class="xs subtle">@line.Equipment</div>
+                            }
+                        </div>
+                    </li>
                 }
-                else
-                {
-                    <ol class="list-unstyled mb-0 plan-lines">
-                        @foreach (var line in day.Lines)
-                        {
-                            <li class="mb-2">
-                                <div class="fw-semibold">@line.ExerciseName</div>
-                                <div class="small">@line.Prescription</div>
-                                @if (line.Equipment is not null)
-                                {
-                                    <div class="small text-muted">@line.Equipment</div>
-                                }
-                                @if (!string.IsNullOrEmpty(line.Notes))
-                                {
-                                    <div class="small text-muted fst-italic">@line.Notes</div>
-                                }
-                            </li>
-                        }
-                    </ol>
-                }
-            </div>
-        </div>
+            </ol>
+            @if (day.IsToday && day.Date is not null && !day.IsLogged)
+            {
+                <a class="btn btn-primary btn-block mt-auto-btn" asp-area="Client" asp-controller="Workouts" asp-action="Today">Start today's workout</a>
+            }
+        </section>
     }
 </div>

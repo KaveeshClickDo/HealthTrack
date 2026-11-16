@@ -441,6 +441,16 @@ namespace HealthTrack.Services
                 return new WorkoutWeekViewModel { HasPlan = false };
             }
 
+            // This week, Monday to Sunday, with the days a workout was logged (the week strip on the plan page).
+            var today = _clock.Today;
+            var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+            var sunday = monday.AddDays(6);
+            var logged = (await _db.WorkoutLogs.AsNoTracking()
+                    .Where(l => l.ClientId == clientId && l.WorkoutDate >= monday && l.WorkoutDate <= sunday)
+                    .Select(l => l.WorkoutDate)
+                    .ToListAsync())
+                .ToHashSet();
+
             return new WorkoutWeekViewModel
             {
                 HasPlan = true,
@@ -450,7 +460,7 @@ namespace HealthTrack.Services
                 TrainerName = plan.Trainer.User.FullName,
                 StartDate = plan.StartDate,
                 EndDate = plan.EndDate,
-                Days = WeekOf(plan)
+                Days = WeekOf(plan, monday, logged)
             };
         }
 
@@ -743,11 +753,14 @@ namespace HealthTrack.Services
                 .Where(p => p.ClientId == clientId && p.Status == PlanStatus.Active)
                 .OrderByDescending(p => p.StartDate);
 
-        private IReadOnlyList<PlanDayViewModel> WeekOf(WorkoutPlan plan) => WorkoutText.WeekFromMonday
-            .Select(day => new PlanDayViewModel
+        // The plan's week, Monday first; with a Monday, each day also gets its date and whether a workout was logged.
+        private IReadOnlyList<PlanDayViewModel> WeekOf(WorkoutPlan plan, DateTime? monday = null, ISet<DateTime>? logged = null) => WorkoutText.WeekFromMonday
+            .Select((day, index) => new PlanDayViewModel
             {
                 DayOfWeek = day,
                 IsToday = day == _clock.Today.DayOfWeek,
+                Date = monday?.AddDays(index),
+                IsLogged = monday is { } first && logged is not null && logged.Contains(first.AddDays(index)),
                 Lines = plan.GetExercisesFor(day).Select(l => new PlanLineViewModel
                 {
                     ExerciseName = l.Exercise.Name,

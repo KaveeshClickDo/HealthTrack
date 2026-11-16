@@ -85,7 +85,7 @@
         box.querySelector('[data-chart-table]').hidden = false;
 
         charts.set(canvas, new Chart(canvas, config(series, decimals)));
-        table(box.querySelector('[data-chart-table] .table-responsive'), series, decimals, canvas.dataset.labelHeader || 'Date');
+        table(box.querySelector('[data-chart-table] .table-wrap'), series, decimals, canvas.dataset.labelHeader || 'Date');
     }
 
     // Draws every chart whose series the server embedded in data-series.
@@ -182,7 +182,7 @@
     // The same numbers as a table, for screen readers and anyone who can't tell the colours apart.
     function table(container, series, decimals, labelHeader) {
         var element = document.createElement('table');
-        element.className = 'table table-sm mb-0';
+        element.className = 'table compact';
 
         var head = element.createTHead().insertRow();
         appendCell(head, 'th', labelHeader);

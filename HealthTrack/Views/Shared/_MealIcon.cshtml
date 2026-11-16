@@ -1,0 +1,17 @@
+@model MealType
+@* The icon for a meal of the day, in its colour. *@
+@switch (Model)
+{
+    case MealType.Breakfast:
+        <span class="stat-icon" data-tone="amber">@Icons.Svg("sun", 18)</span>
+        break;
+    case MealType.Lunch:
+        <span class="stat-icon i-accent">@Icons.Svg("utensils", 18)</span>
+        break;
+    case MealType.Snack:
+        <span class="stat-icon" data-tone="rose">@Icons.Svg("apple", 18)</span>
+        break;
+    default:
+        <span class="stat-icon" data-tone="violet">@Icons.Svg("moon", 18)</span>
+        break;
+}

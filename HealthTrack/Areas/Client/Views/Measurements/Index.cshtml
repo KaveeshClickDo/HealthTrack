@@ -1,106 +1,98 @@
 @model MeasurementsPageViewModel
 @{
     ViewData["Title"] = "Measurements";
+    ViewData["Parent"] = "Health";
     var pager = new PagerViewModel(Model.Results.Page, Model.Results.TotalPages, Model.Results.TotalCount, new Dictionary<string, string?>());
+
+    // The BMI scale runs from 15 to 35: under 18.5, healthy to 24.9, overweight to 29.9, obese from 30.
+    static string ScalePosition(decimal bmi) => Math.Clamp(Math.Round((bmi - 15m) * 5m), 0m, 100m).ToString("0");
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Measurements</h1>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" asp-controller="Progress" asp-action="Index">Progress charts</a>
-        <a class="btn btn-primary" asp-action="Create">Add a measurement</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Measurements</h1>
+        <p>Your weigh-ins and vital signs. BMI is worked out for you, and your workout calories use your latest weight.</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-controller="Progress" asp-action="Index">@Icons.Svg("trending-up", 18)Progress charts</a>
+        <a class="btn btn-primary" asp-action="Create">@Icons.Svg("plus", 18)Add a measurement</a>
     </div>
 </div>
 
 @if (Model.Latest is null)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No measurements yet. <a asp-action="Create">Add your weight and height</a>: your BMI is worked out for you,
-            and your trainer's calorie suggestion and workout calories use your latest weight.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("ruler", 24)</span>
+        <p><span class="strong">No measurements yet.</span> Add your weight and height: your BMI is worked out for you, and your workout calories use your latest weight.</p>
+        <a class="btn btn-primary" asp-action="Create">Add a measurement</a>
     </div>
 }
 else
 {
     var latest = Model.Latest;
-    <div class="card shadow-sm mb-3">
-        <div class="card-body d-flex flex-wrap gap-4 align-items-center">
-            <div>
-                <div class="small text-muted">Latest BMI</div>
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-3 fw-semibold">@latest.Bmi.ToString("0.0")</span>
-                    <span class="badge @StatusBadges.For(latest.BmiCategory)">@latest.BmiCategory.GetDisplayName()</span>
+    <section class="card bmi-card">
+        <div class="bmi-main">
+            <div class="hrow gap-10"><span class="eyebrow">Latest BMI</span><span class="xs subtle">@latest.MeasuredAt.ToString("dd MMM yyyy · HH:mm")</span></div>
+            <div class="hrow gap-10"><span class="kpi kpi-xl">@latest.Bmi.ToString("0.0")</span><span class="badge @StatusBadges.For(latest.BmiCategory)">@latest.BmiCategory.GetDisplayName()</span></div>
+            <figure class="bmi-scale" aria-label="BMI @latest.Bmi.ToString("0.0") on a scale from underweight to obese">
+                <div class="bmi-bands">
+                    <span class="under"></span><span class="healthy"></span><span class="over"></span><span class="obese"></span>
+                    <span class="bmi-marker" data-progress-left="@ScalePosition(latest.Bmi)"></span>
                 </div>
-            </div>
-            <div>
-                <div class="small text-muted">Weight</div>
-                <div class="fs-5">@latest.WeightKg.ToString("0.0") kg</div>
-            </div>
-            <div>
-                <div class="small text-muted">Height</div>
-                <div class="fs-5">@latest.HeightCm.ToString("0.#") cm</div>
-            </div>
+                <div class="bmi-labels xs subtle"><span>Under</span><span>Healthy 18.5–24.9</span><span>Over 25</span><span>Obese 30+</span></div>
+            </figure>
+        </div>
+        <dl class="figures">
+            <div><dt class="small subtle">Weight</dt><dd class="h2">@latest.WeightKg.ToString("0.0") kg</dd></div>
+            <div><dt class="small subtle">Height</dt><dd class="h2">@latest.HeightCm.ToString("0.#") cm</dd></div>
             @if (Model.First is { } first && first.MeasurementId != latest.MeasurementId)
             {
                 var change = latest.WeightKg - first.WeightKg;
-                <div>
-                    <div class="small text-muted">Since @first.MeasuredAt.ToString("dd MMM yyyy")</div>
-                    <div class="fs-5">@((change > 0 ? "+" : string.Empty) + change.ToString("0.0")) kg</div>
-                </div>
+                var towardsTarget = Model.TargetWeightKg is { } goal ? (change < 0) == (goal < first.WeightKg) : change < 0;
+                <div><dt class="small subtle">Since @first.MeasuredAt.ToString("d MMM")</dt><dd class="h2 @(change != 0 && towardsTarget ? "c-green" : string.Empty)">@(change > 0 ? "+" : change < 0 ? "−" : string.Empty)@Math.Abs(change).ToString("0.0") kg</dd></div>
             }
             @if (Model.TargetWeightKg is { } target)
             {
-                <div>
-                    <div class="small text-muted">Target</div>
-                    <div class="fs-5">@target.ToString("0.0") kg</div>
-                </div>
+                <div><dt class="small subtle">Target</dt><dd class="h2">@target.ToString("0.0") kg</dd></div>
             }
-            <div class="small text-muted ms-lg-auto">
-                Measured @latest.MeasuredAt.ToString("dd MMM yyyy HH:mm").<br />
-                BMI = weight &divide; height&sup2;; under 18.5 underweight, 25 overweight, 30 obese.
-            </div>
-        </div>
-    </div>
+        </dl>
+    </section>
 
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h2">All measurements</h2><span class="small subtle">BMI = weight ÷ height²</span></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
                     <tr>
                         <th scope="col">Measured</th>
-                        <th scope="col" class="text-end">Weight (kg)</th>
-                        <th scope="col" class="text-end">BMI</th>
-                        <th scope="col" class="text-end">Body fat (%)</th>
-                        <th scope="col" class="text-end">Waist (cm)</th>
-                        <th scope="col" class="text-end">Heart rate</th>
-                        <th scope="col" class="text-end">Blood pressure</th>
-                        <th scope="col" class="text-end">Glucose</th>
+                        <th scope="col" class="r">Weight (kg)</th>
+                        <th scope="col">BMI</th>
+                        <th scope="col" class="r">Body fat (%)</th>
+                        <th scope="col" class="r">Waist (cm)</th>
+                        <th scope="col" class="r">Heart rate</th>
+                        <th scope="col" class="r">Blood pressure</th>
+                        <th scope="col" class="r">Glucose</th>
                         <th scope="col">Notes</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="num">
                     @foreach (var row in Model.Results.Items)
                     {
                         <tr>
-                            <td class="text-nowrap">@row.MeasuredAt.ToString("dd MMM yyyy HH:mm")</td>
-                            <td class="text-end">@row.WeightKg.ToString("0.0")</td>
-                            <td class="text-end">
-                                @row.Bmi.ToString("0.0")
-                                <span class="badge @StatusBadges.For(row.BmiCategory) ms-1">@row.BmiCategory.GetDisplayName()</span>
-                            </td>
-                            <td class="text-end">@row.BodyFatPercent?.ToString("0.0")</td>
-                            <td class="text-end">@row.WaistCm?.ToString("0.0")</td>
-                            <td class="text-end">@(row.RestingHeartRate is { } bpm ? bpm + " bpm" : null)</td>
-                            <td class="text-end text-nowrap">@(row.SystolicBp is { } sys && row.DiastolicBp is { } dia ? sys + "/" + dia : row.SystolicBp?.ToString())</td>
-                            <td class="text-end">@row.BloodGlucose?.ToString("0.0")</td>
-                            <td class="small">@row.Notes</td>
+                            <td class="nowrap">@row.MeasuredAt.ToString("dd MMM yyyy") <span class="sub">@row.MeasuredAt.ToString("HH:mm")</span></td>
+                            <td class="r strong">@row.WeightKg.ToString("0.0")</td>
+                            <td class="nowrap">@row.Bmi.ToString("0.0") <span class="badge ml-6 @StatusBadges.For(row.BmiCategory)">@row.BmiCategory.GetDisplayName()</span></td>
+                            <td class="r">@(row.BodyFatPercent?.ToString("0.0") ?? "–")</td>
+                            <td class="r">@(row.WaistCm?.ToString("0.0") ?? "–")</td>
+                            <td class="r nowrap">@(row.RestingHeartRate is { } bpm ? bpm + " bpm" : "–")</td>
+                            <td class="r">@(row.SystolicBp is { } sys && row.DiastolicBp is { } dia ? sys + "/" + dia : row.SystolicBp?.ToString() ?? "–")</td>
+                            <td class="r subtle">@(row.BloodGlucose?.ToString("0.0") ?? "–")</td>
+                            <td class="small muted">@(string.IsNullOrWhiteSpace(row.Notes) ? "–" : row.Notes)</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+        <partial name="_Pager" model="pager" />
+    </section>
 }
-
-<partial name="_Pager" model="pager" />

@@ -1,6 +1,7 @@
 // Meal log form: adds and removes food rows and keeps the input names numbered Items[0..n-1] so MVC model binding
 // sees every row; filters the food lists from the search box; and shows a live kcal estimate (servings × kcal per
-// serving from the option's data-kcal). The saved values are always worked out on the server.
+// serving from the option's data-kcal). The saved values are always worked out on the server. The row's icon takes
+// the chosen food group's colour (the option's data-tone).
 (function ($) {
     'use strict';
 
@@ -10,13 +11,13 @@
             return;
         }
 
-        var body = form.querySelector('#item-table tbody');
+        var body = form.querySelector('[data-item-list]');
         var total = form.querySelector('[data-meal-total]');
         var search = document.getElementById('food-search');
         var addButton = document.getElementById('add-item');
 
         function rows() {
-            return body.querySelectorAll('tr.item-row');
+            return body.querySelectorAll('.item-row');
         }
 
         function renumber() {
@@ -42,9 +43,13 @@
             }
         }
 
-        function kcalOf(row) {
+        function selectedOption(row) {
             var select = row.querySelector('[data-food-select]');
-            var option = select.options[select.selectedIndex];
+            return select.selectedIndex > 0 ? select.options[select.selectedIndex] : null;
+        }
+
+        function kcalOf(row) {
+            var option = selectedOption(row);
             var perServing = option ? Number(option.getAttribute('data-kcal')) : NaN;
             var servings = Number(row.querySelector('[data-quantity]').value);
             return isFinite(perServing) && servings > 0 ? perServing * servings : null;
@@ -55,6 +60,11 @@
             rows().forEach(function (row) {
                 var kcal = kcalOf(row);
                 row.querySelector('[data-row-kcal]').textContent = kcal === null ? '–' : Math.round(kcal).toLocaleString();
+                var option = selectedOption(row);
+                var icon = row.querySelector('[data-food-icon]');
+                if (icon) {
+                    icon.setAttribute('data-tone', option ? option.getAttribute('data-tone') || '' : '');
+                }
                 sum += kcal || 0;
             });
             total.textContent = Math.round(sum).toLocaleString();
@@ -109,7 +119,7 @@
             }
 
             // The last row is cleared rather than removed, so there is always one to copy.
-            var row = button.closest('tr.item-row');
+            var row = button.closest('.item-row');
             if (rows().length > 1) {
                 row.remove();
                 renumber();

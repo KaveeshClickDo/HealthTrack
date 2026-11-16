@@ -1,22 +1,30 @@
 @model PagedResult<WorkoutHistoryItemViewModel>
 @{
     ViewData["Title"] = "Workout history";
+    ViewData["Parent"] = "Training";
+    ViewData["ContentClass"] = "narrow";
     var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Workout history</h1>
-    <div class="d-flex gap-2">
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Workout history</h1>
+        <p>Every session you've logged, newest first — with your trainer's feedback.</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="Log">Log a free workout</a>
         <a class="btn btn-primary" asp-action="Today">Today's workout</a>
-        <a class="btn btn-outline-primary" asp-action="Log">Log a free workout</a>
     </div>
 </div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No workouts logged yet. Start with <a asp-action="Today">today's workout</a> or <a asp-action="Log">log a free one</a>.
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("history", 24)</span>
+        <p><span class="strong">No workouts logged yet.</span> Start with today's workout or log a free one.</p>
+        <div class="actions">
+            <a class="btn btn-primary" asp-action="Today">Today's workout</a>
+            <a class="btn btn-secondary" asp-action="Log">Log a free workout</a>
         </div>
     </div>
 }
@@ -24,75 +32,59 @@ else
 {
     @foreach (var session in Model.Items)
     {
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                    <div>
-                        <h2 class="h5 mb-0">@session.WorkoutDate.ToString("dddd dd MMM yyyy")</h2>
-                        <span class="text-muted small">@(session.PlanTitle ?? "Free workout")</span>
-                    </div>
-                    <div class="text-end">
-                        <div class="fw-semibold">@session.TotalMinutes min &middot; @session.TotalCalories.ToString("0") kcal</div>
-                        @if (session.PerceivedEffort is { } effort)
+        <article class="card session">
+            <div class="between wrap session-head">
+                <div><h2 class="h2">@session.WorkoutDate.ToString("dddd d MMMM")</h2><span class="small subtle">@(session.PlanTitle ?? "Free workout") · @session.WorkoutDate.ToString("yyyy")</span></div>
+                <div class="hrow wrap gp-8">
+                    <span class="badge">@Icons.Svg("clock", 14)@session.TotalMinutes min</span>
+                    <span class="badge b-orange">@Icons.Svg("flame", 14)@session.TotalCalories.ToString("0") kcal</span>
+                    @if (session.PerceivedEffort is { } effort)
+                    {
+                        <span class="badge">Effort @effort/10</span>
+                    }
+                </div>
+            </div>
+            <div class="table-wrap boxed">
+                <table class="table compact">
+                    <thead><tr><th scope="col">Exercise</th><th scope="col">Done</th><th scope="col" class="r">kcal</th></tr></thead>
+                    <tbody>
+                        @foreach (var entry in session.Entries)
                         {
-                            <div class="small text-muted">Effort @effort/10</div>
-                        }
-                    </div>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-2">
-                        <thead>
+                            var done = WorkoutText.Prescription(entry.SetsCompleted, entry.RepsCompleted, entry.DurationMinutes)
+                                + (entry.WeightKg is { } load ? $" · {load:0.#} kg" : string.Empty)
+                                + (entry.DistanceKm is { } distance ? $" · {distance:0.##} km" : string.Empty);
                             <tr>
-                                <th scope="col">Exercise</th>
-                                <th scope="col">Done</th>
-                                <th scope="col" class="text-end">kcal</th>
+                                <th scope="row"><span class="cell-person"><img class="thumb thumb-sm" src="@ExercisePhotos.For(entry.ExerciseName)" alt="" />@entry.ExerciseName</span></th>
+                                <td class="muted">@done.TrimStart(' ', '·')</td>
+                                <td class="r num">@entry.CaloriesBurned.ToString("0")</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var entry in session.Entries)
-                            {
-                                <tr>
-                                    <td>@entry.ExerciseName</td>
-                                    <td class="small">
-                                        @WorkoutText.Prescription(entry.SetsCompleted, entry.RepsCompleted, entry.DurationMinutes)
-                                        @if (entry.WeightKg is { } load)
-                                        {
-                                            <span>&middot; @load.ToString("0.#") kg</span>
-                                        }
-                                        @if (entry.DistanceKm is { } distance)
-                                        {
-                                            <span>&middot; @distance.ToString("0.##") km</span>
-                                        }
-                                    </td>
-                                    <td class="text-end">@entry.CaloriesBurned.ToString("0")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                @if (!string.IsNullOrEmpty(session.Notes))
-                {
-                    <p class="small text-muted mb-2">Your notes: @session.Notes</p>
-                }
-
-                @foreach (var feedback in session.Feedback)
-                {
-                    <div class="border-start border-3 border-primary ps-3 mt-2">
-                        <div class="small text-muted">
-                            Feedback from @feedback.TrainerName &middot; @feedback.CreatedAt.ToString("dd MMM yyyy")
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (!string.IsNullOrEmpty(session.Notes))
+            {
+                <p class="small muted"><span class="subtle">Your notes:</span> @session.Notes</p>
+            }
+            @foreach (var feedback in session.Feedback)
+            {
+                <div class="feedback-note">
+                    <span class="avatar av-sm av-trainer">@feedback.TrainerName.Initials()</span>
+                    <div class="body">
+                        <div class="hrow wrap gap-10">
+                            <span class="small strong">Feedback from @feedback.TrainerName</span>
+                            <span class="xs subtle">@feedback.CreatedAt.ToString("dd MMM yyyy")</span>
                             @if (feedback.Rating is { } rating)
                             {
-                                <span class="rating" aria-label="Rating @rating of 5">@(new string('★', rating))@(new string('☆', 5 - rating))</span>
+                                <partial name="_Stars" model="rating" />
                             }
                         </div>
-                        <p class="mb-0">@feedback.Message</p>
+                        <p class="text-prewrap">@feedback.Message</p>
                     </div>
-                }
-            </div>
-        </div>
+                </div>
+            }
+        </article>
     }
-}
 
-<partial name="_Pager" model="pager" />
+    <div class="page-pager"><partial name="_Pager" model="pager" /></div>
+}

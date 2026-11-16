@@ -43,12 +43,19 @@
         }
     });
 
-    // Progress bars: data-progress-width="40" sets the width to 40%. Set through the style property rather than a
-    // style attribute in the markup, which a Content-Security-Policy without 'unsafe-inline' styles would block.
+    // Progress bars: data-progress-width="40" sets the width to 40%, and a marker's data-progress-left="51" its left
+    // edge. Set through the style property rather than a style attribute in the markup, which a
+    // Content-Security-Policy without 'unsafe-inline' styles would block.
     document.addEventListener('DOMContentLoaded', function () {
+        function percentOf(element, attribute) {
+            return Math.max(0, Math.min(100, Number(element.getAttribute(attribute)) || 0));
+        }
+
         document.querySelectorAll('[data-progress-width]').forEach(function (bar) {
-            var percent = Math.max(0, Math.min(100, Number(bar.getAttribute('data-progress-width')) || 0));
-            bar.style.width = percent + '%';
+            bar.style.width = percentOf(bar, 'data-progress-width') + '%';
+        });
+        document.querySelectorAll('[data-progress-left]').forEach(function (marker) {
+            marker.style.left = percentOf(marker, 'data-progress-left') + '%';
         });
     });
 
@@ -181,13 +188,12 @@
                     updateBadge(data.count);
                     var last = lastShownId();
                     var newest = last;
+                    // At most a few toasts at once (only the newest on the session's first poll, since the bell and
+                    // the dashboard already list the rest), so they never cover the page.
+                    var fresh = data.items.filter(function (item) { return item.id > last; });
+                    fresh.forEach(function (item) { newest = Math.max(newest, item.id); });
                     // The poll lists newest first; toasts go up oldest first so the newest ends up nearest the corner.
-                    data.items.slice().reverse().forEach(function (item) {
-                        if (item.id > last) {
-                            showToast(item);
-                            newest = Math.max(newest, item.id);
-                        }
-                    });
+                    fresh.slice(0, last === 0 ? 1 : 3).reverse().forEach(showToast);
                     if (newest > last) {
                         rememberShown(newest);
                     }
