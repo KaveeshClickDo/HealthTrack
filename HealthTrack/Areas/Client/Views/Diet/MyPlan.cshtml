@@ -96,7 +96,7 @@ else
         <div class="week-days">
             @foreach (var day in Model.Days)
             {
-                <div class="card day-card@(day.IsToday ? " is-today" : string.Empty)">
+                <div class="card day-card @(day.IsToday ? "is-today" : string.Empty)">
                     <span class="between"><span class="strong">@day.DayOfWeek</span>@if (day.IsToday) {<span class="badge b-accent badge-xs">Today</span>}</span>
                     @if (day.Meals.Count == 0)
                     {

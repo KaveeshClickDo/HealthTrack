@@ -16,7 +16,7 @@
             <circle class="ring-track" cx="60" cy="60" r="50" stroke-width="12"></circle>
             @if (dash > 0)
             {
-                <circle class="ring-value@(over ? " over" : string.Empty)" cx="60" cy="60" r="50" stroke-width="12" stroke-linecap="round"
+                <circle class="ring-value @(over ? "over" : string.Empty)" cx="60" cy="60" r="50" stroke-width="12" stroke-linecap="round"
                         transform="rotate(-90 60 60)" stroke-dasharray="@dash.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) @Circumference.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)"></circle>
             }
             <text class="ring-text" x="60" y="58">@value%</text>

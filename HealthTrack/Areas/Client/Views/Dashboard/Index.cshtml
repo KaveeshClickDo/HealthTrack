@@ -104,7 +104,7 @@
     <div class="card stat">
         <span class="stat-label"><span class="stat-icon i-orange">@Icons.Svg("flame", 18)</span>Burned this week</span>
         <span class="kpi">@Model.CaloriesBurnedThisWeek.ToString("N0")<small>kcal</small></span>
-        <span class="stat-meta">@Model.WorkoutsThisWeek workout@(Model.WorkoutsThisWeek == 1 ? string.Empty : "s") since Monday</span>
+        <span class="stat-meta">@Model.WorkoutsThisWeek @(Model.WorkoutsThisWeek == 1 ? "workout" : "workouts") since Monday</span>
     </div>
 </div>
 

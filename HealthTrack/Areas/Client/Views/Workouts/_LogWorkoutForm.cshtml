@@ -60,7 +60,7 @@
                 var isPlanned = !string.IsNullOrEmpty(entry.Target);
                 var option = Model.ExerciseOptions.FirstOrDefault(o => o.Id == entry.ExerciseId);
                 var photo = option is null ? null : ExercisePhotos.ForOption(option.Label, option.Group);
-                <div class="entry-row@(planned ? string.Empty : " free")">
+                <div class="entry-row @(planned ? string.Empty : "free")">
                     <div class="entry-what">
                         @if (planned)
                         {
@@ -73,14 +73,14 @@
                         {
                             <input type="hidden" name="Entries[@i].Include" value="true" />
                         }
-                        <img class="thumb@(planned ? " thumb-lg" : string.Empty)" data-thumb src="@photo" alt="" />
+                        <img class="thumb @(planned ? "thumb-lg" : string.Empty)" data-thumb src="@photo" alt="" />
                         <div class="entry-name">
                             @if (isPlanned)
                             {
                                 <label class="strong" asp-for="Entries[i].ExerciseId" data-planned>@option?.Label</label>
                             }
                             <label class="xs subtle" asp-for="Entries[i].ExerciseId" data-free-label hidden="@isPlanned">Exercise</label>
-                            <select asp-for="Entries[i].ExerciseId" class="select select-sm@(isPlanned ? " visually-hidden" : string.Empty)" data-exercise-select>
+                            <select asp-for="Entries[i].ExerciseId" class="select select-sm @(isPlanned ? "visually-hidden" : string.Empty)" data-exercise-select>
                                 <option value="">Choose an exercise…</option>
                                 @foreach (var group in Model.ExerciseOptions.GroupBy(o => o.Group))
                                 {

@@ -29,7 +29,7 @@
 {
     <div class="alert alert-info">
         @Icons.Svg("clipboard", 18)
-        <span><span class="strong">Planned: </span><span class="muted">@Model.PlannedDescription@(Model.PlannedCalories is { } planned ? $" · target {planned:N0} kcal" : string.Empty)</span></span>
+        <span><span class="strong">Planned: </span><span class="muted">@(Model.PlannedDescription + (Model.PlannedCalories is { } planned ? $" · target {planned:N0} kcal" : string.Empty))</span></span>
     </div>
 }
 

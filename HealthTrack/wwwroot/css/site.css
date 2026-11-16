@@ -1117,3 +1117,39 @@ input.switch[type="checkbox"] { width: 46px; height: 28px; }
 .setting-card .head .hrow { align-items: flex-start; gap: 14px; }
 .input.w-200, .input-wrap.w-200 { max-width: 200px; }
 .alert.on-surface-2 { background: var(--surface-2); }
+
+/* Trainer dashboard */
+.adherence { display: flex; align-items: center; gap: 10px; min-width: 150px; }
+.adherence .bar { flex: 1; }
+.adherence .pct { font-weight: 650; min-width: 38px; text-align: right; }
+.cell-person .badge { margin-top: 4px; }
+.sched { display: flex; gap: 14px; align-items: flex-start; padding: 14px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface-2); }
+.time-tile { flex: none; display: flex; flex-direction: column; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(61, 219, 179, .1); border: 1px solid var(--accent-line); }
+.time-tile b { font-size: 16px; }
+.request { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 14px; border: 1px solid var(--line-2); background: var(--surface-2); }
+.request blockquote { padding-left: 14px; border-left: 2px solid var(--line-2); color: var(--text-2); font-size: 14px; }
+.decline-row { display: flex; gap: 8px; }
+.decline-row .input { flex: 1; min-width: 0; }
+.kpi.c-red { color: var(--red); }
+.foot-note { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--line); }
+.icon-btn.sm { width: 36px; height: 36px; border-radius: 10px; display: inline-grid; }
+
+/* Trainer: client cards */
+.client-card { display: flex; flex-direction: column; gap: 18px; }
+.client-card.is-inactive { border-color: rgba(255, 133, 133, .45); }
+.client-card .who { flex: 1; min-width: 0; }
+.client-card .who .small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kv.compact { grid-template-columns: 112px 1fr; gap: 10px 16px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 760px) { .kv.compact { grid-template-columns: 112px 1fr; } .kv.compact dd { margin-bottom: 0; } }
+
+/* Trainer: a client's progress */
+.client-head { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.client-head .avatar { width: 64px; height: 64px; font-size: 22px; }
+.client-head .meta { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text-2); }
+.kv.tight { grid-template-columns: 110px 1fr; gap: 8px 16px; }
+.eat-days { display: flex; flex-direction: column; }
+.eat-days > div { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.eat-days > div:first-child { padding-top: 0; }
+.eat-days > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.kv dt { font-weight: 400; } .kv dd { margin-bottom: 0; }

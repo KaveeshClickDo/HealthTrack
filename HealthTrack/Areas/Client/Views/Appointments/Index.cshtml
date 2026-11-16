@@ -32,7 +32,7 @@
                     ? "Online"
                     : "In person · " + (appointment.Location ?? (appointment.Status == AppointmentStatus.Pending ? "room given when approved" : "place to be confirmed"));
                 <li>
-                    <span class="date-tile@(index == 0 ? " is-next" : string.Empty)">
+                    <span class="date-tile @(index == 0 ? "is-next" : string.Empty)">
                         <span class="xs dow">@appointment.StartDateTime.ToString("ddd")</span>
                         <span class="h2">@appointment.StartDateTime.Day</span>
                         <span class="xs subtle">@appointment.StartDateTime.ToString("MMM")</span>

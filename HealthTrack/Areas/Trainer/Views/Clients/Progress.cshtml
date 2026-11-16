@@ -1,201 +1,186 @@
 @model TrainerClientProgressViewModel
 @{
     ViewData["Title"] = Model.ClientName + " – progress";
+    ViewData["Parent"] = "Clients";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["Crumb"] = Model.ClientName;
     ViewData["ClientId"] = Model.ClientId;
     var adherence = Model.Adherence;
+    var firstName = Model.ClientName.Split(' ')[0];
 }
 
-<p><a asp-action="Index">&larr; My clients</a></p>
-
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">@Model.ClientName</h1>
-        <p class="text-muted mb-0">
-            @Model.FitnessGoal.GetDisplayName() &middot; @Model.ActivityLevel.GetDisplayName() &middot; age @Model.Age
-            @if (Model.TargetWeightKg is { } target)
-            {
-                <span>&middot; target @target.ToString("0.0") kg</span>
-            }
-        </p>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)My clients</a>
+<div class="page-head">
+    <div class="client-head">
+        <span class="avatar av-@(Model.ClientId % 6 + 1)">@Model.ClientName.Initials()</span>
+        <div class="vs gp-4">
+            <h1 class="h1">@Model.ClientName</h1>
+            <div class="meta small">
+                <span>@Model.FitnessGoal.GetDisplayName()</span><span>· @Model.ActivityLevel.GetDisplayName()</span><span>· Age @Model.Age</span>
+                @if (Model.TargetWeightKg is { } target)
+                {
+                    <span>· Target @target.ToString("0.0") kg</span>
+                }
+            </div>
+        </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-outline-primary" asp-controller="DietPlans" asp-action="Create" asp-route-clientId="@Model.ClientId">New diet plan</a>
-        <a class="btn btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@Model.ClientId">New workout plan</a>
-        <a class="btn btn-primary" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@Model.ClientId">Give feedback</a>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-controller="DietPlans" asp-action="Create" asp-route-clientId="@Model.ClientId">@Icons.Svg("apple", 18)New diet plan</a>
+        <a class="btn btn-secondary" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@Model.ClientId">@Icons.Svg("clipboard", 18)New workout plan</a>
+        <a class="btn btn-primary" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@Model.ClientId">@Icons.Svg("message-plus", 18)Give feedback</a>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Workout adherence</div>
-            <div class="fs-3 fw-semibold">@(adherence.Percent is { } percent ? percent + "%" : "–")</div>
-            <div class="small text-muted">
-                @(adherence.ScheduledDays == 0
-                    ? "No training days were scheduled in this range."
-                    : $"{adherence.CompletedDays} of {adherence.ScheduledDays} scheduled days with a logged session")
-            </div>
-        </div></div>
+<div class="grid g-3">
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-accent">@Icons.Svg("calendar-check", 18)</span>Workout adherence</span>
+        <span class="kpi">@(adherence.Percent?.ToString() ?? "–")<small>%</small></span>
+        @if (adherence.Percent is { } percent)
+        {
+            <div class="bar" role="progressbar" aria-label="Workout adherence" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"><i class="@(percent < 50 ? "amber" : string.Empty)" data-progress-width="@percent"></i></div>
+        }
+        <span class="stat-meta">@(adherence.ScheduledDays == 0 ? "No training days were scheduled in this range." : $"{adherence.CompletedDays} of {adherence.ScheduledDays} scheduled days with a logged session")</span>
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Latest measurement</div>
-            @if (Model.Latest is { } latest)
-            {
-                <div class="fs-3 fw-semibold">@latest.WeightKg.ToString("0.0") kg</div>
-                <div class="small">
-                    BMI @latest.Bmi.ToString("0.0")
-                    <span class="badge @StatusBadges.For(latest.BmiCategory) ms-1">@latest.BmiCategory.GetDisplayName()</span>
-                    <span class="text-muted">&middot; @latest.MeasuredAt.ToString("dd MMM yyyy")</span>
-                </div>
-            }
-            else
-            {
-                <div class="text-muted">No measurements yet.</div>
-            }
-        </div></div>
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-blue">@Icons.Svg("weight", 18)</span>Latest measurement</span>
+        @if (Model.Latest is { } latest)
+        {
+            <span class="kpi">@latest.WeightKg.ToString("0.0")<small>kg</small></span>
+            <span class="stat-meta hrow wrap gp-8">BMI @latest.Bmi.ToString("0.0") <span class="badge @StatusBadges.For(latest.BmiCategory)">@latest.BmiCategory.GetDisplayName()</span> · @latest.MeasuredAt.ToString("d MMM yyyy")</span>
+        }
+        else
+        {
+            <span class="kpi">–</span>
+            <span class="stat-meta">No measurements yet.</span>
+        }
     </div>
-    <div class="col-md-4">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted mb-1">Medical details</div>
-            @if (!Model.SharesMedicalInfo)
+    <div class="card stat">
+        <div class="between">
+            <span class="stat-label"><span class="stat-icon" data-tone="violet">@Icons.Svg("lock", 18)</span>Medical details</span>
+            @if (Model.SharesMedicalInfo)
             {
-                <p class="small text-muted mb-0">@Model.ClientName has chosen not to share medical details.</p>
+                <span class="badge b-green">Shared with you</span>
             }
-            else
-            {
-                <dl class="small mb-0">
-                    <dt>Conditions</dt>
-                    <dd>@(Model.MedicalConditions ?? "None given")</dd>
-                    <dt>Allergies</dt>
-                    <dd>@(Model.Allergies ?? "None given")</dd>
-                    <dt>Medications</dt>
-                    <dd class="mb-0">@(Model.CurrentMedications ?? "None given")</dd>
-                </dl>
-            }
-        </div></div>
+        </div>
+        @if (!Model.SharesMedicalInfo)
+        {
+            <p class="small muted">@firstName has chosen not to share medical details.</p>
+        }
+        else
+        {
+            <dl class="kv tight small">
+                <dt>Conditions</dt><dd class="strong">@(Model.MedicalConditions ?? "None given")</dd>
+                <dt>Allergies</dt><dd class="strong">@(Model.Allergies ?? "None given")</dd>
+                <dt>Medications</dt><dd class="strong">@(Model.CurrentMedications ?? "None given")</dd>
+            </dl>
+        }
     </div>
 </div>
 
 <partial name="_ProgressRange" model="Model.Range" />
 <partial name="_ProgressCharts" model="Model.Charts" />
 
-<div class="row g-3 mt-1">
-    <div class="col-lg-6">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h6">Recent workouts</h2>
-                @if (Model.RecentWorkouts.Count == 0)
+<div class="grid g-2">
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h3">Recent workouts</h2></div>
+        @if (Model.RecentWorkouts.Count == 0)
+        {
+            <p class="small muted card-pad-bottom">No sessions logged yet.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table compact">
+                    <thead><tr><th scope="col">Date</th><th scope="col">Session</th><th scope="col" class="r">Min</th><th scope="col" class="r">kcal</th><th scope="col"><span class="visually-hidden">Feedback</span></th></tr></thead>
+                    <tbody>
+                        @foreach (var workout in Model.RecentWorkouts)
+                        {
+                            <tr>
+                                <td class="nowrap">@workout.WorkoutDate.ToString("dd MMM yyyy")</td>
+                                <td>@(workout.PlanTitle ?? "Free workout")<span class="sub">@workout.Exercises @(workout.Exercises == 1 ? "exercise" : "exercises")</span></td>
+                                <td class="r num">@workout.Minutes</td>
+                                <td class="r num">@workout.Calories.ToString("N0")</td>
+                                <td class="r"><a class="btn btn-secondary btn-sm" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@Model.ClientId" asp-route-workoutLogId="@workout.WorkoutLogId">Feedback</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="card vs gp-16">
+        <div class="card-head"><h2 class="h3">Recent eating</h2></div>
+        @if (Model.RecentMealDays.Count == 0)
+        {
+            <p class="small muted">No meals logged yet.</p>
+        }
+        else
+        {
+            <div class="eat-days">
+                @foreach (var day in Model.RecentMealDays)
                 {
-                    <p class="text-muted small mb-0">No sessions logged yet.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Date</th>
-                                    <th scope="col">Session</th>
-                                    <th scope="col" class="text-end">Minutes</th>
-                                    <th scope="col" class="text-end">kcal</th>
-                                    <th scope="col"><span class="visually-hidden">Feedback</span></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var workout in Model.RecentWorkouts)
-                                {
-                                    <tr>
-                                        <td class="text-nowrap">@workout.WorkoutDate.ToString("dd MMM yyyy")</td>
-                                        <td>@(workout.PlanTitle ?? "Free workout") <span class="text-muted small">&middot; @workout.Exercises ex.</span></td>
-                                        <td class="text-end">@workout.Minutes</td>
-                                        <td class="text-end">@workout.Calories.ToString("N0")</td>
-                                        <td class="text-end">
-                                            <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create"
-                                               asp-route-clientId="@Model.ClientId" asp-route-workoutLogId="@workout.WorkoutLogId">Feedback</a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                    var dayPercent = day.PercentOfTarget;
+                    <div>
+                        <div class="between small"><span class="strong">@day.Date.ToString("ddd d MMM")</span><span class="subtle">@day.Meals.Count @(day.Meals.Count == 1 ? "meal" : "meals")</span></div>
+                        <div class="between small"><span><span class="strong num">@day.CaloriesEaten.ToString("N0")</span> <span class="muted">kcal eaten</span></span><span class="subtle">@(day.CalorieTarget is { } dayTarget ? $"{dayPercent}% of {dayTarget:N0} kcal" : "No diet plan that day")</span></div>
+                        @if (dayPercent is { } value)
+                        {
+                            <div class="bar"><i class="@(value > 110 ? "amber" : string.Empty)" data-progress-width="@Math.Min(value, 100)"></i></div>
+                        }
+                        <span class="xs subtle">Protein @day.ProteinG.ToString("0")@(day.ProteinTargetG is { } p ? $" of {p}" : string.Empty) g · Carbohydrate @day.CarbsG.ToString("0")@(day.CarbsTargetG is { } c ? $" of {c}" : string.Empty) g · Fat @day.FatG.ToString("0")@(day.FatTargetG is { } f ? $" of {f}" : string.Empty) g</span>
                     </div>
                 }
             </div>
-        </section>
-    </div>
-    <div class="col-lg-6">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h6">Recent eating</h2>
-                @if (Model.RecentMealDays.Count == 0)
-                {
-                    <p class="text-muted small mb-0">No meals logged yet.</p>
-                }
-                else
-                {
-                    @foreach (var day in Model.RecentMealDays)
-                    {
-                        <div class="mb-3">
-                            <div class="small fw-semibold mb-1">@day.Date.ToString("dd MMM yyyy") &middot; @day.Meals.Count @(day.Meals.Count == 1 ? "meal" : "meals")</div>
-                            <partial name="_NutritionBars" model="day" />
-                        </div>
-                    }
-                }
-            </div>
-        </section>
-    </div>
-    <div class="col-12">
-        <section class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6">Recent measurements</h2>
-                @if (Model.RecentMeasurements.Count == 0)
-                {
-                    <p class="text-muted small mb-0">No measurements yet.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Measured</th>
-                                    <th scope="col" class="text-end">Weight (kg)</th>
-                                    <th scope="col" class="text-end">BMI</th>
-                                    <th scope="col" class="text-end">Body fat (%)</th>
-                                    <th scope="col" class="text-end">Waist (cm)</th>
-                                    <th scope="col" class="text-end">Heart rate</th>
-                                    <th scope="col" class="text-end">Blood pressure</th>
-                                    @if (Model.SharesMedicalInfo)
-                                    {
-                                        <th scope="col">Notes</th>
-                                    }
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var row in Model.RecentMeasurements)
-                                {
-                                    <tr>
-                                        <td class="text-nowrap">@row.MeasuredAt.ToString("dd MMM yyyy HH:mm")</td>
-                                        <td class="text-end">@row.WeightKg.ToString("0.0")</td>
-                                        <td class="text-end">@row.Bmi.ToString("0.0")</td>
-                                        <td class="text-end">@row.BodyFatPercent?.ToString("0.0")</td>
-                                        <td class="text-end">@row.WaistCm?.ToString("0.0")</td>
-                                        <td class="text-end">@(row.RestingHeartRate is { } bpm ? bpm + " bpm" : null)</td>
-                                        <td class="text-end text-nowrap">@(row.SystolicBp is { } sys && row.DiastolicBp is { } dia ? sys + "/" + dia : row.SystolicBp?.ToString())</td>
-                                        @if (Model.SharesMedicalInfo)
-                                        {
-                                            <td class="small">@row.Notes</td>
-                                        }
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </section>
-    </div>
+        }
+    </section>
 </div>
+
+<section class="card flush">
+    <div class="card-head pad">
+        <h2 class="h3">Recent measurements</h2>
+        <span class="small subtle">@(Model.SharesMedicalInfo ? $"Notes are visible because {firstName} shares their medical details" : "Notes are hidden: medical details aren't shared")</span>
+    </div>
+    @if (Model.RecentMeasurements.Count == 0)
+    {
+        <p class="small muted card-pad-bottom">No measurements yet.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Measured</th><th scope="col" class="r">Weight (kg)</th><th scope="col" class="r">BMI</th><th scope="col" class="r">Body fat (%)</th>
+                        <th scope="col" class="r">Waist (cm)</th><th scope="col" class="r">Heart rate</th><th scope="col" class="r">Blood pressure</th>
+                        @if (Model.SharesMedicalInfo)
+                        {
+                            <th scope="col">Notes</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody class="num">
+                    @foreach (var row in Model.RecentMeasurements)
+                    {
+                        <tr>
+                            <td class="nowrap">@row.MeasuredAt.ToString("dd MMM yyyy")<span class="sub">@row.MeasuredAt.ToString("HH:mm")</span></td>
+                            <td class="r">@row.WeightKg.ToString("0.0")</td>
+                            <td class="r">@row.Bmi.ToString("0.0")</td>
+                            <td class="r">@(row.BodyFatPercent?.ToString("0.0") ?? "–")</td>
+                            <td class="r">@(row.WaistCm?.ToString("0.0") ?? "–")</td>
+                            <td class="r nowrap">@(row.RestingHeartRate is { } bpm ? bpm + " bpm" : "–")</td>
+                            <td class="r">@(row.SystolicBp is { } sys && row.DiastolicBp is { } dia ? sys + "/" + dia : row.SystolicBp?.ToString() ?? "–")</td>
+                            @if (Model.SharesMedicalInfo)
+                            {
+                                <td class="small muted">@(string.IsNullOrWhiteSpace(row.Notes) ? "–" : row.Notes)</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
 
 @section Scripts {
     <script src="~/lib/chart.js/chart.umd.js"></script>

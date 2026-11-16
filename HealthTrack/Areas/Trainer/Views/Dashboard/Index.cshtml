@@ -2,175 +2,183 @@
 @{
     ViewData["Title"] = "Dashboard";
     var dashboardUrl = Url.Action("Index", "Dashboard");
+    var onPlan = Model.Clients.Count(c => c.ActivePlanTitle is not null);
+    var inactive = Model.Clients.Where(c => c.IsInactive).ToList();
+    var firstRequest = Model.PendingRequests.FirstOrDefault();
+    var next = Model.TodaysSchedule.FirstOrDefault();
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Welcome back, @Model.FirstName</h1>
-        <p class="text-muted mb-0">Your clients and schedule for @Model.Today.ToString("dddd dd MMM yyyy").</p>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">@Model.Today.ToString("dddd d MMMM")</span>
+        <h1 class="h1 page-title">Welcome back, @Model.FirstName</h1>
+        <p>How your clients are doing this week, and what's on today.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-        <a class="btn btn-primary" asp-controller="WorkoutPlans" asp-action="Create">Create a plan</a>
-        <a class="btn btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Templates">Assign a routine</a>
-        <a class="btn btn-outline-primary" asp-controller="Feedback" asp-action="Create">Give feedback</a>
-    </div>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Active clients</div>
-            <div class="fs-3 fw-semibold">@Model.Clients.Count</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Inactive 7+ days</div>
-            <div class="fs-3 fw-semibold @(Model.InactiveClients > 0 ? "text-danger" : string.Empty)">@Model.InactiveClients</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Requests to answer</div>
-            <div class="fs-3 fw-semibold">@Model.PendingRequests.Count</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Appointments today</div>
-            <div class="fs-3 fw-semibold">@Model.TodaysSchedule.Count</div>
-        </div></div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-controller="Feedback" asp-action="Create">@Icons.Svg("message-plus", 18)Give feedback</a>
+        <a class="btn btn-secondary" asp-controller="WorkoutPlans" asp-action="Templates">@Icons.Svg("copy", 18)Assign a routine</a>
+        <a class="btn btn-primary" asp-controller="WorkoutPlans" asp-action="Create">@Icons.Svg("plus", 18)Create a plan</a>
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-xl-8">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">My clients</h2>
-                    <a class="small" asp-controller="Clients" asp-action="Index">All clients</a>
-                </div>
-                @if (Model.Clients.Count == 0)
-                {
-                    <p class="text-muted mb-0">No clients are assigned to you yet. An administrator assigns them; you'll get a notification.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Client</th>
-                                    <th scope="col">Last activity</th>
-                                    <th scope="col">Adherence (7 days)</th>
-                                    <th scope="col">Weight change</th>
-                                    <th scope="col"><span class="visually-hidden">Actions</span></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var client in Model.Clients)
-                                {
-                                    <tr>
-                                        <td>
-                                            @client.FullName
+<div class="grid g-4">
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-blue">@Icons.Svg("users", 18)</span>Active clients</span>
+        <span class="kpi">@Model.Clients.Count</span>
+        <span class="stat-meta">@(Model.Clients.Count == 0 ? "None assigned yet" : onPlan == Model.Clients.Count ? "All on a workout plan" : $"{onPlan} on a workout plan")</span>
+    </div>
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon" data-tone="rose">@Icons.Svg("user-x", 18)</span>Inactive 7+ days</span>
+        <span class="kpi @(inactive.Count > 0 ? "c-red" : string.Empty)">@inactive.Count</span>
+        <span class="stat-meta">@(inactive.Count == 0 ? "Everyone has logged something this week" : string.Join(", ", inactive.Take(2).Select(c => c.FullName)) + (inactive.Count == 1 ? $" · nothing logged for {inactive[0].DaysInactive} days" : string.Empty))</span>
+    </div>
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon" data-tone="amber">@Icons.Svg("inbox", 18)</span>Requests to answer</span>
+        <span class="kpi">@Model.PendingRequests.Count</span>
+        <span class="stat-meta">@(firstRequest is null ? "Nothing waiting" : $"{firstRequest.ClientName} · {firstRequest.StartDateTime:ddd d MMM}")</span>
+    </div>
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-green">@Icons.Svg("calendar-check", 18)</span>Appointments today</span>
+        <span class="kpi">@Model.TodaysSchedule.Count</span>
+        <span class="stat-meta">@(next is null ? "Nothing booked today" : $"{next.StartDateTime:HH:mm} · {next.ClientName}" + (next.Location is { } place && next.Mode == AppointmentMode.InPerson ? $", {place}" : string.Empty))</span>
+    </div>
+</div>
+
+<div class="split">
+    <section class="main card flush">
+        <div class="card-head pad">
+            <div class="vs gp-4"><h2 class="h2">My clients</h2><span class="small subtle">Adherence covers the last 7 days</span></div>
+            <a class="link-sm" asp-controller="Clients" asp-action="Index">All clients @Icons.Svg("chevron-right", 14)</a>
+        </div>
+        @if (Model.Clients.Count == 0)
+        {
+            <div class="empty sm">
+                <span class="icon">@Icons.Svg("users", 24)</span>
+                <p>No clients are assigned to you yet. An administrator assigns them, and you'll get a notification.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table">
+                    <thead><tr><th scope="col">Client</th><th scope="col">Last activity</th><th scope="col">Adherence</th><th scope="col">Weight change</th><th scope="col"><span class="visually-hidden">Progress</span></th></tr></thead>
+                    <tbody>
+                        @foreach (var client in Model.Clients)
+                        {
+                            <tr>
+                                <th scope="row">
+                                    <span class="cell-person">
+                                        <span class="avatar av-sm av-@(client.ClientId % 6 + 1)">@client.FullName.Initials()</span>
+                                        <span>
+                                            <span class="strong d-block">@client.FullName</span>
                                             @if (client.IsInactive)
                                             {
-                                                <span class="badge text-bg-danger ms-1">Inactive @client.DaysInactive days</span>
+                                                <span class="badge b-red">Inactive @client.DaysInactive days</span>
                                             }
-                                            <div class="small text-muted">@(client.ActivePlanTitle ?? "No active plan")</div>
-                                        </td>
-                                        <td class="text-nowrap">@(client.LastActiveDay?.ToString("dd MMM yyyy") ?? "Nothing logged")</td>
-                                        <td>
-                                            @if (client.AdherencePercent is { } adherence)
-                                            {
-                                                <div class="progress" role="progressbar" aria-label="Adherence" aria-valuenow="@adherence" aria-valuemin="0" aria-valuemax="100">
-                                                    <div class="progress-bar @(adherence < 50 ? "bg-warning" : "bg-success")" data-progress-width="@adherence">@adherence%</div>
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="text-muted small">Nothing scheduled</span>
-                                            }
-                                        </td>
-                                        <td class="text-nowrap">@(client.WeightChangeKg is { } kg ? (kg > 0 ? "+" : string.Empty) + kg.ToString("0.0") + " kg" : "–")</td>
-                                        <td class="text-end">
-                                            <a class="btn btn-sm btn-outline-primary" asp-controller="Clients" asp-action="Progress" asp-route-clientId="@client.ClientId">Progress</a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </section>
-    </div>
-
-    <div class="col-xl-4">
-        <section class="card shadow-sm mb-3">
-            <div class="card-body">
-                <h2 class="h5">Today's schedule</h2>
-                @if (Model.TodaysSchedule.Count == 0)
-                {
-                    <p class="text-muted mb-0">No appointments today. <a asp-controller="Availability" asp-action="Index">Check your availability</a> so clients can book you.</p>
-                }
-                else
-                {
-                    <ul class="list-unstyled mb-0">
-                        @foreach (var appointment in Model.TodaysSchedule)
-                        {
-                            <li class="mb-2">
-                                <a asp-controller="Appointments" asp-action="Details" asp-route-id="@appointment.AppointmentId">
-                                    @appointment.StartDateTime.ToString("HH:mm")&ndash;@appointment.EndDateTime.ToString("HH:mm") @appointment.ClientName
-                                </a>
-                                <span class="badge @StatusBadges.For(appointment.Status) ms-1">@appointment.Status.GetDisplayName()</span>
-                                <div class="small text-muted">@appointment.AppointmentType.GetDisplayName() · @appointment.Mode.GetDisplayName()</div>
-                            </li>
+                                            <span class="sub">@(client.ActivePlanTitle ?? "No active plan")</span>
+                                        </span>
+                                    </span>
+                                </th>
+                                <td class="nowrap">
+                                    @if (client.LastActiveDay is { } last)
+                                    {
+                                        @DateLabels.Day(last, Model.Today)<span class="sub">@last.ToString("dd MMM yyyy")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="subtle">Nothing logged</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (client.AdherencePercent is { } adherence)
+                                    {
+                                        <div class="adherence" role="progressbar" aria-label="Adherence" aria-valuenow="@adherence" aria-valuemin="0" aria-valuemax="100">
+                                            <div class="bar"><i class="@(adherence < 50 ? "amber" : string.Empty)" data-progress-width="@adherence"></i></div>
+                                            <span class="pct num">@adherence%</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="subtle small">Nothing scheduled</span>
+                                    }
+                                </td>
+                                <td class="nowrap num">@(client.WeightChangeKg is { } kg ? (kg > 0 ? "+" : kg < 0 ? "−" : string.Empty) + Math.Abs(kg).ToString("0.0") + " kg" : "–")</td>
+                                <td class="r"><a class="icon-btn sm" asp-controller="Clients" asp-action="Progress" asp-route-clientId="@client.ClientId" title="Progress" aria-label="Progress of @client.FullName">@Icons.Svg("trending-up", 18)</a></td>
+                            </tr>
                         }
-                    </ul>
-                }
+                    </tbody>
+                </table>
             </div>
+            @if (inactive.FirstOrDefault() is { } quiet)
+            {
+                <div class="foot-note">
+                    <span class="small muted">@quiet.FullName.Split(' ')[0] hasn't logged anything @(quiet.LastActiveDay is { } day ? "since " + day.ToString("d MMM") : "yet") — a quick message might help.</span>
+                    <a class="link-sm" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@quiet.ClientId">Send feedback @Icons.Svg("chevron-right", 14)</a>
+                </div>
+            }
+        }
+    </section>
+
+    <div class="aside">
+        <section class="card vs gp-16">
+            <div class="card-head"><h2 class="h3">Today's schedule</h2><a class="link-sm" asp-controller="Appointments" asp-action="Index">Appointments @Icons.Svg("chevron-right", 14)</a></div>
+            @if (Model.TodaysSchedule.Count == 0)
+            {
+                <p class="small muted">No appointments today. <a asp-controller="Availability" asp-action="Index">Check your availability</a> so clients can book you.</p>
+            }
+            else
+            {
+                @foreach (var appointment in Model.TodaysSchedule)
+                {
+                    <a class="sched row-link" asp-controller="Appointments" asp-action="Details" asp-route-id="@appointment.AppointmentId">
+                        <span class="time-tile"><b class="num">@appointment.StartDateTime.ToString("HH:mm")</b><span class="xs subtle">@appointment.EndDateTime.ToString("HH:mm")</span></span>
+                        <span class="grow vs gp-4">
+                            <span class="between gp-8"><span class="strong">@appointment.ClientName</span><span class="badge @StatusBadges.For(appointment.Status)"><span class="dot"></span>@appointment.Status.GetDisplayName()</span></span>
+                            <span class="small muted">@appointment.AppointmentType.GetDisplayName() · @appointment.Mode.GetDisplayName()@(appointment.Location is { } where && appointment.Mode == AppointmentMode.InPerson ? " · " + where : string.Empty)</span>
+                        </span>
+                    </a>
+                }
+            }
         </section>
 
-        <section class="card shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">Requests to answer</h2>
-                    <a class="small" asp-controller="Appointments" asp-action="Index">All appointments</a>
-                </div>
-                @if (Model.PendingRequests.Count == 0)
-                {
-                    <p class="text-muted mb-0">No requests waiting.</p>
-                }
-                else
-                {
-                    @foreach (var request in Model.PendingRequests)
-                    {
-                        <div class="border rounded p-2 mb-2">
-                            <a asp-controller="Appointments" asp-action="Details" asp-route-id="@request.AppointmentId">
-                                @request.StartDateTime.ToString("ddd dd MMM yyyy") at @request.StartDateTime.ToString("HH:mm")
-                            </a>
-                            <div class="small text-muted mb-2">@request.ClientName · @request.AppointmentType.GetDisplayName() · @request.DurationMinutes minutes</div>
-                            <div class="d-flex flex-wrap gap-2 align-items-start">
-                                <form asp-controller="Appointments" asp-action="Approve" asp-route-id="@request.AppointmentId" method="post">
-                                    <input type="hidden" name="RowVersion" value="@request.RowVersion" />
-                                    <input type="hidden" name="ReturnUrl" value="@dashboardUrl" />
-                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                                </form>
-                                <form asp-controller="Appointments" asp-action="Reject" asp-route-id="@request.AppointmentId" method="post"
-                                      class="d-flex gap-1 flex-grow-1" data-confirm="Decline this request? The client will see your reason.">
-                                    <input type="hidden" name="RowVersion" value="@request.RowVersion" />
-                                    <input type="hidden" name="ReturnUrl" value="@dashboardUrl" />
-                                    <label class="visually-hidden" for="reason-@request.AppointmentId">Reason for declining</label>
-                                    <input id="reason-@request.AppointmentId" name="Reason" class="form-control form-control-sm" required maxlength="500" placeholder="Reason" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
-                                </form>
-                            </div>
+        <section class="card vs gp-16">
+            <div class="card-head"><h2 class="h3">Requests to answer</h2>@if (Model.PendingRequests.Count > 0) {<span class="badge b-amber">@Model.PendingRequests.Count waiting</span>}</div>
+            @if (Model.PendingRequests.Count == 0)
+            {
+                <p class="small muted">No requests waiting.</p>
+            }
+            @foreach (var request in Model.PendingRequests)
+            {
+                <div class="request">
+                    <div class="hrow items-start">
+                        <span class="avatar av-sm av-client">@request.ClientName.Initials()</span>
+                        <div>
+                            <a class="strong row-link" asp-controller="Appointments" asp-action="Details" asp-route-id="@request.AppointmentId">@request.StartDateTime.ToString("ddd d MMM yyyy 'at' HH:mm")</a>
+                            <div class="small muted">@request.ClientName · @request.AppointmentType.GetDisplayName() · @request.DurationMinutes minutes</div>
                         </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(request.ClientReason))
+                    {
+                        <blockquote>“@request.ClientReason”</blockquote>
                     }
-                }
-            </div>
+                    <div class="hrow wrap gp-8">
+                        <form class="inline" asp-controller="Appointments" asp-action="Approve" asp-route-id="@request.AppointmentId" method="post">
+                            <input type="hidden" name="RowVersion" value="@request.RowVersion" />
+                            <input type="hidden" name="ReturnUrl" value="@dashboardUrl" />
+                            <button type="submit" class="btn btn-success btn-sm">@Icons.Svg("check", 16)Approve</button>
+                        </form>
+                        <a class="btn btn-ghost btn-sm" asp-controller="Appointments" asp-action="Details" asp-route-id="@request.AppointmentId">Review</a>
+                    </div>
+                    <form class="decline-row" asp-controller="Appointments" asp-action="Reject" asp-route-id="@request.AppointmentId" method="post"
+                          data-confirm="Decline this request? The client will see your reason.">
+                        <input type="hidden" name="RowVersion" value="@request.RowVersion" />
+                        <input type="hidden" name="ReturnUrl" value="@dashboardUrl" />
+                        <label class="visually-hidden" for="reason-@request.AppointmentId">Reason for declining</label>
+                        <input id="reason-@request.AppointmentId" name="Reason" class="input input-sm" required maxlength="500" placeholder="Reason, if you decline" />
+                        <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+                    </form>
+                </div>
+            }
         </section>
     </div>
 </div>

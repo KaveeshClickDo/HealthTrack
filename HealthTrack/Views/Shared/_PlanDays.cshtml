@@ -5,7 +5,7 @@
 <div class="grid g-3">
     @foreach (var day in Model.Where(d => !d.IsRestDay))
     {
-        <section class="card vs gp-16@(day.IsToday && day.Date is not null ? " is-today" : string.Empty)">
+        <section class="card vs gp-16 @(day.IsToday && day.Date is not null ? "is-today" : string.Empty)">
             <div class="card-head">
                 <h2 class="h2">@day.DayOfWeek</h2>
                 @if (day.Date is { } date)

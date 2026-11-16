@@ -74,7 +74,7 @@ else
                     }
                     else
                     {
-                        <span class="xs status @(day.IsToday ? "accent" : "muted")">@day.Lines.Count exercise@(day.Lines.Count == 1 ? string.Empty : "s")</span>
+                        <span class="xs status @(day.IsToday ? "accent" : "muted")">@day.Lines.Count @(day.Lines.Count == 1 ? "exercise" : "exercises")</span>
                     }
                 </li>
             }

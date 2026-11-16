@@ -92,8 +92,8 @@
                     {
                         <a class="@Active("Trainer", "Dashboard")" asp-area="Trainer" asp-controller="Dashboard" asp-action="Index">@Icons.Svg("dashboard")Dashboard</a>
                         <p class="ht-nav-label">Coaching</p>
-                        <a class="@Active("Trainer", "Clients")" asp-area="Trainer" asp-controller="Clients" asp-action="Index">@Icons.Svg("users")Clients@if (counts.ActiveClients > 0) {<span class="count">@counts.ActiveClients</span>}</a>
-                        <a class="@Active("Trainer", "Appointments")" asp-area="Trainer" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar")Appointments@if (counts.PendingRequests > 0) {<span class="count hot" title="Requests to answer">@counts.PendingRequests</span>}</a>
+                        <a class="@Active("Trainer", "Clients")" asp-area="Trainer" asp-controller="Clients" asp-action="Index">@Icons.Svg("users")<span>Clients</span>@if (counts.ActiveClients > 0) {<span class="count">@counts.ActiveClients</span>}</a>
+                        <a class="@Active("Trainer", "Appointments")" asp-area="Trainer" asp-controller="Appointments" asp-action="Index">@Icons.Svg("calendar")<span>Appointments</span>@if (counts.PendingRequests > 0) {<span class="count hot" title="Requests to answer">@counts.PendingRequests</span>}</a>
                         <a class="@Active("Trainer", "Availability")" asp-area="Trainer" asp-controller="Availability" asp-action="Index">@Icons.Svg("clock")Availability</a>
                         <a class="@Active("Trainer", "Feedback")" asp-area="Trainer" asp-controller="Feedback" asp-action="Create">@Icons.Svg("message-plus")Give feedback</a>
                         <p class="ht-nav-label">Planning</p>
@@ -110,7 +110,7 @@
                         <a class="@Active("Admin", "Dashboard")" asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@Icons.Svg("dashboard")Dashboard</a>
                         <p class="ht-nav-label">People</p>
                         <a class="@Active("Admin", "Users")" asp-area="Admin" asp-controller="Users" asp-action="Index">@Icons.Svg("users")Users</a>
-                        <a class="@Active("Admin", "TrainerApprovals")" asp-area="Admin" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check")Trainer approvals@if (counts.PendingApprovals > 0) {<span class="count hot">@counts.PendingApprovals</span>}</a>
+                        <a class="@Active("Admin", "TrainerApprovals")" asp-area="Admin" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check")<span>Trainer approvals</span>@if (counts.PendingApprovals > 0) {<span class="count hot">@counts.PendingApprovals</span>}</a>
                         <a class="@Active("Admin", "Assignments")" asp-area="Admin" asp-controller="Assignments" asp-action="Index">@Icons.Svg("link")Assignments</a>
                         <p class="ht-nav-label">Library</p>
                         <a class="@Active("Admin", "Library", "Exercises", "EditExercise")" asp-area="Admin" asp-controller="Library" asp-action="Exercises">@Icons.Svg("dumbbell")Exercises</a>

@@ -1,72 +1,79 @@
 @model IReadOnlyList<TrainerClientViewModel>
+@inject IClock Clock
 @{
     ViewData["Title"] = "My clients";
+    ViewData["Parent"] = "Coaching";
+    ViewData["Crumb"] = "Clients";
 }
 
-<h1 class="h2 mb-1">My clients</h1>
-<p class="text-muted mb-3">The clients an administrator has assigned to you. Adherence covers the last 7 days; clients with nothing logged for 7 days or more are flagged.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">My clients</h1>
+        <p>The clients an administrator has assigned to you. Adherence covers the last 7 days, and anyone with nothing logged for 7 days or more is flagged.</p>
+    </div>
+    <div class="actions"><a class="btn btn-secondary" asp-controller="WorkoutPlans" asp-action="Templates">@Icons.Svg("copy", 18)Routine templates</a></div>
+</div>
 
 @if (Model.Count == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No clients are assigned to you yet. An administrator assigns clients; you'll get a notification when they do.
-            Meanwhile you can build <a asp-controller="WorkoutPlans" asp-action="Templates">routine templates</a>.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("users", 24)</span>
+        <p><span class="strong">No clients are assigned to you yet.</span> An administrator assigns clients, and you'll get a notification when they do. Meanwhile you can build routine templates.</p>
+        <a class="btn btn-secondary" asp-controller="WorkoutPlans" asp-action="Templates">Routine templates</a>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Client</th>
-                        <th scope="col">Goal</th>
-                        <th scope="col">Assigned since</th>
-                        <th scope="col">Last activity</th>
-                        <th scope="col">Adherence (7 days)</th>
-                        <th scope="col">Workout plan</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var client in Model)
+    <div class="grid g-3">
+        @foreach (var client in Model)
+        {
+            <article class="card client-card @(client.IsInactive ? "is-inactive" : string.Empty)">
+                <div class="hrow items-start gp-14">
+                    <span class="avatar av-@(client.ClientId % 6 + 1)">@client.FullName.Initials()</span>
+                    <div class="who vs gp-4">
+                        <h2 class="h3">@client.FullName</h2>
+                        <span class="small subtle">@client.Email</span>
+                        @if (client.IsInactive)
+                        {
+                            <span class="badge b-red self-start">@Icons.Svg("alert-circle", 14)Inactive @client.DaysInactive days</span>
+                        }
+                        else
+                        {
+                            <span class="badge b-green self-start"><span class="dot"></span>Active</span>
+                        }
+                    </div>
+                </div>
+                <dl class="kv compact">
+                    <dt>Goal</dt><dd>@client.FitnessGoal.GetDisplayName() <span class="subtle">· @client.ActivityLevel.GetDisplayName()</span></dd>
+                    <dt>Workout plan</dt><dd>@(client.ActivePlanTitle ?? "No active plan")</dd>
+                    <dt>Client since</dt><dd>@client.AssignedSince.ToString("d MMM yyyy")</dd>
+                    <dt>Last activity</dt>
+                    <dd>
+                        @(client.LastActiveDay is { } last ? DateLabels.Day(last, Clock.Today) : "Nothing logged")
+                        <span class="subtle">· @(client.LastWorkoutDate is { } workout ? "last workout " + workout.ToString("d MMM") : "no workout yet")</span>
+                    </dd>
+                </dl>
+                <div class="vs gp-8">
+                    <div class="between small"><span class="muted">Adherence, last 7 days</span><span class="num strong @(client.AdherencePercent is < 50 ? "c-amber" : string.Empty)">@(client.AdherencePercent is { } adherence ? adherence + "%" : "–")</span></div>
+                    @if (client.AdherencePercent is { } percent)
                     {
-                        <tr>
-                            <td>
-                                @client.FullName
-                                <div class="small text-muted">@client.Email</div>
-                            </td>
-                            <td>
-                                @client.FitnessGoal.GetDisplayName()
-                                <div class="small text-muted">@client.ActivityLevel.GetDisplayName()</div>
-                            </td>
-                            <td class="text-nowrap">@client.AssignedSince.ToString("dd MMM yyyy")</td>
-                            <td class="text-nowrap">
-                                @(client.LastActiveDay?.ToString("dd MMM yyyy") ?? "Nothing logged")
-                                @if (client.IsInactive)
-                                {
-                                    <div><span class="badge text-bg-danger">Inactive @client.DaysInactive days</span></div>
-                                }
-                                <div class="small text-muted">Last workout: @(client.LastWorkoutDate?.ToString("dd MMM yyyy") ?? "none yet")</div>
-                            </td>
-                            <td>@(client.AdherencePercent is { } adherence ? adherence + "%" : "Nothing scheduled")</td>
-                            <td>@(client.ActivePlanTitle ?? "No active plan")</td>
-                            <td class="text-end">
-                                <div class="d-flex flex-wrap gap-1 justify-content-end">
-                                    <a class="btn btn-sm btn-primary" asp-action="Progress" asp-route-clientId="@client.ClientId">Progress</a>
-                                    <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@client.ClientId">New plan</a>
-                                    <a class="btn btn-sm btn-outline-primary" asp-controller="DietPlans" asp-action="Create" asp-route-clientId="@client.ClientId">Diet plan</a>
-                                    <a class="btn btn-sm btn-outline-primary" asp-controller="WorkoutPlans" asp-action="Templates" asp-route-clientId="@client.ClientId">Assign template</a>
-                                    <a class="btn btn-sm btn-outline-primary" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@client.ClientId">Give feedback</a>
-                                </div>
-                            </td>
-                        </tr>
+                        <div class="bar thick" role="progressbar" aria-label="Adherence" aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100"><i class="@(percent < 50 ? "amber" : string.Empty)" data-progress-width="@percent"></i></div>
                     }
-                </tbody>
-            </table>
-        </div>
+                    else
+                    {
+                        <span class="xs subtle">Nothing scheduled this week.</span>
+                    }
+                </div>
+                <div class="divider"></div>
+                <a class="btn btn-primary btn-block" asp-action="Progress" asp-route-clientId="@client.ClientId">@Icons.Svg("trending-up", 18)View progress</a>
+                <div class="two-col">
+                    <a class="btn btn-ghost btn-sm" asp-controller="WorkoutPlans" asp-action="Create" asp-route-clientId="@client.ClientId">New plan</a>
+                    <a class="btn btn-ghost btn-sm" asp-controller="DietPlans" asp-action="Create" asp-route-clientId="@client.ClientId">Diet plan</a>
+                    <a class="btn btn-ghost btn-sm" asp-controller="WorkoutPlans" asp-action="Templates" asp-route-clientId="@client.ClientId">Assign template</a>
+                    <a class="btn btn-ghost btn-sm" asp-controller="Feedback" asp-action="Create" asp-route-clientId="@client.ClientId">Give feedback</a>
+                </div>
+            </article>
+        }
     </div>
+    <p class="small subtle hrow gp-8">@Icons.Svg("info", 16)New clients are assigned by an administrator. You'll get a notification when it happens.</p>
 }
