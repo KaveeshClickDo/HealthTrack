@@ -39,7 +39,7 @@ namespace HealthTrack.Helpers
             AppointmentStatus.Rescheduled => "b-blue",
             AppointmentStatus.Completed => "b-accent",
             AppointmentStatus.NoShow => "b-orange",
-            AppointmentStatus.Rejected or AppointmentStatus.CancelledByClient or AppointmentStatus.CancelledByTrainer => "b-red",
+            AppointmentStatus.Rejected => "b-red",
             _ => string.Empty
         };
 
@@ -51,6 +51,17 @@ namespace HealthTrack.Helpers
             BmiCategory.Normal => "b-green",
             BmiCategory.Obese => "b-red",
             _ => "b-amber"
+        };
+
+        /// <summary>The colour for a feedback category.</summary>
+        /// <param name="category">The category.</param>
+        /// <returns>The badge colour class.</returns>
+        public static string For(FeedbackCategory category) => category switch
+        {
+            FeedbackCategory.Workout => "b-accent",
+            FeedbackCategory.Diet => "b-orange",
+            FeedbackCategory.Progress => "b-blue",
+            _ => string.Empty
         };
 
         /// <summary>The colour for an audit action.</summary>

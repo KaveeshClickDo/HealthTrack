@@ -1,128 +1,173 @@
 @model BookAppointmentViewModel
 @{
     ViewData["Title"] = "Book an appointment";
+    ViewData["Parent"] = "Appointments";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["Crumb"] = "Book";
+    var chosen = Model.Professionals.FirstOrDefault(p => p.TrainerId == Model.TrainerId);
+
+    // Free times in parts of the day, as the board groups them; appointment-book.js groups the same way.
+    var groups = Model.Slots
+        .GroupBy(s => s.Hours < 12 ? "Morning" : s.Hours < 17 ? "Afternoon" : "Evening")
+        .ToList();
 }
 
-<div class="row justify-content-center">
-    <div class="col-xl-10">
-        <p><a asp-action="Index">&larr; Appointments</a></p>
-        <h1 class="h2 mb-1">Book an appointment</h1>
-        <p class="text-muted mb-4">Choose who you'd like to see, then a day and one of their free times. The request is confirmed when they approve it.</p>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)Appointments</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Book an appointment</h1>
+        <p>Choose who you'd like to see, then a day and one of their free times. Your booking is confirmed once they approve it.</p>
+    </div>
+</div>
 
-        @if (Model.Professionals.Count == 0)
-        {
-            <div class="alert alert-info">No professionals are taking bookings at the moment. Please try again later.</div>
-        }
-        else
-        {
-            @* wwwroot/js/appointment-book.js fetches the free times when the professional, day or length changes. *@
-            <form asp-action="Book" method="post" id="book-form" data-slots-url="@Url.Action("AvailableSlots")">
-                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+@if (Model.Professionals.Count == 0)
+{
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("calendar", 24)</span>
+        <p><span class="strong">No professionals are taking bookings at the moment.</span> Please try again later.</p>
+    </div>
+}
+else
+{
+    @* wwwroot/js/appointment-book.js fetches the free times when the professional, day or length changes, and keeps
+       the "Your request" summary up to date. *@
+    <form asp-action="Book" method="post" id="book-form" data-slots-url="@Url.Action("AvailableSlots")">
+        <div asp-validation-summary="All" role="alert"></div>
+        <div class="split">
+            <div class="main gp-20">
+                <fieldset class="card form-card">
+                    <legend class="step-head"><span class="avatar av-sm">1</span><span class="h2">Who would you like to see?</span></legend>
+                    <div class="pro-grid">
+                        @foreach (var professional in Model.Professionals)
+                        {
+                            <label class="choice" for="pro-@professional.TrainerId">
+                                <input type="radio" id="pro-@professional.TrainerId" name="TrainerId" value="@professional.TrainerId"
+                                       checked="@(professional.TrainerId == Model.TrainerId)" data-suggested-type="@((int)professional.SuggestedType)"
+                                       data-name="@professional.Name" data-profession="@professional.ProfessionalType.GetDisplayName()"
+                                       data-val="true" data-val-required="Choose a professional." />
+                                <span class="pro">
+                                    <span class="hrow">
+                                        <span class="avatar av-trainer">@professional.Name.Initials()</span>
+                                        <span><span class="strong d-block">@professional.Name</span><span class="xs subtle">@professional.ProfessionalType.GetDisplayName() · @professional.YearsOfExperience @(professional.YearsOfExperience == 1 ? "year" : "years")</span></span>
+                                    </span>
+                                    <span class="tags">
+                                        @if (professional.IsMyTrainer)
+                                        {
+                                            <span class="badge b-accent">Your trainer</span>
+                                        }
+                                        <span class="badge">@professional.Specialization</span>
+                                    </span>
+                                    @if (!string.IsNullOrWhiteSpace(professional.Bio))
+                                    {
+                                        <span class="small muted">@professional.Bio</span>
+                                    }
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="TrainerId" class="error-text"></span>
+                </fieldset>
 
-                <fieldset class="card shadow-sm mb-3">
-                    <div class="card-body">
-                        <legend class="h5">1. Who</legend>
-                        <div class="row g-2">
-                            @foreach (var professional in Model.Professionals)
+                <fieldset class="card form-card">
+                    <legend class="step-head"><span class="avatar av-sm">2</span><span class="h2">What's it for?</span></legend>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label asp-for="AppointmentType" class="label">Type of appointment</label>
+                            <select asp-for="AppointmentType" asp-items="Html.GetEnumSelectList<AppointmentType>()" class="select">
+                                <option value="">Choose…</option>
+                            </select>
+                            <span asp-validation-for="AppointmentType" class="error-text"></span>
+                        </div>
+                        <div class="field">
+                            <span class="label">Where</span>
+                            <div class="seg-group" role="radiogroup" aria-label="Where">
+                                @foreach (var mode in Enum.GetValues<AppointmentMode>())
+                                {
+                                    <span><input type="radio" asp-for="Mode" value="@mode" id="mode-@mode" data-label="@mode.GetDisplayName()" /><label for="mode-@mode">@mode.GetDisplayName()</label></span>
+                                }
+                            </div>
+                            <span asp-validation-for="Mode" class="error-text"></span>
+                        </div>
+                        <div class="field full">
+                            <label asp-for="ClientReason" class="label">What would you like to work on? <span class="opt">Optional · stored encrypted</span></label>
+                            <textarea asp-for="ClientReason" class="textarea" placeholder="What you'd like to work on or ask about"></textarea>
+                            <span asp-validation-for="ClientReason" class="error-text"></span>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="card form-card">
+                    <legend class="step-head"><span class="avatar av-sm">3</span><span class="h2">When?</span></legend>
+                    <div class="form-grid">
+                        <div class="field">
+                            <label asp-for="Date" class="label">Day</label>
+                            <input asp-for="Date" class="input" min="@Model.EarliestDate.ToString("yyyy-MM-dd")" max="@Model.LatestDate.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="Date" class="error-text"></span>
+                        </div>
+                        <div class="field">
+                            <span class="label">Length</span>
+                            <div class="seg-group" role="radiogroup" aria-label="Length">
+                                @foreach (var length in HealthTrack.Models.Entities.Appointment.AllowedDurations)
+                                {
+                                    <span><input type="radio" asp-for="DurationMinutes" value="@length" id="length-@length" /><label for="length-@length">@length min</label></span>
+                                }
+                            </div>
+                            <span asp-validation-for="DurationMinutes" class="error-text"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <span class="label" data-slot-heading>@(Model.Date is { } day && Model.Slots.Count > 0 ? "Free times on " + day.ToString("dddd d MMMM") : "Free times")</span>
+                        @* Rebuilt by appointment-book.js; each pill is a StartTime radio. *@
+                        <div class="vs gp-16" data-slot-list>
+                            @if (Model.Slots.Count == 0)
                             {
-                                <div class="col-md-6">
-                                    <label class="card h-100 professional-option">
-                                        <span class="card-body d-flex gap-2">
-                                            <input type="radio" class="form-check-input mt-1" name="TrainerId" value="@professional.TrainerId"
-                                                   checked="@(professional.TrainerId == Model.TrainerId)" data-suggested-type="@((int)professional.SuggestedType)" required />
-                                            <span>
-                                                <strong>@professional.Name</strong>
-                                                @if (professional.IsMyTrainer)
-                                                {
-                                                    <span class="badge text-bg-primary ms-1">Your trainer</span>
-                                                }
-                                                <span class="d-block small text-muted">
-                                                    @professional.ProfessionalType.GetDisplayName() &middot; @professional.Specialization &middot;
-                                                    @professional.YearsOfExperience @(professional.YearsOfExperience == 1 ? "year" : "years")
-                                                </span>
-                                                @if (!string.IsNullOrWhiteSpace(professional.Bio))
-                                                {
-                                                    <span class="d-block small mt-1">@professional.Bio</span>
-                                                }
+                                <p class="small muted" data-slot-empty>Choose a professional and a day first.</p>
+                            }
+                            @foreach (var group in groups)
+                            {
+                                <div class="slot-group">
+                                    <span class="eyebrow">@group.Key</span>
+                                    <div class="slot-grid">
+                                        @foreach (var slot in group)
+                                        {
+                                            var value = slot.ToString("hh\\:mm");
+                                            <span class="pill">
+                                                <input type="radio" name="StartTime" id="slot-@value.Replace(":", string.Empty)" value="@value" checked="@(slot == Model.StartTime)"
+                                                       data-val="true" data-val-required="Choose one of the free times." />
+                                                <label for="slot-@value.Replace(":", string.Empty)">@value</label>
                                             </span>
-                                        </span>
-                                    </label>
+                                        }
+                                    </div>
                                 </div>
                             }
                         </div>
-                        <span asp-validation-for="TrainerId" class="text-danger small"></span>
+                        <span class="error-text" data-valmsg-for="StartTime" data-valmsg-replace="true"></span>
+                        <span class="hint" id="slot-help">You can book from 2 hours to 60 days ahead. Times already taken aren't shown.</span>
                     </div>
                 </fieldset>
+            </div>
 
-                <fieldset class="card shadow-sm mb-3">
-                    <div class="card-body row g-3">
-                        <legend class="h5 col-12 mb-0">2. What</legend>
-                        <div class="col-md-6">
-                            <label asp-for="AppointmentType" class="form-label"></label>
-                            <select asp-for="AppointmentType" asp-items="Html.GetEnumSelectList<AppointmentType>()" class="form-select">
-                                <option value="">Choose…</option>
-                            </select>
-                            <span asp-validation-for="AppointmentType" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Mode" class="form-label"></label>
-                            <select asp-for="Mode" asp-items="Html.GetEnumSelectList<AppointmentMode>()" class="form-select"></select>
-                            <span asp-validation-for="Mode" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="ClientReason" class="form-label"></label> <span class="text-muted small">(optional, stored encrypted)</span>
-                            <textarea asp-for="ClientReason" class="form-control" rows="2" placeholder="What you'd like to work on or ask about"></textarea>
-                            <span asp-validation-for="ClientReason" class="text-danger small"></span>
-                        </div>
+            <aside class="aside">
+                <div class="card summary">
+                    <h2 class="h2">Your request</h2>
+                    <div class="hrow" data-summary-pro hidden="@(chosen is null)">
+                        <span class="avatar av-trainer" data-summary="initials">@chosen?.Name.Initials()</span>
+                        <div><div class="strong" data-summary="name">@chosen?.Name</div><div class="xs subtle" data-summary="profession">@chosen?.ProfessionalType.GetDisplayName()</div></div>
                     </div>
-                </fieldset>
-
-                <fieldset class="card shadow-sm mb-3">
-                    <div class="card-body row g-3">
-                        <legend class="h5 col-12 mb-0">3. When</legend>
-                        <div class="col-md-4">
-                            <label asp-for="Date" class="form-label"></label>
-                            <input asp-for="Date" class="form-control" min="@Model.EarliestDate.ToString("yyyy-MM-dd")" max="@Model.LatestDate.ToString("yyyy-MM-dd")" />
-                            <span asp-validation-for="Date" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="DurationMinutes" class="form-label"></label>
-                            <select asp-for="DurationMinutes" class="form-select">
-                                @foreach (var length in HealthTrack.Models.Entities.Appointment.AllowedDurations)
-                                {
-                                    <option value="@length">@length minutes</option>
-                                }
-                            </select>
-                            <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-5">
-                            <label for="StartTime" class="form-label">Free times</label>
-                            @* A plain select that appointment-book.js refills; the tag helper would compare "09:15" with "09:15:00". *@
-                            <select id="StartTime" name="StartTime" class="form-select" required data-val="true" data-val-required="Choose one of the free times.">
-                                @if (Model.Slots.Count == 0)
-                                {
-                                    <option value="">Choose a professional and a day first</option>
-                                }
-                                else
-                                {
-                                    <option value="">Choose a time…</option>
-                                    @foreach (var slot in Model.Slots)
-                                    {
-                                        <option value="@slot.ToString("hh\\:mm")" selected="@(slot == Model.StartTime)">@slot.ToString("hh\\:mm")</option>
-                                    }
-                                }
-                            </select>
-                            <span class="text-danger small" data-valmsg-for="StartTime" data-valmsg-replace="true"></span>
-                            <div class="form-text" id="slot-help">Times are 2 hours to 60 days ahead and leave out anything already booked.</div>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <button type="submit" class="btn btn-primary">Send the request</button>
-            </form>
-        }
-    </div>
-</div>
+                    <dl>
+                        <dt>Type</dt><dd data-summary="type">@(Model.AppointmentType?.GetDisplayName() ?? "–")</dd>
+                        <dt>Where</dt><dd data-summary="mode">@(Model.Mode?.GetDisplayName() ?? "–")</dd>
+                        <dt>Day</dt><dd data-summary="day">@(Model.Date?.ToString("ddd d MMM yyyy") ?? "–")</dd>
+                        <dt>Time</dt><dd data-summary="time">@(Model.StartTime is { } start && Model.DurationMinutes is { } chosenLength ? $"{start:hh\\:mm} – {start.Add(TimeSpan.FromMinutes(chosenLength)):hh\\:mm}" : "–")</dd>
+                    </dl>
+                    <div class="divider"></div>
+                    <button type="submit" class="btn btn-primary btn-lg btn-block">Send request</button>
+                    <p class="xs subtle">You'll get a notification as soon as they answer. You can cancel up to 2 hours before the start.</p>
+                </div>
+            </aside>
+        </div>
+    </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

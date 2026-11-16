@@ -2,57 +2,79 @@
 @{
     var appointment = Model.Appointment;
     ViewData["Title"] = "Appointment with " + appointment.TrainerName;
+    ViewData["Parent"] = "Appointments";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["Crumb"] = $"{appointment.AppointmentType.GetDisplayName()}, {appointment.StartDateTime:d MMM}";
+    var meetingLink = appointment.Mode == AppointmentMode.Online
+        && Uri.TryCreate(appointment.Location, UriKind.Absolute, out var url)
+        && (url.Scheme == Uri.UriSchemeHttps || url.Scheme == Uri.UriSchemeHttp) ? url : null;
+    var trainerFirstName = appointment.TrainerName.Split(' ')[0];
 }
 
-<p><a asp-action="Index">&larr; Appointments</a></p>
-<h1 class="h2 mb-3">@appointment.AppointmentType.GetDisplayName() with @appointment.TrainerName</h1>
-
-<div class="row g-3">
-    <div class="col-lg-7">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <partial name="_AppointmentSummary" model="appointment" />
-                @if (Model.ProfessionalNotes is not null)
-                {
-                    <hr />
-                    <h2 class="h6">Notes from @appointment.TrainerName</h2>
-                    <p class="mb-0 text-prewrap">@Model.ProfessionalNotes</p>
-                }
-                <p class="small text-muted mt-3 mb-0">
-                    Booked @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
-                    @if (Model.UpdatedAt is { } updated)
-                    {
-                        <span>&middot; last changed @updated.ToString("dd MMM yyyy HH:mm")</span>
-                    }
-                </p>
-            </div>
-        </div>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)Appointments</a>
+<div class="page-head">
+    <div class="intro">
+        <span class="badge @StatusBadges.For(appointment.Status) self-start"><span class="dot"></span>@appointment.Status.GetDisplayName()</span>
+        <h1 class="h1">@appointment.AppointmentType.GetDisplayName() with @appointment.TrainerName</h1>
+        <p>@appointment.StartDateTime.ToString("dddd d MMMM") · @appointment.StartDateTime.ToString("HH:mm") – @appointment.EndDateTime.ToString("HH:mm") · @appointment.Mode.GetDisplayName()</p>
     </div>
-    <div class="col-lg-5">
+    @if (meetingLink is not null && appointment.IsOpen && appointment.Status != AppointmentStatus.Pending)
+    {
+        <div class="actions"><a class="btn btn-primary" href="@meetingLink" rel="noopener noreferrer" target="_blank">@Icons.Svg("video", 18)Join online meeting</a></div>
+    }
+</div>
+
+<div class="split">
+    <section class="main card gp-20">
+        <h2 class="h2">Details</h2>
+        <partial name="_AppointmentSummary" model="appointment" />
+        @if (Model.ProfessionalNotes is not null)
+        {
+            <div class="divider"></div>
+            <div class="vs gp-6">
+                <h3 class="h3">Notes from @appointment.TrainerName</h3>
+                <p class="text-prewrap">@Model.ProfessionalNotes</p>
+            </div>
+        }
+        <div class="divider"></div>
+        <p class="xs subtle">
+            Booked @Model.CreatedAt.ToString("d MMM yyyy 'at' HH:mm")@if (Model.UpdatedAt is { } updated)
+            {
+                <text> · last changed @updated.ToString("d MMM yyyy 'at' HH:mm")</text>
+            }
+        </p>
+    </section>
+
+    <div class="aside">
+        @if (appointment.IsOpen)
+        {
+            <div class="alert alert-info">
+                @Icons.Svg("bell", 18)
+                <span class="small"><span class="strong">Reminders.</span> <span class="muted">If appointment reminders are on, we'll remind you before it starts. <a asp-area="" asp-controller="Notifications" asp-action="Preferences">Change reminders</a></span></span>
+            </div>
+        }
         @if (appointment.CanCancel)
         {
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h2 class="h5">Cancel</h2>
-                    <form asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post"
-                          data-confirm="Cancel this appointment? @appointment.TrainerName will be told.">
-                        <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
-                        <label for="cancel-reason" class="form-label">Reason <span class="text-muted small">(optional)</span></label>
-                        <textarea id="cancel-reason" name="Reason" class="form-control mb-2" rows="2" maxlength="500"></textarea>
-                        <button type="submit" class="btn btn-outline-danger">Cancel appointment</button>
-                    </form>
+            <form class="card vs gp-14" asp-action="Cancel" asp-route-id="@appointment.AppointmentId" method="post"
+                  data-confirm="Cancel this appointment? @appointment.TrainerName will be told.">
+                <h2 class="h3">Can't make it?</h2>
+                <input type="hidden" name="RowVersion" value="@Model.Action.RowVersion" />
+                <div class="field">
+                    <label for="cancel-reason" class="label">Reason <span class="opt">Optional</span></label>
+                    <textarea id="cancel-reason" name="Reason" class="textarea" maxlength="500" placeholder="Let @trainerFirstName know why"></textarea>
                 </div>
-            </div>
+                <button type="submit" class="btn btn-danger">Cancel appointment</button>
+                <p class="xs subtle">@trainerFirstName will be told. You can cancel up to 2 hours before the start.</p>
+            </form>
         }
         else if (appointment.IsOpen)
         {
-            <div class="alert alert-secondary">
-                This appointment starts in less than 2 hours, so it can no longer be cancelled here. Contact @appointment.TrainerName if you can't make it.
-            </div>
+            <div class="alert on-surface">@Icons.Svg("clock", 18)<span class="small muted">This appointment starts in less than 2 hours, so it can no longer be cancelled here. Contact @appointment.TrainerName if you can't make it.</span></div>
         }
         else
         {
-            <div class="alert alert-secondary">This appointment is @appointment.Status.GetDisplayName().ToLowerInvariant() and can no longer change.</div>
+            <div class="alert on-surface">@Icons.Svg("info", 18)<span class="small muted">This appointment is @appointment.Status.GetDisplayName().ToLowerInvariant() and can no longer change.</span></div>
+            <a class="btn btn-secondary" asp-action="Book">Book another appointment</a>
         }
     </div>
 </div>

@@ -6,46 +6,43 @@
     var showClient = ViewData["ShowClient"] as bool? == true;
 }
 @* One appointment's facts, shared by the client's and the professional's pages. *@
-<dl class="row mb-0">
-    <dt class="col-sm-4">When</dt>
-    <dd class="col-sm-8">
-        @Model.StartDateTime.ToString("dddd dd MMM yyyy") &middot; @Model.StartDateTime.ToString("HH:mm")&ndash;@Model.EndDateTime.ToString("HH:mm")
-        <span class="text-muted">(@Model.DurationMinutes minutes)</span>
-    </dd>
-    <dt class="col-sm-4">Status</dt>
-    <dd class="col-sm-8"><span class="badge @StatusBadges.For(Model.Status)">@Model.Status.GetDisplayName()</span></dd>
-    <dt class="col-sm-4">Type</dt>
-    <dd class="col-sm-8">@Model.AppointmentType.GetDisplayName() &middot; @Model.Mode.GetDisplayName()</dd>
+<dl class="kv">
+    <dt>When</dt>
+    <dd>@Model.StartDateTime.ToString("dddd d MMM yyyy") · @Model.StartDateTime.ToString("HH:mm") – @Model.EndDateTime.ToString("HH:mm") <span class="subtle">(@Model.DurationMinutes minutes)</span></dd>
+    <dt>Status</dt>
+    <dd><span class="badge @StatusBadges.For(Model.Status)">@Model.Status.GetDisplayName()</span></dd>
+    <dt>Type</dt>
+    <dd>@Model.AppointmentType.GetDisplayName() · @Model.Mode.GetDisplayName()</dd>
     @if (showClient)
     {
-        <dt class="col-sm-4">Client</dt>
-        <dd class="col-sm-8">@Model.ClientName</dd>
+        <dt>Client</dt>
+        <dd><span class="hrow"><span class="avatar av-sm av-client">@Model.ClientName.Initials()</span>@Model.ClientName</span></dd>
     }
     else
     {
-        <dt class="col-sm-4">Professional</dt>
-        <dd class="col-sm-8">@Model.TrainerName <span class="text-muted">(@Model.ProfessionalType.GetDisplayName())</span></dd>
+        <dt>Professional</dt>
+        <dd><span class="hrow"><span class="avatar av-sm av-trainer">@Model.TrainerName.Initials()</span>@Model.TrainerName <span class="subtle">· @Model.ProfessionalType.GetDisplayName()</span></span></dd>
     }
-    <dt class="col-sm-4">Where</dt>
-    <dd class="col-sm-8">
+    <dt>Where</dt>
+    <dd>
         @if (Model.Location is null)
         {
-            <span class="text-muted">@(Model.Status == AppointmentStatus.Pending ? "Given when approved" : "Not given")</span>
+            <span class="subtle">@(Model.Status == AppointmentStatus.Pending ? "Given when approved" : "Not given")</span>
         }
         else if (isLink)
         {
-            <a href="@url" rel="noopener noreferrer" target="_blank">@Model.Location</a>
+            <a class="link-inline" href="@url" rel="noopener noreferrer" target="_blank">@Model.Location@Icons.Svg("external-link", 14)</a>
         }
         else
         {
             @Model.Location
         }
     </dd>
-    <dt class="col-sm-4">Reason for booking</dt>
-    <dd class="col-sm-8">@(Model.ClientReason ?? "None given")</dd>
+    <dt>Reason for booking</dt>
+    <dd class="text-prewrap">@(Model.ClientReason ?? "None given")</dd>
     @if (Model.CancellationReason is not null)
     {
-        <dt class="col-sm-4">@(Model.Status == AppointmentStatus.Rejected ? "Why it was declined" : "Why it was cancelled")</dt>
-        <dd class="col-sm-8">@Model.CancellationReason</dd>
+        <dt>@(Model.Status == AppointmentStatus.Rejected ? "Why it was declined" : "Why it was cancelled")</dt>
+        <dd class="text-prewrap">@Model.CancellationReason</dd>
     }
 </dl>

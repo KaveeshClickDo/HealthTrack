@@ -1,46 +1,52 @@
 @model PagedResult<FeedbackItemViewModel>
 @{
     ViewData["Title"] = "Feedback";
+    ViewData["Parent"] = "Coaching";
+    ViewData["ContentClass"] = "narrow-md";
     var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
 }
 
-<h1 class="h2 mb-1">Feedback</h1>
-<p class="text-muted mb-3">Comments from your trainer on your training, diet and progress.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Feedback</h1>
+        <p>Notes from your trainer on your training, eating and progress — newest first.</p>
+    </div>
+</div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No feedback yet. Keep logging your workouts and meals; your trainer reviews them and leaves comments here.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("message", 24)</span>
+        <p><span class="strong">No feedback yet.</span> Keep logging your workouts and meals; your trainer reviews them and leaves comments here.</p>
     </div>
 }
 else
 {
-    @foreach (var feedback in Model.Items)
-    {
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                    <div>
-                        <span class="badge text-bg-light border">@feedback.Category.GetDisplayName()</span>
-                        <span class="text-muted small ms-1">
-                            @feedback.TrainerName &middot; @feedback.CreatedAt.ToString("dd MMM yyyy HH:mm")
-                        </span>
+    <ol class="feedback-list">
+        @foreach (var feedback in Model.Items)
+        {
+            <li class="card">
+                <span class="avatar av-trainer">@feedback.TrainerName.Initials()</span>
+                <div class="body">
+                    <div class="between wrap gp-8">
+                        <div class="hrow wrap gap-10">
+                            <span class="strong">@feedback.TrainerName</span>
+                            <span class="badge @StatusBadges.For(feedback.Category)">@feedback.Category.GetDisplayName()</span>
+                            <span class="xs subtle">@feedback.CreatedAt.ToString("dd MMM yyyy · HH:mm")</span>
+                        </div>
+                        @if (feedback.Rating is { } rating)
+                        {
+                            <partial name="_Stars" model="rating" />
+                        }
                     </div>
-                    @if (feedback.Rating is { } rating)
+                    <p class="feedback-text text-prewrap">@feedback.Message</p>
+                    @if (feedback.WorkoutDate is { } date)
                     {
-                        <span class="rating" aria-label="Progress rating @rating of 5">@(new string('★', rating))@(new string('☆', 5 - rating))</span>
+                        <a class="link-sm" asp-controller="Workouts" asp-action="History">@Icons.Svg("history", 16)About your workout on @date.ToString("dd MMM yyyy")</a>
                     }
                 </div>
-                <p class="mb-1">@feedback.Message</p>
-                @if (feedback.WorkoutDate is { } date)
-                {
-                    <a class="small" asp-controller="Workouts" asp-action="History">About your workout on @date.ToString("dd MMM yyyy")</a>
-                }
-            </div>
-        </div>
-    }
+            </li>
+        }
+    </ol>
+    <div class="page-pager"><partial name="_Pager" model="pager" /></div>
 }
-
-<partial name="_Pager" model="pager" />

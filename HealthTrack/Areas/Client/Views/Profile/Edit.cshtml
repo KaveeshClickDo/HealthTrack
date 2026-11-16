@@ -1,108 +1,125 @@
 @model HealthProfileViewModel
 @{
     ViewData["Title"] = "Health profile";
+    ViewData["Parent"] = "Your account";
+    ViewData["ParentUrl"] = Url.Action("Index", "Manage", new { area = "" });
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h2 mb-1">Health profile</h1>
-        <p class="text-muted mb-4">
-            Your goal and activity level set your suggested calorie target. Your name, email and password are under
-            <a asp-area="" asp-controller="Manage" asp-action="Index">Manage account</a>.
-        </p>
+<a class="back" asp-area="" asp-controller="Manage" asp-action="Index">@Icons.Svg("arrow-left", 16)Back to your account</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Health profile</h1>
+        <p>Your goal and activity level shape the daily calorie target your plan starts from. Your name, email and password are in <a asp-area="" asp-controller="Manage" asp-action="Index">your account</a>.</p>
+    </div>
+</div>
 
-        <form asp-action="Edit" method="post">
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+<div class="split">
+    <form class="main gp-20" asp-action="Edit" method="post">
+        <div asp-validation-summary="All" role="alert"></div>
 
-            <div class="card shadow-sm mb-3">
-                <div class="card-body row g-3">
-                    <h2 class="h5 col-12 mb-0">Goal</h2>
-                    <div class="col-md-6">
-                        <label asp-for="FitnessGoal" class="form-label"></label>
-                        <select asp-for="FitnessGoal" asp-items="Html.GetEnumSelectList<FitnessGoal>()" class="form-select"></select>
-                        <span asp-validation-for="FitnessGoal" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="ActivityLevel" class="form-label"></label>
-                        <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="form-select"></select>
-                        <span asp-validation-for="ActivityLevel" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="TargetWeightKg" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                        <input asp-for="TargetWeightKg" type="number" min="30" max="300" step="0.1" class="form-control" />
-                        <span asp-validation-for="TargetWeightKg" class="text-danger small"></span>
-                        <div class="form-text">Shown as a dashed line on your weight chart.</div>
-                    </div>
+        <section class="card form-card">
+            <div class="vs gp-4"><h2 class="h2">Your goal</h2><p class="small subtle">What you're working towards, and how active you are day to day.</p></div>
+            <fieldset class="field">
+                <legend class="label legend-gap">Fitness goal</legend>
+                <div class="pill-grid">
+                    @foreach (var goal in Enum.GetValues<FitnessGoal>())
+                    {
+                        <span class="pill">
+                            <input type="radio" asp-for="FitnessGoal" value="@goal" id="goal-@goal" />
+                            <label for="goal-@goal">@goal.GetDisplayName()</label>
+                        </span>
+                    }
                 </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body row g-3">
-                    <div class="col-12">
-                        <h2 class="h5 mb-1">Medical details</h2>
-                        <p class="small text-muted mb-0">Optional. Stored encrypted, and only you and, if you allow it, your trainer can see them.</p>
-                    </div>
-                    <div class="col-12">
-                        <label asp-for="MedicalConditions" class="form-label"></label>
-                        <textarea asp-for="MedicalConditions" class="form-control" rows="2"></textarea>
-                        <span asp-validation-for="MedicalConditions" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="Allergies" class="form-label"></label>
-                        <textarea asp-for="Allergies" class="form-control" rows="2"></textarea>
-                        <span asp-validation-for="Allergies" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="CurrentMedications" class="form-label"></label>
-                        <textarea asp-for="CurrentMedications" class="form-control" rows="2"></textarea>
-                        <span asp-validation-for="CurrentMedications" class="text-danger small"></span>
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input asp-for="ShareMedicalInfoWithTrainer" class="form-check-input" />
-                            <label asp-for="ShareMedicalInfoWithTrainer" class="form-check-label"></label>
-                        </div>
-                        <div class="form-text">When this is off, your trainer still sees your measurements and logs, but not these three fields or your measurement notes.</div>
-                    </div>
+                <span asp-validation-for="FitnessGoal" class="error-text"></span>
+            </fieldset>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="ActivityLevel" class="label"></label>
+                    <select asp-for="ActivityLevel" asp-items="Html.GetEnumSelectList<ActivityLevel>()" class="select"></select>
+                    <span asp-validation-for="ActivityLevel" class="error-text"></span>
                 </div>
-            </div>
-
-            <div class="card shadow-sm mb-3">
-                <div class="card-body row g-3">
-                    <h2 class="h5 col-12 mb-0">Emergency contact</h2>
-                    <div class="col-md-6">
-                        <label asp-for="EmergencyContactName" class="form-label"></label>
-                        <input asp-for="EmergencyContactName" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
-                    </div>
-                    <div class="col-md-6">
-                        <label asp-for="EmergencyContactPhone" class="form-label"></label>
-                        <input asp-for="EmergencyContactPhone" type="tel" class="form-control" autocomplete="off" />
-                        <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
-                    </div>
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Save health profile</button>
-        </form>
-
-        <section class="card shadow-sm mt-4" id="your-data">
-            <div class="card-body">
-                <h2 class="h5">Your data</h2>
-                <p class="text-muted">
-                    Download everything HealthTrack holds about you (your profile and medical details, measurements, plans, logs,
-                    appointments, feedback and notifications) as a JSON file, or delete your account and your health records.
-                    See the <a asp-area="" asp-controller="Home" asp-action="Privacy">privacy notice</a>.
-                </p>
-                <div class="d-flex flex-wrap gap-2">
-                    <form asp-action="ExportMyData" method="post">
-                        <button type="submit" class="btn btn-outline-primary">Download my data</button>
-                    </form>
-                    <a class="btn btn-outline-danger" asp-action="DeleteAccount">Delete my account</a>
+                <div class="field">
+                    <label asp-for="TargetWeightKg" class="label">Target weight <span class="opt">Optional</span></label>
+                    <div class="input-wrap"><input asp-for="TargetWeightKg" asp-format="{0:0.0}" type="number" min="30" max="300" step="0.1" class="input" /><span class="unit">kg</span></div>
+                    <span class="hint">Shown as a dashed line on your weight chart.</span>
+                    <span asp-validation-for="TargetWeightKg" class="error-text"></span>
                 </div>
             </div>
         </section>
-    </div>
+
+        <section class="card form-card">
+            <div class="vs gp-4">
+                <div class="hrow wrap"><h2 class="h2">Medical details</h2><span class="badge b-accent">@Icons.Svg("lock", 14)Encrypted</span></div>
+                <p class="small subtle">Optional. Only you — and your trainer, if you allow it — can see these.</p>
+            </div>
+            <div class="form-grid">
+                <div class="field full">
+                    <label asp-for="MedicalConditions" class="label"></label>
+                    <textarea asp-for="MedicalConditions" class="textarea" placeholder="For example, asthma or a past knee injury"></textarea>
+                    <span asp-validation-for="MedicalConditions" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="Allergies" class="label"></label>
+                    <textarea asp-for="Allergies" class="textarea"></textarea>
+                    <span asp-validation-for="Allergies" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="CurrentMedications" class="label"></label>
+                    <textarea asp-for="CurrentMedications" class="textarea" placeholder="Name and dose"></textarea>
+                    <span asp-validation-for="CurrentMedications" class="error-text"></span>
+                </div>
+            </div>
+            <div class="switch-row">
+                <div>
+                    <label asp-for="ShareMedicalInfoWithTrainer" class="strong"></label>
+                    <p class="small subtle">When this is off, your trainer still sees your measurements and logs, but not these three fields or your measurement notes.</p>
+                </div>
+                <input asp-for="ShareMedicalInfoWithTrainer" class="switch" />
+            </div>
+        </section>
+
+        <section class="card form-card">
+            <div class="vs gp-4"><h2 class="h2">Emergency contact</h2><p class="small subtle">Optional. The person to contact if something goes wrong.</p></div>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="EmergencyContactName" class="label">Name</label>
+                    <input asp-for="EmergencyContactName" class="input" autocomplete="off" />
+                    <span asp-validation-for="EmergencyContactName" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="EmergencyContactPhone" class="label">Phone number</label>
+                    <input asp-for="EmergencyContactPhone" type="tel" class="input" autocomplete="off" />
+                    <span asp-validation-for="EmergencyContactPhone" class="error-text"></span>
+                </div>
+            </div>
+        </section>
+
+        <div class="actions end">
+            <a class="btn btn-ghost" asp-area="Client" asp-controller="Dashboard" asp-action="Index">Cancel</a>
+            <button type="submit" class="btn btn-primary">@Icons.Svg("check", 18)Save health profile</button>
+        </div>
+    </form>
+
+    <aside class="aside">
+        <section class="card vs gp-16">
+            <h2 class="h3">How this is used</h2>
+            <ul class="list uses">
+                <li><span class="stat-icon i-accent">@Icons.Svg("target", 18)</span><div><div class="small strong">Goal and activity level</div><p class="small muted">With your latest weight, height and age, they set the suggested daily calories your trainer starts from.</p></div></li>
+                <li><span class="stat-icon i-blue">@Icons.Svg("trending-down", 18)</span><div><div class="small strong">Target weight</div><p class="small muted">Drawn as a dashed line on your weight chart, so you can see the gap close.</p></div></li>
+                <li><span class="stat-icon" data-tone="violet">@Icons.Svg("lock", 18)</span><div><div class="small strong">Medical details</div><p class="small muted">Encrypted before they're stored, and hidden from your trainer unless you switch sharing on.</p></div></li>
+            </ul>
+        </section>
+        <section class="card vs gp-16" id="your-data">
+            <h2 class="h3">Your data</h2>
+            <p class="small muted">Download everything HealthTrack holds about you — profile and medical details, measurements, plans, logs, appointments, feedback and notifications — as a JSON file. Or delete your account and your health records. See the <a asp-area="" asp-controller="Home" asp-action="Privacy">privacy notice</a>.</p>
+            <div class="btn-col">
+                <form class="inline" asp-action="ExportMyData" method="post">
+                    <button type="submit" class="btn btn-secondary btn-sm">@Icons.Svg("download", 16)Download my data</button>
+                </form>
+                <a class="btn btn-danger btn-sm" asp-action="DeleteAccount">@Icons.Svg("trash", 16)Delete my account</a>
+            </div>
+        </section>
+    </aside>
 </div>
 
 @section Scripts {
