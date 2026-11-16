@@ -90,7 +90,8 @@ The web project's root namespace is `HealthTrack`, and namespaces follow folders
 
 ## UI conventions
 
-- Bootstrap 5 cards and tables, one consistent navigation per role, page titles via `ViewData["Title"]`.
+- The look is the "HealthTrack — Dark UI" design kit: `wwwroot/css/site.css` holds the fonts, Bootstrap's dark colour mode mapped onto the kit's tokens, the kit itself (its `.row` is `.hrow` here) and a bridge section for everything else. Build pages from the kit's classes (`.page-head`, `.card`/`.card.flush`, `.split` with `.main`/`.aside`, `.grid.g-2/g-3/g-4`, `.field`/`.label`/`.input`/`.select`, `.badge` + `b-green`/`b-amber`/…, `.table` in `.table-wrap`, `.btn-primary/-secondary/-ghost/-danger`); Bootstrap is kept for its JS (toasts) and a few utilities. One consistent sidebar per role (`_Layout`), page titles via `ViewData["Title"]`, the breadcrumb via `ViewData["Parent"]`/`["ParentUrl"]`/`["Crumb"]`.
+- Exercise photos come from `ExercisePhotos.For(name, category)` (free Unsplash photos in `wwwroot/images`, credited in `CREDITS.md`).
 - Success and error messages through TempData and the `_Alerts` partial.
 - Destructive actions confirm first: put `data-confirm="..."` on the form and healthtrack.js asks (no onclick). Lists page at 20 rows through `query.ToPagedResultAsync(page)` (Helpers/Paging) and the `_Pager` partial. Empty states say what to do next.
 - List filters are GET forms with plain lower-case field names. Never name a filter `action`, `controller` or `area`: route values win over the query string in model binding, so the filter silently never applies. In Razor, `page` is the `@page` directive, so don't use it as a variable name either, and never put a letter right before `@` (`time@(…)`, `x@Model`): Razor reads it as an email address.

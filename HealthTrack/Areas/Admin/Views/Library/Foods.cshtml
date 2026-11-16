@@ -2,6 +2,8 @@
 @model LibraryListViewModel<FoodItem, FoodCategory>
 @{
     ViewData["Title"] = "Food library";
+    ViewData["Parent"] = "Library";
+    ViewData["Crumb"] = "Foods";
     var filter = Model.Filter;
     var returnUrl = Context.Request.Path + Context.Request.QueryString;
     var pager = new PagerViewModel(Model.Results.Page, Model.Results.TotalPages, Model.Results.TotalCount,
@@ -11,96 +13,75 @@
             ["category"] = filter.Category is { } categoryFilter ? ((int)categoryFilter).ToString() : null,
             ["includeInactive"] = filter.IncludeInactive ? "true" : null
         });
+    var inactive = filter.IncludeInactive ? "true" : null;
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-0">Food library</h1>
-        <p class="text-muted mb-0">Clients log meals from these; nutrition is per serving.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Food library</h1>
+        <p>Clients pick these when they log a meal. Calories and macros are per serving.</p>
     </div>
-    <div class="d-flex gap-2">
-        <a class="btn btn-outline-primary" asp-action="Exercises">Exercise library</a>
-        <a class="btn btn-primary" asp-action="EditFood">Add food</a>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="Exercises">@Icons.Svg("dumbbell", 18)Exercise library</a>
+        <a class="btn btn-primary" asp-action="EditFood">@Icons.Svg("plus", 18)Add food</a>
     </div>
 </div>
 
-<form method="get" asp-action="Foods" class="card shadow-sm mb-3">
-    <div class="card-body row g-2 align-items-end">
-        <div class="col-md-5">
-            <label for="search" class="form-label small">Name</label>
-            <input type="search" id="search" name="search" value="@filter.Search" class="form-control" maxlength="100" />
-        </div>
-        <div class="col-md-3">
-            <label for="category" class="form-label small">Category</label>
-            <select id="category" name="category" class="form-select">
-                <option value="">All categories</option>
-                @foreach (var category in Enum.GetValues<FoodCategory>())
-                {
-                    <option value="@((int)category)" selected="@(filter.Category == category)">@category.GetDisplayName()</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-2">
-            <div class="form-check mb-2">
-                <input type="checkbox" id="includeInactive" name="includeInactive" value="true" class="form-check-input" checked="@filter.IncludeInactive" />
-                <label for="includeInactive" class="form-check-label">Show inactive</label>
-            </div>
-        </div>
-        <div class="col-md-2 d-flex gap-2">
-            <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
-            <a class="btn btn-link" asp-action="Foods">Clear</a>
-        </div>
+<form method="get" asp-action="Foods" class="card lib-filter">
+    @if (filter.Category is { } chosen)
+    {
+        <input type="hidden" name="category" value="@((int)chosen)" />
+    }
+    <div class="top">
+        <div class="input-wrap"><span class="lead-icon">@Icons.Svg("search", 18)</span><input type="search" id="search" name="search" value="@filter.Search" class="input" maxlength="100" placeholder="Search by name" aria-label="Search by name" /></div>
+        <label class="check" for="includeInactive"><input type="checkbox" id="includeInactive" name="includeInactive" value="true" class="switch" checked="@filter.IncludeInactive" data-auto-submit /><span>Show inactive</span></label>
+        <button type="submit" class="btn btn-secondary">Search</button>
     </div>
+    <nav class="cat-links" aria-label="Category">
+        <a class="@(filter.Category is null ? "is-on" : string.Empty)" asp-action="Foods" asp-route-search="@filter.Search" asp-route-includeInactive="@inactive">All</a>
+        @foreach (var category in Enum.GetValues<FoodCategory>())
+        {
+            <a class="@(filter.Category == category ? "is-on" : string.Empty)" asp-action="Foods" asp-route-category="@((int)category)" asp-route-search="@filter.Search" asp-route-includeInactive="@inactive">@category.GetDisplayName()</a>
+        }
+    </nav>
 </form>
 
 @if (Model.Results.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No foods match. <a asp-action="Foods">Clear the filters</a> or <a asp-action="EditFood">add a food</a>.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("apple", 24)</span>
+        <p>No foods match.</p>
+        <div class="actions"><a class="btn btn-secondary" asp-action="Foods">Clear the filters</a><a class="btn btn-primary" asp-action="EditFood">Add a food</a></div>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Name</th>
-                        <th scope="col">Category</th>
-                        <th scope="col">Serving</th>
-                        <th scope="col" class="text-end">kcal</th>
-                        <th scope="col" class="text-end">Protein</th>
-                        <th scope="col" class="text-end">Carbs</th>
-                        <th scope="col" class="text-end">Fat</th>
-                        <th scope="col">Status</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
-                    </tr>
-                </thead>
-                <tbody>
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h3">@(filter.Category?.GetDisplayName() ?? "All foods")</h2><span class="small subtle">@Model.Results.TotalCount @(Model.Results.TotalCount == 1 ? "food" : "foods")</span></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th scope="col">Name</th><th scope="col">Category</th><th scope="col">Serving</th><th scope="col" class="r">kcal</th><th scope="col" class="r">Protein</th><th scope="col" class="r">Carbs</th><th scope="col" class="r">Fat</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+                <tbody class="num">
                     @foreach (var food in Model.Results.Items)
                     {
-                        <tr class="@(food.IsActive ? string.Empty : "text-muted")">
-                            <td><a asp-action="EditFood" asp-route-id="@food.FoodItemId">@food.Name</a></td>
+                        <tr class="@(food.IsActive ? string.Empty : "muted-row")">
+                            <th scope="row"><a class="strong row-link" asp-action="EditFood" asp-route-id="@food.FoodItemId">@food.Name</a></th>
                             <td>@food.Category.GetDisplayName()</td>
-                            <td class="text-nowrap">@food.ServingSize.ToString("0.##") @food.ServingUnit</td>
-                            <td class="text-end">@food.CaloriesPerServing.ToString("0")</td>
-                            <td class="text-end">@food.ProteinG.ToString("0.#") g</td>
-                            <td class="text-end">@food.CarbsG.ToString("0.#") g</td>
-                            <td class="text-end">@food.FatG.ToString("0.#") g</td>
-                            <td><span class="badge @(food.IsActive ? "text-bg-success" : "text-bg-secondary")">@(food.IsActive ? "Active" : "Inactive")</span></td>
-                            <td class="text-end">
-                                <form asp-action="ToggleActive" method="post"
+                            <td class="nowrap">@food.ServingSize.ToString("0.##") @food.ServingUnit</td>
+                            <td class="r strong">@food.CaloriesPerServing.ToString("0")</td>
+                            <td class="r">@food.ProteinG.ToString("0.#") g</td>
+                            <td class="r">@food.CarbsG.ToString("0.#") g</td>
+                            <td class="r">@food.FatG.ToString("0.#") g</td>
+                            <td><span class="badge @(food.IsActive ? "b-green" : string.Empty)"><span class="dot"></span>@(food.IsActive ? "Active" : "Inactive")</span></td>
+                            <td class="r nowrap">
+                                <a class="btn btn-ghost btn-sm" asp-action="EditFood" asp-route-id="@food.FoodItemId">Edit</a>
+                                <form class="inline" asp-action="ToggleActive" method="post"
                                       data-confirm="@(food.IsActive ? $"Deactivate {food.Name}? It disappears from the meal picker; logged meals keep it." : null)">
                                     <input type="hidden" name="type" value="food" />
                                     <input type="hidden" name="id" value="@food.FoodItemId" />
                                     <input type="hidden" name="isActive" value="@(food.IsActive ? "false" : "true")" />
                                     <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button type="submit" class="btn btn-sm @(food.IsActive ? "btn-outline-danger" : "btn-outline-primary")">
-                                        @(food.IsActive ? "Deactivate" : "Activate")
-                                    </button>
+                                    <button type="submit" class="btn btn-ghost btn-sm @(food.IsActive ? "link-danger" : "accent")">@(food.IsActive ? "Deactivate" : "Activate")</button>
                                 </form>
                             </td>
                         </tr>
@@ -108,7 +89,7 @@ else
                 </tbody>
             </table>
         </div>
-    </div>
+        <div class="card-foot"><span>Deactivated foods disappear from the meal picker; meals already logged keep them.</span></div>
+        <partial name="_Pager" model="pager" />
+    </section>
 }
-
-<partial name="_Pager" model="pager" />

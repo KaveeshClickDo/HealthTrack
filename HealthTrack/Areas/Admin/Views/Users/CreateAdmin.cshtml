@@ -1,41 +1,51 @@
 @model CreateAdminViewModel
 @{
     ViewData["Title"] = "Create administrator";
+    ViewData["Parent"] = "Users";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["ContentClass"] = "narrow-lg";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <p><a asp-action="Index">&larr; All users</a></p>
-        <h1 class="h2 mb-2">Create an administrator</h1>
-        <p class="text-muted mb-4">
-            Administrators can't register themselves. Choose a temporary password, share it with them securely and ask them
-            to change it under Manage account after their first login.
-        </p>
-
-        <form asp-action="CreateAdmin" method="post">
-            <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <partial name="~/Views/Account/_AccountFields.cshtml" model="Model" />
-                </div>
-            </div>
-
-            <div class="form-check mb-4">
-                <input asp-for="AcceptPrivacy" class="form-check-input" />
-                <label asp-for="AcceptPrivacy" class="form-check-label">
-                    The new administrator has read and accepted the
-                    <a asp-area="" asp-controller="Home" asp-action="Privacy" target="_blank" rel="noopener">privacy notice</a>.
-                </label>
-                <div><span asp-validation-for="AcceptPrivacy" class="text-danger small"></span></div>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Create administrator</button>
-                <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
-            </div>
-        </form>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)All users</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Create an administrator</h1>
+        <p>Administrators can't register themselves. Choose a temporary password, share it with them securely and ask them to change it under Your account after their first login.</p>
     </div>
+</div>
+
+<div class="split">
+    <form class="main gp-20" asp-action="CreateAdmin" method="post">
+        <div asp-validation-summary="All" role="alert"></div>
+        <section class="card form-card">
+            <h2 class="h2">Their details</h2>
+            <partial name="~/Views/Account/_AccountFields.cshtml" model="Model" />
+        </section>
+        <div class="card vs gp-20">
+            <div class="field">
+                <label class="check" for="AcceptPrivacy">
+                    <input asp-for="AcceptPrivacy" />
+                    <span>The new administrator has read and accepted the <a asp-area="" asp-controller="Home" asp-action="Privacy" target="_blank" rel="noopener">privacy notice</a>.</span>
+                </label>
+                <span asp-validation-for="AcceptPrivacy" class="error-text"></span>
+            </div>
+            <div class="actions end">
+                <a class="btn btn-ghost" asp-action="Index">Cancel</a>
+                <button type="submit" class="btn btn-primary">@Icons.Svg("user-plus", 18)Create administrator</button>
+            </div>
+        </div>
+    </form>
+
+    <aside class="aside card vs gp-16">
+        <h2 class="h3">What they can do</h2>
+        <ul class="list uses">
+            <li class="small">@Icons.Svg("users", 18)<span>Manage users, approve professionals and assign trainers.</span></li>
+            <li class="small">@Icons.Svg("dumbbell", 18)<span>Keep the exercise and food libraries up to date.</span></li>
+            <li class="small">@Icons.Svg("trending-up", 18)<span>Run every report and read the audit log.</span></li>
+            <li class="small">@Icons.Svg("eye-off", 18)<span>They never see clinical notes or measurement values.</span></li>
+        </ul>
+        <p class="xs subtle">Creating the account is recorded in the audit log under your name.</p>
+    </aside>
 </div>
 
 @section Scripts {

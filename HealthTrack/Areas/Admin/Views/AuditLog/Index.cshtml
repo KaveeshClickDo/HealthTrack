@@ -1,6 +1,7 @@
 @model AuditLogPageViewModel
 @{
     ViewData["Title"] = "Audit log";
+    ViewData["Parent"] = "Insights";
     var filter = Model.Filter;
     var pager = new PagerViewModel(Model.Results.Page, Model.Results.TotalPages, Model.Results.TotalCount,
         new Dictionary<string, string?>
@@ -12,89 +13,80 @@
         });
 }
 
-<h1 class="h2 mb-1">Audit log</h1>
-<p class="text-muted mb-3">Sign-ins, registrations, approvals, assignments and other changes, newest first. Passwords and health values are never recorded.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Audit log</h1>
+        <p>Sign-ins, registrations, approvals, assignments and other changes, newest first. Passwords and health values are never recorded.</p>
+    </div>
+</div>
 
-<form method="get" asp-action="Index" class="card shadow-sm mb-3">
-    <div class="card-body row g-2 align-items-end">
-        <div class="col-md-4">
-            <label for="userEmail" class="form-label small">User email</label>
-            <input type="search" id="userEmail" name="userEmail" value="@filter.UserEmail" class="form-control" maxlength="256" />
-        </div>
-        <div class="col-md-3">
-            <label for="auditAction" class="form-label small">Action</label>
-            <select id="auditAction" name="auditAction" class="form-select">
-                <option value="">All actions</option>
-                @foreach (var action in Enum.GetValues<AuditAction>())
-                {
-                    <option value="@((int)action)" selected="@(filter.AuditAction == action)">@action.GetDisplayName()</option>
-                }
-            </select>
-        </div>
-        <div class="col-sm-6 col-md-2">
-            <label for="from" class="form-label small">From</label>
-            <input type="date" id="from" name="from" value="@filter.From?.ToString("yyyy-MM-dd")" class="form-control" />
-        </div>
-        <div class="col-sm-6 col-md-2">
-            <label for="to" class="form-label small">To</label>
-            <input type="date" id="to" name="to" value="@filter.To?.ToString("yyyy-MM-dd")" class="form-control" />
-        </div>
-        <div class="col-md-1 d-flex flex-md-column gap-1">
-            <button type="submit" class="btn btn-outline-primary">Filter</button>
-            <a class="btn btn-link btn-sm" asp-action="Index">Clear</a>
-        </div>
+<form method="get" asp-action="Index" class="card filter-bar">
+    <div class="field grow-2">
+        <label for="userEmail" class="label">User email</label>
+        <div class="input-wrap"><span class="lead-icon">@Icons.Svg("search", 18)</span><input type="search" id="userEmail" name="userEmail" value="@filter.UserEmail" class="input" maxlength="256" placeholder="someone@example.com" /></div>
+    </div>
+    <div class="field">
+        <label for="auditAction" class="label">Action</label>
+        <select id="auditAction" name="auditAction" class="select" data-auto-submit>
+            <option value="">All actions</option>
+            @foreach (var action in Enum.GetValues<AuditAction>())
+            {
+                <option value="@((int)action)" selected="@(filter.AuditAction == action)">@action.GetDisplayName()</option>
+            }
+        </select>
+    </div>
+    <div class="field">
+        <label for="from" class="label">From</label>
+        <input type="date" id="from" name="from" value="@filter.From?.ToString("yyyy-MM-dd")" class="input" />
+    </div>
+    <div class="field">
+        <label for="to" class="label">To</label>
+        <input type="date" id="to" name="to" value="@filter.To?.ToString("yyyy-MM-dd")" class="input" />
+    </div>
+    <div class="actions">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <a class="btn btn-ghost" asp-action="Index">Clear</a>
     </div>
 </form>
 
 @if (Model.Results.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No events match these filters. <a asp-action="Index">Clear the filters</a> to see everything.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("scroll", 24)</span>
+        <p>No events match these filters.</p>
+        <a class="btn btn-secondary" asp-action="Index">Clear the filters</a>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">When</th>
-                        <th scope="col">User</th>
-                        <th scope="col">Action</th>
-                        <th scope="col">Record</th>
-                        <th scope="col">Details</th>
-                        <th scope="col">IP address</th>
-                    </tr>
-                </thead>
+    <section class="card flush">
+        <div class="table-wrap">
+            <table class="table compact">
+                <thead><tr><th scope="col">When</th><th scope="col">User</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Details</th><th scope="col">IP address</th></tr></thead>
                 <tbody>
                     @foreach (var item in Model.Results.Items)
                     {
                         <tr>
-                            <td class="text-nowrap">@item.Timestamp.ToString("dd MMM yyyy HH:mm:ss")</td>
+                            <td class="nowrap">@item.Timestamp.ToString("d MMM yyyy")<span class="sub">@item.Timestamp.ToString("HH:mm:ss")</span></td>
                             <td>
                                 @if (item.UserEmail is null)
                                 {
-                                    <span class="text-muted">Unknown</span>
+                                    <span class="subtle">Unknown</span>
                                 }
                                 else
                                 {
-                                    @item.UserName
-                                    <div class="small text-muted">@item.UserEmail</div>
+                                    @item.UserName<span class="sub">@item.UserEmail</span>
                                 }
                             </td>
                             <td><span class="badge @StatusBadges.For(item.Action)">@item.Action.GetDisplayName()</span></td>
-                            <td class="small text-nowrap">@(item.EntityName is null ? string.Empty : $"{item.EntityName} {item.EntityId}")</td>
-                            <td class="small">@item.Details</td>
-                            <td class="small text-nowrap">@item.IpAddress</td>
+                            <td class="small nowrap subtle">@(item.EntityName is null ? "–" : $"{item.EntityName} {item.EntityId}")</td>
+                            <td class="small">@(item.Details ?? "–")</td>
+                            <td class="small nowrap subtle mono">@item.IpAddress</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+        <partial name="_Pager" model="pager" />
+    </section>
 }
-
-<partial name="_Pager" model="pager" />
