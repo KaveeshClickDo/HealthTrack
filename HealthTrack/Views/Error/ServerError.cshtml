@@ -6,7 +6,7 @@
 
 @* Never shows exception details; the reference lets an administrator find the request in the server log. *@
 <div class="error-page text-center mx-auto">
-    <p class="display-4 fw-semibold text-primary mb-2">@statusCode</p>
+    <p class="error-code mb-3">@statusCode</p>
     @if (isBadRequest)
     {
         <h1 class="h3">We couldn't accept that request</h1>

@@ -3,27 +3,42 @@
     ViewData["Title"] = "Register as a client";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <h1 class="h2 mb-2">Create a client account</h1>
-        <p class="text-muted mb-4">
-            Already registered? <a asp-action="Login">Log in</a>.
-            Are you a trainer or health professional? <a asp-action="RegisterTrainer">Register as a professional</a>.
-        </p>
+<div class="row g-5">
+    <aside class="col-lg-4 d-flex flex-column gap-4">
+        <a class="register-back" asp-action="Register">&larr; Choose a different account</a>
+        <div class="d-flex flex-column gap-3">
+            <h1 class="display register-title mb-0">Create your client account</h1>
+            <p class="text-muted mb-0">Your account is ready straight away. An administrator then matches you with a trainer who builds your plan.</p>
+        </div>
+        <ol class="register-steps">
+            <li><a href="#about"><span class="step-no">1</span>About you</a></li>
+            <li><a href="#health"><span class="step-no">2</span>Your health profile</a></li>
+            <li><a href="#medical"><span class="step-no">3</span>Medical details <span class="text-muted small">· optional</span></a></li>
+            <li><a href="#emergency"><span class="step-no">4</span>Emergency contact <span class="text-muted small">· optional</span></a></li>
+        </ol>
+        <div class="alert alert-secondary d-flex gap-2 mb-0">
+            @Icons.Svg("shield", 18)
+            <span class="small text-muted">Medical details are encrypted before they're stored. You can download or delete your data at any time.</span>
+        </div>
+        <p class="small text-muted mb-0">Coaching clients yourself? <a asp-action="RegisterTrainer">Register as a professional</a></p>
+    </aside>
 
+    <div class="col-lg-8">
         <form asp-action="RegisterClient" method="post">
             <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="about" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">About you</h2>
+                    <p class="eyebrow mb-1">Step 1</p>
+                    <h2 class="h4 mb-3">About you</h2>
                     <partial name="_AccountFields" model="Model" />
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="health" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-1">Your health profile</h2>
+                    <p class="eyebrow mb-1">Step 2</p>
+                    <h2 class="h4 mb-1">Your health profile</h2>
                     <p class="text-muted small mb-3">Your height and weight become your first measurement, and they set your suggested calorie target.</p>
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -59,9 +74,10 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="medical" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-1">Medical details <span class="text-muted small fw-normal">(optional)</span></h2>
+                    <p class="eyebrow mb-1">Step 3 · optional</p>
+                    <h2 class="h4 mb-1">Medical details</h2>
                     <p class="text-muted small mb-3">
                         These are encrypted before they are stored. Your assigned trainer can see them unless you turn sharing off
                         in your health profile later.
@@ -86,9 +102,10 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="emergency" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">Emergency contact <span class="text-muted small fw-normal">(optional)</span></h2>
+                    <p class="eyebrow mb-1">Step 4 · optional</p>
+                    <h2 class="h4 mb-3">Emergency contact</h2>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label asp-for="EmergencyContactName" class="form-label"></label>

@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 # HealthTrack: Data Protection keys and the development email pickup folder
 **/App_Data/keys/
 **/App_Data/mail/
+
+# Zipped copy of docs/screenshots/test-cases (the folder itself is committed)
+docs/screenshots/*.zip

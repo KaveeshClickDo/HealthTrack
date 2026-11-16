@@ -1,7 +1,7 @@
 // Chart drawing shared by progress-charts.js, dashboard-charts.js and reports.js (load it after chart.umd.js).
 // A chart lives in a card: [data-chart-card] holds the canvas (inside .chart-box), an empty-state paragraph
 // [data-chart-empty] and a <details data-chart-table> that gets the same numbers as a table.
-// Marks follow one set of rules: one y-axis per chart, 2px lines, 8px points with a white ring, bars at most 24px wide,
+// Marks follow one set of rules: one y-axis per chart, 2px lines, 8px points ringed in the card colour, bars at most 24px wide,
 // series colours in a fixed order, a grey dashed line for targets, and a legend whenever there are two series or more.
 (function () {
     'use strict';
@@ -9,10 +9,12 @@
     // Categorical slots 1-3, checked for colour-blind separation; slot 3 is below 3:1 contrast, so every chart also
     // has a legend and a data table.
     var palette = ['#2a78d6', '#eb6834', '#1baf7a'];
-    var reference = '#6c757d';
-    var muted = '#6c757d';
-    var gridColor = '#e9ecef';
-    var surface = '#ffffff';
+    // The rest follow the dark theme's tokens (site.css): text-3 for labels and targets, grid lines, and the card
+    // surface for the ring around each point.
+    var reference = '#8c9c98';
+    var muted = '#8c9c98';
+    var gridColor = '#243030';
+    var surface = '#101616';
 
     var charts = new Map();
 
@@ -88,7 +90,9 @@
 
     // Draws every chart whose series the server embedded in data-series.
     function drawEmbedded() {
-        document.querySelectorAll('canvas[data-chart][data-series]').forEach(function (canvas) {
+        // Razor renders data-* attributes even when the value is null, so the client page carries data-series="";
+        // parsing that would throw and stop the page's fetched charts from loading.
+        document.querySelectorAll('canvas[data-chart][data-series]:not([data-series=""])').forEach(function (canvas) {
             draw(canvas, JSON.parse(canvas.dataset.series));
         });
     }

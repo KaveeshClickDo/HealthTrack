@@ -11,7 +11,9 @@
             return;
         }
 
-        var canvases = Array.prototype.slice.call(document.querySelectorAll('canvas[data-chart][data-url]'));
+        // The trainer page renders data-url="" next to its embedded series; an empty URL must not be fetched, or the
+        // failed request would replace the embedded chart with the error text.
+        var canvases = Array.prototype.slice.call(document.querySelectorAll('canvas[data-chart][data-url]:not([data-url=""])'));
         var form = document.getElementById('progress-range');
         var live = form && form.hasAttribute('data-live-range');
 

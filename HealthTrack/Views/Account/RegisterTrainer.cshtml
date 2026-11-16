@@ -3,27 +3,40 @@
     ViewData["Title"] = "Register as a professional";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <h1 class="h2 mb-2">Register as a trainer or health professional</h1>
-        <p class="text-muted mb-4">
-            An administrator checks your details before you can log in. Already registered? <a asp-action="Login">Log in</a>.
-            Looking to track your own health? <a asp-action="RegisterClient">Register as a client</a>.
-        </p>
+<div class="row g-5">
+    <aside class="col-lg-4 d-flex flex-column gap-4">
+        <a class="register-back" asp-action="Register">&larr; Choose a different account</a>
+        <div class="d-flex flex-column gap-3">
+            <h1 class="display register-title mb-0">Register as a professional</h1>
+            <p class="text-muted mb-0">For fitness trainers, nutritionists, physiotherapists and medical doctors. An administrator checks your details before you can log in.</p>
+        </div>
+        <ol class="register-steps">
+            <li><a href="#about"><span class="step-no">1</span>About you</a></li>
+            <li><a href="#professional"><span class="step-no">2</span>Professional details</a></li>
+        </ol>
+        <div class="alert alert-warning d-flex gap-2 mb-0">
+            @Icons.Svg("user-check", 18)
+            <span class="small">Your account stays <strong>pending approval</strong> until an administrator approves it. We'll let you know as soon as it's ready.</span>
+        </div>
+        <p class="small text-muted mb-0">Looking to track your own health? <a asp-action="RegisterClient">Register as a client</a></p>
+    </aside>
 
+    <div class="col-lg-8">
         <form asp-action="RegisterTrainer" method="post">
             <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="about" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-3">About you</h2>
+                    <p class="eyebrow mb-1">Step 1</p>
+                    <h2 class="h4 mb-3">About you</h2>
                     <partial name="_AccountFields" model="Model" />
                 </div>
             </div>
 
-            <div class="card shadow-sm mb-4">
+            <div id="professional" class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <h2 class="h5 mb-1">Professional details</h2>
+                    <p class="eyebrow mb-1">Step 2</p>
+                    <h2 class="h4 mb-1">Professional details</h2>
                     <p class="text-muted small mb-3">Clients see your profession, specialisation and bio when they book.</p>
                     <div class="row g-3">
                         <div class="col-md-6">

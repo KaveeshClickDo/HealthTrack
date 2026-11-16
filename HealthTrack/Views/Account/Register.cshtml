@@ -2,34 +2,43 @@
     ViewData["Title"] = "Register";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <h1 class="h2 mb-2">Create your HealthTrack account</h1>
-        <p class="text-muted mb-4">Choose the kind of account you need. Already registered? <a asp-action="Login">Log in</a>.</p>
+<div class="d-flex flex-column gap-5">
+    <div class="d-flex flex-column align-items-center text-center gap-3">
+        <span class="eyebrow text-primary">Get started</span>
+        <h1 class="display register-hero mb-0">Create your HealthTrack account</h1>
+        <p class="lead register-lead mb-0">Choose the account that fits you. It only takes a couple of minutes. Already registered? <a asp-action="Login">Log in</a>.</p>
+    </div>
 
-        <div class="row g-4">
-            <div class="col-md-6">
-                <div class="card h-100 shadow-sm choice-card">
-                    <div class="card-body d-flex flex-column">
-                        <h2 class="h4">I'm a client</h2>
-                        <p class="text-muted flex-grow-1">
-                            Track your workouts, meals and measurements, follow plans from your trainer and book appointments.
-                            Your account is ready straight away.
-                        </p>
-                        <a class="btn btn-primary stretched-link" asp-action="RegisterClient">Register as a client</a>
-                    </div>
+    <div class="row g-4 register-choices mx-auto">
+        <div class="col-md-6">
+            <div class="card h-100 choice-card">
+                <div class="card-body d-flex flex-column gap-3 p-4">
+                    <span class="choice-icon">@Icons.Svg("activity", 24)</span>
+                    <span class="badge text-bg-success align-self-start">Ready straight away</span>
+                    <h2 class="h3 mb-0">I'm a client</h2>
+                    <p class="text-muted mb-0">Track your workouts, meals and measurements, follow plans from your trainer and book appointments.</p>
+                    <ul class="choice-points">
+                        <li>Workout and diet plans from a professional</li>
+                        <li>Charts of your weight, BMI and vitals</li>
+                        <li>Reminders for workouts, meals and sessions</li>
+                    </ul>
+                    <a class="btn btn-primary btn-lg w-100 mt-auto stretched-link" asp-action="RegisterClient">Register as a client</a>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100 shadow-sm choice-card">
-                    <div class="card-body d-flex flex-column">
-                        <h2 class="h4">I'm a trainer or health professional</h2>
-                        <p class="text-muted flex-grow-1">
-                            Fitness trainers, nutritionists, physiotherapists and medical doctors coach clients and take appointments.
-                            An administrator checks your details before your first login.
-                        </p>
-                        <a class="btn btn-outline-primary stretched-link" asp-action="RegisterTrainer">Register as a professional</a>
-                    </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 choice-card">
+                <div class="card-body d-flex flex-column gap-3 p-4">
+                    <span class="choice-icon">@Icons.Svg("stethoscope", 24)</span>
+                    <span class="badge text-bg-warning align-self-start">Checked by our team first</span>
+                    <h2 class="h3 mb-0">I'm a trainer or health professional</h2>
+                    <p class="text-muted mb-0">Fitness trainers, nutritionists, physiotherapists and medical doctors coach clients and take appointments.</p>
+                    <ul class="choice-points">
+                        <li>Plans, templates and feedback for your clients</li>
+                        <li>Bookings only inside your availability</li>
+                        <li>An administrator approves you before your first login</li>
+                    </ul>
+                    <a class="btn btn-outline-primary btn-lg w-100 mt-auto stretched-link" asp-action="RegisterTrainer">Register as a professional</a>
                 </div>
             </div>
         </div>
