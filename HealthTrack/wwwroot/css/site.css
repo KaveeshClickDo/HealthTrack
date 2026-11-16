@@ -1074,3 +1074,46 @@ fieldset.card > legend + * { clear: both; }
 .card.danger-card { display: flex; flex-direction: column; gap: 18px; border-color: rgba(255, 133, 133, .45); }
 .stat-icon.danger { color: var(--red); background: rgba(255, 133, 133, .1); }
 input.switch[type="checkbox"] { width: 46px; height: 28px; }
+
+/* Your account */
+.profile-card { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; }
+.profile-card .who { flex: 1 1 300px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.profile-card .h2 { font-size: 26px; }
+.link-card { display: flex; gap: 16px; align-items: flex-start; color: var(--text); }
+.link-card:hover { color: var(--text); border-color: var(--field-line); }
+.link-card .text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.link-card > .ico:last-child { color: var(--text-3); }
+
+/* Edit details and change password */
+.ht-content.narrow-xs { max-width: 920px; }
+.ht-content.narrow-pw { max-width: 980px; }
+.rules { display: flex; flex-direction: column; gap: 12px; }
+.rules li { color: var(--text-3); }
+.rules li .ico-on { display: none; }
+.rules li.is-met { color: var(--text); }
+.rules li.is-met .ico-on { display: inline-flex; color: var(--green); }
+.rules li.is-met .ico-off { display: none; }
+
+/* Notifications */
+.ht-content.narrow-n { max-width: 1040px; }
+.day-label { padding: 16px 24px; border-bottom: 1px solid var(--line); }
+.day-label + ul + .day-label, ul + .day-label { border-top: 1px solid var(--line); }
+.note-rows > li { display: flex; gap: 16px; align-items: flex-start; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+.note-rows > li:last-child { border-bottom: 0; }
+.note-rows > li.is-unread { background: var(--surface-2); }
+.note-rows .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.note-rows .title-read { font-weight: 550; }
+.unread-dot.inline { margin-top: 0; }
+@media (max-width: 760px) {
+  .note-rows > li { flex-wrap: wrap; padding: 16px; }
+  .note-rows .actions { width: 100%; padding-left: 50px; }
+  .day-label { padding: 14px 16px; }
+}
+
+/* Notification settings */
+.ht-content.narrow-ns { max-width: 1100px; }
+.setting-card { display: flex; flex-direction: column; gap: 18px; }
+.setting-card .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.setting-card .head .hrow { align-items: flex-start; gap: 14px; }
+.input.w-200, .input-wrap.w-200 { max-width: 200px; }
+.alert.on-surface-2 { background: var(--surface-2); }

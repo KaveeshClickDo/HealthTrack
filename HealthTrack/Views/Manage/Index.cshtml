@@ -1,54 +1,81 @@
 @model AccountSummaryViewModel
 @{
-    ViewData["Title"] = "Manage account";
+    ViewData["Title"] = "Your account";
+    var isClient = User.IsInRole(AppRoles.Client);
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+    var avatarClass = isAdmin ? "av-admin" : isClient ? "av-client" : "av-trainer";
+    var profession = User.FindFirst(AppClaims.Profession)?.Value;
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h2 mb-4">@ViewData["Title"]</h1>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Your account</h1>
+        <p>
+            Your personal details and sign-in.
+            @if (isClient)
+            {
+                <text>Your goal and medical details live in your <a asp-area="Client" asp-controller="Profile" asp-action="Edit">health profile</a>.</text>
+            }
+        </p>
+    </div>
+</div>
 
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-                    <div>
-                        <h2 class="h5 mb-1">@Model.FullName</h2>
-                        <span class="badge text-bg-light border">@Model.Role</span>
-                        <span class="badge @(Model.AccountStatus == AccountStatus.Active ? "text-bg-success" : "text-bg-warning")">@Model.AccountStatus.GetDisplayName()</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-outline-primary" asp-action="EditProfile">Edit details</a>
-                        <a class="btn btn-outline-primary" asp-action="ChangePassword">Change password</a>
-                    </div>
-                </div>
-
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Email</dt>
-                    <dd class="col-sm-8">@Model.Email</dd>
-
-                    <dt class="col-sm-4">Phone number</dt>
-                    <dd class="col-sm-8">@(Model.PhoneNumber ?? "Not given")</dd>
-
-                    <dt class="col-sm-4">Date of birth</dt>
-                    <dd class="col-sm-8">@Model.DateOfBirth.ToString("dd MMM yyyy") (age @Model.Age)</dd>
-
-                    <dt class="col-sm-4">Gender</dt>
-                    <dd class="col-sm-8">@Model.Gender.GetDisplayName()</dd>
-
-                    <dt class="col-sm-4">Member since</dt>
-                    <dd class="col-sm-8">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
-
-                    <dt class="col-sm-4">Last login</dt>
-                    <dd class="col-sm-8">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "This is your first visit")</dd>
-                </dl>
-            </div>
+<section class="card profile-card">
+    <span class="avatar av-xl @avatarClass">@Model.FullName.Initials()</span>
+    <div class="who">
+        <h2 class="h2">@Model.FullName</h2>
+        <div class="hrow wrap gp-8">
+            <span class="badge">@Model.Role</span>
+            <span class="badge @StatusBadges.For(Model.AccountStatus)"><span class="dot"></span>@Model.AccountStatus.GetDisplayName()</span>
+            <span class="small subtle">@(profession is null ? string.Empty : profession + " · ")Member since @Model.CreatedAt.ToString("d MMM yyyy")</span>
         </div>
+    </div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-action="EditProfile">@Icons.Svg("pencil", 18)Edit details</a>
+        <a class="btn btn-secondary" asp-action="ChangePassword">@Icons.Svg("lock", 18)Change password</a>
+    </div>
+</section>
 
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="h6">Reminders and notifications</h2>
-                <p class="text-muted small mb-2">Choose which reminders you get and whether copies are sent by email.</p>
-                <a asp-area="" asp-controller="Notifications" asp-action="Preferences">Notification settings</a>
-            </div>
+<div class="split">
+    <section class="main card gp-20">
+        <div class="card-head"><h2 class="h2">Personal details</h2><a class="link-sm" asp-action="EditProfile">Edit</a></div>
+        <dl class="kv">
+            <dt>Email</dt><dd>@Model.Email</dd>
+            <dt>Phone number</dt><dd>@(Model.PhoneNumber ?? "Not given")</dd>
+            <dt>Date of birth</dt><dd>@Model.DateOfBirth.ToString("d MMM yyyy") <span class="subtle">· age @Model.Age</span></dd>
+            <dt>Gender</dt><dd>@Model.Gender.GetDisplayName()</dd>
+            <dt>Member since</dt><dd>@Model.CreatedAt.ToString("d MMM yyyy")</dd>
+            <dt>Last login</dt><dd>@(Model.LastLoginAt?.ToString("d MMM yyyy 'at' HH:mm") ?? "This is your first visit")</dd>
+        </dl>
+    </section>
+
+    <div class="aside">
+        @if (isClient)
+        {
+            <a class="card link-card" asp-area="Client" asp-controller="Profile" asp-action="Edit">
+                <span class="stat-icon" data-tone="rose">@Icons.Svg("logo", 18)</span>
+                <span class="text"><span class="strong">Health profile</span><span class="small muted">Goal, activity level, target weight and medical details. Download or delete your data here too.</span></span>
+                @Icons.Svg("chevron-right", 18)
+            </a>
+        }
+        <a class="card link-card" asp-area="" asp-controller="Notifications" asp-action="Preferences">
+            <span class="stat-icon" data-tone="violet">@Icons.Svg("bell", 18)</span>
+            <span class="text">
+                <span class="strong">@(isAdmin ? "Notifications" : "Reminders and notifications")</span>
+                <span class="small muted">@(isAdmin ? "See new trainer registrations, and choose whether copies come by email." : isClient ? "Choose which reminders you get, and whether copies come by email." : "Choose when appointment reminders arrive, and whether copies come by email.")</span>
+            </span>
+            @Icons.Svg("chevron-right", 18)
+        </a>
+        <div class="card link-card">
+            <span class="stat-icon i-accent">@Icons.Svg("shield-check", 18)</span>
+            <span class="text"><span class="strong">Sign-in protection</span><span class="small muted">After 5 wrong passwords your account locks for 15 minutes, and you're signed out after 30 minutes of inactivity.</span></span>
         </div>
+        @if (isAdmin)
+        {
+            <div class="card link-card">
+                <span class="stat-icon" data-tone="amber">@Icons.Svg("scroll", 18)</span>
+                <span class="text"><span class="strong">Your actions are audited</span><span class="small muted">Every sign-in and change you make is written to the <a asp-area="Admin" asp-controller="AuditLog" asp-action="Index">audit log</a>.</span></span>
+            </div>
+        }
     </div>
 </div>

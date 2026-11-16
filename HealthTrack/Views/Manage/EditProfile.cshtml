@@ -1,55 +1,62 @@
 @model ProfileViewModel
 @{
     ViewData["Title"] = "Edit your details";
+    ViewData["Parent"] = "Your account";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["ContentClass"] = "narrow-xs";
+    var avatarClass = User.IsInRole(AppRoles.Admin) ? "av-admin" : User.IsInRole(AppRoles.Client) ? "av-client" : "av-trainer";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <p><a asp-action="Index">&larr; Back to your account</a></p>
-        <h1 class="h2 mb-4">@ViewData["Title"]</h1>
-
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <form asp-action="EditProfile" method="post">
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label"></label>
-                            <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
-                            <span asp-validation-for="FirstName" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label"></label>
-                            <input asp-for="LastName" class="form-control" autocomplete="family-name" />
-                            <span asp-validation-for="LastName" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="PhoneNumber" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                            <input asp-for="PhoneNumber" type="tel" class="form-control" autocomplete="tel" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="DateOfBirth" class="form-label"></label>
-                            <input asp-for="DateOfBirth" class="form-control" autocomplete="bday" />
-                            <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Gender" class="form-label"></label>
-                            <select asp-for="Gender" asp-items="Html.GetEnumSelectList<Gender>()" class="form-select">
-                                <option value="">Choose…</option>
-                            </select>
-                            <span asp-validation-for="Gender" class="text-danger small"></span>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)Back to your account</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Edit your details</h1>
+        <p>Keep your name and contact details up to date@(User.IsInRole(AppRoles.Client) ? " so your trainer can reach you" : string.Empty).</p>
     </div>
 </div>
+
+<form class="card form-stack gp-24" asp-action="EditProfile" method="post">
+    <div asp-validation-summary="All" role="alert"></div>
+    <div class="hrow gp-16">
+        <span class="avatar av-lg @avatarClass">@($"{Model.FirstName} {Model.LastName}".Initials())</span>
+        <div><div class="strong">@User.Identity?.Name</div><div class="small subtle">Your sign-in email</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-grid">
+        <div class="field">
+            <label asp-for="FirstName" class="label"></label>
+            <input asp-for="FirstName" class="input" autocomplete="given-name" />
+            <span asp-validation-for="FirstName" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="LastName" class="label"></label>
+            <input asp-for="LastName" class="input" autocomplete="family-name" />
+            <span asp-validation-for="LastName" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="PhoneNumber" class="label">Phone number <span class="opt">Optional</span></label>
+            <input asp-for="PhoneNumber" type="tel" class="input" autocomplete="tel" />
+            <span asp-validation-for="PhoneNumber" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="DateOfBirth" class="label"></label>
+            <input asp-for="DateOfBirth" class="input" autocomplete="bday" />
+            <span asp-validation-for="DateOfBirth" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="Gender" class="label"></label>
+            <select asp-for="Gender" asp-items="Html.GetEnumSelectList<Gender>()" class="select">
+                <option value="">Choose…</option>
+            </select>
+            <span asp-validation-for="Gender" class="error-text"></span>
+        </div>
+    </div>
+    <div class="divider"></div>
+    <div class="actions end">
+        <a class="btn btn-ghost" asp-action="Index">Cancel</a>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -1,0 +1,16 @@
+@model NotificationType
+@* The icon for a kind of notification, in its colour. *@
+@{
+    var (icon, tone) = Model switch
+    {
+        NotificationType.WorkoutReminder => ("play", "accent"),
+        NotificationType.MealReminder => ("utensils", "orange"),
+        NotificationType.AppointmentReminder => ("calendar", "violet"),
+        NotificationType.AppointmentUpdate => ("calendar-clock", "blue"),
+        NotificationType.PlanAssigned => ("clipboard", "accent"),
+        NotificationType.NewFeedback => ("message", "green"),
+        NotificationType.AccountUpdate => ("user", "amber"),
+        _ => ("info", string.Empty)
+    };
+}
+<span class="stat-icon @(tone == "accent" ? "i-accent" : string.Empty)" data-tone="@(tone == "accent" ? null : tone)">@Icons.Svg(icon, 18)</span>

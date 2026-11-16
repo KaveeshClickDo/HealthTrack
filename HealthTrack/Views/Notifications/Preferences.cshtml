@@ -1,105 +1,109 @@
 @model ReminderPreferencesViewModel
 @{
     ViewData["Title"] = "Notification settings";
+    ViewData["Parent"] = "Notifications";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    ViewData["Crumb"] = "Settings";
+    ViewData["ContentClass"] = "narrow-ns";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Notification settings</h1>
-        <p class="text-muted mb-0">Choose which reminders you get and when. Each reminder appears once, in the bell at the top of the page.</p>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Notification settings</h1>
+        <p>Choose which reminders you get and when. Each one appears once, under the bell at the top of the page.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-action="Index">Notifications</a>
+    <div class="actions"><a class="btn btn-secondary" asp-action="Index">View notifications</a></div>
 </div>
 
-<form asp-action="Preferences" method="post" class="row g-3">
-    <div class="col-12">
-        <div asp-validation-summary="All" class="alert alert-danger mb-0" role="alert"></div>
+<form class="form-stack" asp-action="Preferences" method="post">
+    <div asp-validation-summary="All" role="alert"></div>
+    <div class="grid g-2">
+        @if (Model.ShowsPlanReminders)
+        {
+            <section class="card setting-card">
+                <div class="head">
+                    <div class="hrow">
+                        <span class="stat-icon i-accent">@Icons.Svg("play", 18)</span>
+                        <div><h2 class="h3">Workouts</h2><p class="small subtle">On days your plan has exercises, if nothing's logged yet.</p></div>
+                    </div>
+                    <input asp-for="WorkoutRemindersEnabled" class="switch" aria-label="Workout reminders" />
+                </div>
+                <div class="field">
+                    <label asp-for="WorkoutReminderTime" class="label">Remind me at</label>
+                    <input asp-for="WorkoutReminderTime" type="time" asp-format="{0:hh\:mm}" class="input w-200" />
+                    <span asp-validation-for="WorkoutReminderTime" class="error-text"></span>
+                </div>
+            </section>
+            <section class="card setting-card">
+                <div class="head">
+                    <div class="hrow">
+                        <span class="stat-icon" data-tone="orange">@Icons.Svg("utensils", 18)</span>
+                        <div><h2 class="h3">Meals</h2><p class="small subtle">Before each meal in your diet plan that isn't logged yet.</p></div>
+                    </div>
+                    <input asp-for="MealRemindersEnabled" class="switch" aria-label="Meal reminders" />
+                </div>
+                <div class="field">
+                    <label asp-for="MealReminderLeadMinutes" class="label">Minutes before</label>
+                    <div class="input-wrap w-200">
+                        <input asp-for="MealReminderLeadMinutes" type="number" min="@HealthTrack.Models.Entities.NotificationPreference.MinMealLeadMinutes"
+                               max="@HealthTrack.Models.Entities.NotificationPreference.MaxMealLeadMinutes" step="5" class="input" />
+                        <span class="unit">min</span>
+                    </div>
+                    <span class="hint">Anything from 0 to 120 minutes.</span>
+                    <span asp-validation-for="MealReminderLeadMinutes" class="error-text"></span>
+                </div>
+            </section>
+        }
+        else
+        {
+            @* Workout and meal reminders apply to clients only; the saved values are kept as they are. *@
+            <input type="hidden" asp-for="WorkoutRemindersEnabled" />
+            <input type="hidden" asp-for="WorkoutReminderTime" asp-format="{0:hh\:mm}" />
+            <input type="hidden" asp-for="MealRemindersEnabled" />
+            <input type="hidden" asp-for="MealReminderLeadMinutes" />
+        }
+
+        @if (Model.ShowsAppointmentReminders)
+        {
+            <section class="card setting-card">
+                <div class="head">
+                    <div class="hrow">
+                        <span class="stat-icon" data-tone="violet">@Icons.Svg("calendar", 18)</span>
+                        <div><h2 class="h3">Appointments</h2><p class="small subtle">Before an approved or rescheduled appointment.</p></div>
+                    </div>
+                    <input asp-for="AppointmentRemindersEnabled" class="switch" aria-label="Appointment reminders" />
+                </div>
+                <div class="field">
+                    <label asp-for="AppointmentReminderLeadHours" class="label">Hours before</label>
+                    <div class="input-wrap w-200">
+                        <input asp-for="AppointmentReminderLeadHours" type="number" min="@HealthTrack.Models.Entities.NotificationPreference.MinAppointmentLeadHours"
+                               max="@HealthTrack.Models.Entities.NotificationPreference.MaxAppointmentLeadHours" class="input" />
+                        <span class="unit">hours</span>
+                    </div>
+                    <span class="hint">Anything from 1 to 72 hours.</span>
+                    <span asp-validation-for="AppointmentReminderLeadHours" class="error-text"></span>
+                </div>
+            </section>
+        }
+        else
+        {
+            <input type="hidden" asp-for="AppointmentRemindersEnabled" />
+            <input type="hidden" asp-for="AppointmentReminderLeadHours" />
+        }
+
+        <section class="card setting-card">
+            <div class="head">
+                <div class="hrow">
+                    <span class="stat-icon i-blue">@Icons.Svg("mail", 18)</span>
+                    <div><h2 class="h3">Email copies</h2><p class="small subtle">Also send me each notification by email.</p></div>
+                </div>
+                <input asp-for="EmailEnabled" class="switch" aria-label="Email copies" />
+            </div>
+            <div class="alert on-surface-2">@Icons.Svg("info", 18)<span class="small muted">New notifications and reminders go to <span class="strong">@Model.Email</span> within a minute.</span></div>
+        </section>
     </div>
-
-    @if (Model.ShowsPlanReminders)
-    {
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5">Workouts</h2>
-                    <div class="form-check form-switch mb-3">
-                        <input asp-for="WorkoutRemindersEnabled" class="form-check-input" role="switch" />
-                        <label asp-for="WorkoutRemindersEnabled" class="form-check-label"></label>
-                    </div>
-                    <label asp-for="WorkoutReminderTime" class="form-label"></label>
-                    <input asp-for="WorkoutReminderTime" type="time" asp-format="{0:hh\:mm}" class="form-control" />
-                    <span asp-validation-for="WorkoutReminderTime" class="text-danger small"></span>
-                    <div class="form-text">On days your plan has exercises, if nothing is logged yet by this time.</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5">Meals</h2>
-                    <div class="form-check form-switch mb-3">
-                        <input asp-for="MealRemindersEnabled" class="form-check-input" role="switch" />
-                        <label asp-for="MealRemindersEnabled" class="form-check-label"></label>
-                    </div>
-                    <label asp-for="MealReminderLeadMinutes" class="form-label"></label>
-                    <input asp-for="MealReminderLeadMinutes" type="number" min="@HealthTrack.Models.Entities.NotificationPreference.MinMealLeadMinutes"
-                           max="@HealthTrack.Models.Entities.NotificationPreference.MaxMealLeadMinutes" step="5" class="form-control" />
-                    <span asp-validation-for="MealReminderLeadMinutes" class="text-danger small"></span>
-                    <div class="form-text">0 to 120 minutes before each meal in your diet plan that isn't logged yet.</div>
-                </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        @* Workout and meal reminders apply to clients only; the saved values are kept as they are. *@
-        <input type="hidden" asp-for="WorkoutRemindersEnabled" />
-        <input type="hidden" asp-for="WorkoutReminderTime" asp-format="{0:hh\:mm}" />
-        <input type="hidden" asp-for="MealRemindersEnabled" />
-        <input type="hidden" asp-for="MealReminderLeadMinutes" />
-    }
-
-    @if (Model.ShowsAppointmentReminders)
-    {
-        <div class="col-md-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5">Appointments</h2>
-                    <div class="form-check form-switch mb-3">
-                        <input asp-for="AppointmentRemindersEnabled" class="form-check-input" role="switch" />
-                        <label asp-for="AppointmentRemindersEnabled" class="form-check-label"></label>
-                    </div>
-                    <label asp-for="AppointmentReminderLeadHours" class="form-label"></label>
-                    <input asp-for="AppointmentReminderLeadHours" type="number" min="@HealthTrack.Models.Entities.NotificationPreference.MinAppointmentLeadHours"
-                           max="@HealthTrack.Models.Entities.NotificationPreference.MaxAppointmentLeadHours" class="form-control" />
-                    <span asp-validation-for="AppointmentReminderLeadHours" class="text-danger small"></span>
-                    <div class="form-text">1 to 72 hours before an approved or rescheduled appointment.</div>
-                </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <input type="hidden" asp-for="AppointmentRemindersEnabled" />
-        <input type="hidden" asp-for="AppointmentReminderLeadHours" />
-    }
-
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h5">Email</h2>
-                <div class="form-check form-switch mb-2">
-                    <input asp-for="EmailEnabled" class="form-check-input" role="switch" />
-                    <label asp-for="EmailEnabled" class="form-check-label"></label>
-                </div>
-                <div class="form-text">
-                    Copies of notifications and reminders created from now on go to your sign-in address, <strong>@Model.Email</strong>, within a minute.
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-12">
+    <div class="between wrap">
+        <span class="small subtle">Changes apply to reminders created from now on.</span>
         <button type="submit" class="btn btn-primary">Save settings</button>
     </div>
 </form>
