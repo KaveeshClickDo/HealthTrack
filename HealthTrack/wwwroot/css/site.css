@@ -1190,3 +1190,10 @@ input.switch[type="checkbox"] { width: 46px; height: 28px; }
 .add-card:hover { border-color: var(--field-line); color: var(--text); }
 .add-card .stat-icon { width: 52px; height: 52px; border-radius: 16px; color: var(--accent); }
 .badge.diff-1 { color: var(--green); } .badge.diff-2 { color: var(--amber); } .badge.diff-3 { color: var(--red); }
+
+/* Trainer: diet plan forms */
+.kcal-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.kcal-row > .field { flex: 1 1 240px; }
+.alert.suggest { flex: 1 1 280px; background: rgba(61, 219, 179, .07); border-color: var(--accent-line); }
+.alert.suggest .ico { color: var(--accent); }
+.form-grid.macros { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }

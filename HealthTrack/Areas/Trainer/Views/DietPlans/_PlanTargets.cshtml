@@ -2,12 +2,15 @@
 @* The suggested calorie target next to the daily target field, shared by the create and edit forms. *@
 @if (Model is { } suggested)
 {
-    <div class="form-text">
-        Suggested: <strong>@suggested.ToString("N0") kcal</strong>, from the client's latest weight and height, age,
-        activity level and goal (TDEE &minus; 500 to lose weight, + 300 to gain muscle, never below 1,200).
+    <div class="alert suggest">
+        @Icons.Svg("sparkles", 18)
+        <span class="small"><span class="strong">Suggested: @suggested.ToString("N0") kcal</span><br /><span class="muted">From the client's latest weight and height, age, activity level and goal (TDEE − 500 to lose weight, + 300 to gain muscle, never below 1,200).</span></span>
     </div>
 }
 else
 {
-    <div class="form-text">No suggestion yet: the client hasn't recorded a measurement. Enter a target yourself.</div>
+    <div class="alert on-surface">
+        @Icons.Svg("info", 18)
+        <span class="small muted">No suggestion yet: the client hasn't recorded a measurement. Enter a target yourself.</span>
+    </div>
 }

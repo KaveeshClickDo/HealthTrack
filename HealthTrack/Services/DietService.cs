@@ -135,7 +135,11 @@ namespace HealthTrack.Services
                     DailyCalorieTarget = p.DailyCalorieTarget,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate,
-                    MealCount = p.Meals.Count
+                    MealCount = p.Meals.Count,
+                    ClientId = p.ClientId,
+                    ProteinTargetG = p.ProteinTargetG,
+                    CarbsTargetG = p.CarbsTargetG,
+                    FatTargetG = p.FatTargetG
                 })
                 .ToPagedResultAsync(page);
         }

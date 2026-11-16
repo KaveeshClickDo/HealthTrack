@@ -30,5 +30,17 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>Number of scheduled meals.</summary>
         public int MealCount { get; init; }
+
+        /// <summary>The client's ID, for the avatar colour.</summary>
+        public int ClientId { get; init; }
+
+        /// <summary>Daily protein target in grams, if set.</summary>
+        public int? ProteinTargetG { get; init; }
+
+        /// <summary>Daily carbohydrate target in grams, if set.</summary>
+        public int? CarbsTargetG { get; init; }
+
+        /// <summary>Daily fat target in grams, if set.</summary>
+        public int? FatTargetG { get; init; }
     }
 }

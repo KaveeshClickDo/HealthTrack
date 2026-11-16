@@ -3,43 +3,40 @@
     var planId = (int)ViewData["PlanId"]!;
 }
 @* Its own form, so adding a meal doesn't post the plan's other fields. The field names come from this partial's model. *@
-<form asp-action="AddMeal" asp-route-id="@planId" method="post" class="row g-2 align-items-end">
-    <div class="col-md-3">
-        <label asp-for="DayOfWeek" class="form-label small"></label>
-        <select asp-for="DayOfWeek" class="form-select">
-            <option value="">Every day</option>
-            @foreach (var day in WorkoutText.WeekFromMonday)
-            {
-                <option value="@((int)day)">@day only</option>
-            }
-        </select>
+<form class="form-stack gp-16" asp-action="AddMeal" asp-route-id="@planId" method="post">
+    <div class="grid-4">
+        <div class="field">
+            <label asp-for="DayOfWeek" class="label"></label>
+            <select asp-for="DayOfWeek" class="select">
+                <option value="">Every day</option>
+                @foreach (var day in WorkoutText.WeekFromMonday)
+                {
+                    <option value="@((int)day)">@day only</option>
+                }
+            </select>
+        </div>
+        <div class="field">
+            <label asp-for="MealType" class="label"></label>
+            <select asp-for="MealType" asp-items="Html.GetEnumSelectList<MealType>()" class="select">
+                <option value="">Choose…</option>
+            </select>
+            <span asp-validation-for="MealType" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="ScheduledTime" class="label"></label>
+            <input asp-for="ScheduledTime" type="time" asp-format="{0:hh\:mm}" class="input" />
+            <span asp-validation-for="ScheduledTime" class="error-text"></span>
+        </div>
+        <div class="field">
+            <label asp-for="TargetCalories" class="label"></label>
+            <div class="input-wrap"><input asp-for="TargetCalories" type="number" min="50" max="2000" step="10" class="input" /><span class="unit">kcal</span></div>
+            <span asp-validation-for="TargetCalories" class="error-text"></span>
+        </div>
     </div>
-    <div class="col-md-3">
-        <label asp-for="MealType" class="form-label small"></label>
-        <select asp-for="MealType" asp-items="Html.GetEnumSelectList<MealType>()" class="form-select">
-            <option value="">Choose…</option>
-        </select>
+    <div class="field">
+        <label asp-for="MealDescription" class="label"></label>
+        <input asp-for="MealDescription" class="input" placeholder="For example, oats 50 g, banana, 200 ml low-fat milk" />
+        <span asp-validation-for="MealDescription" class="error-text"></span>
     </div>
-    <div class="col-6 col-md-3">
-        <label asp-for="ScheduledTime" class="form-label small"></label>
-        <input asp-for="ScheduledTime" type="time" asp-format="{0:hh\:mm}" class="form-control" />
-    </div>
-    <div class="col-6 col-md-3">
-        <label asp-for="TargetCalories" class="form-label small"></label>
-        <input asp-for="TargetCalories" type="number" min="50" max="2000" step="10" class="form-control" />
-    </div>
-    <div class="col-md-10">
-        <label asp-for="MealDescription" class="form-label small"></label>
-        <input asp-for="MealDescription" class="form-control" placeholder="For example, oats 50 g, banana, 200 ml low-fat milk" />
-    </div>
-    <div class="col-md-2 d-grid">
-        <button type="submit" class="btn btn-outline-primary">Add</button>
-    </div>
-    <div class="col-12">
-        <span asp-validation-for="MealType" class="text-danger small d-block"></span>
-        <span asp-validation-for="ScheduledTime" class="text-danger small d-block"></span>
-        <span asp-validation-for="TargetCalories" class="text-danger small d-block"></span>
-        <span asp-validation-for="MealDescription" class="text-danger small d-block"></span>
-        <div class="form-text">The time also sets when the client's meal reminder is sent.</div>
-    </div>
+    <div><button type="submit" class="btn btn-secondary">@Icons.Svg("plus", 18)Add the meal</button></div>
 </form>

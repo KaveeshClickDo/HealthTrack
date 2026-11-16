@@ -1,60 +1,71 @@
 @model PagedResult<DietPlanListItemViewModel>
 @{
     ViewData["Title"] = "Diet plans";
+    ViewData["Parent"] = "Planning";
     var pager = new PagerViewModel(Model.Page, Model.TotalPages, Model.TotalCount, new Dictionary<string, string?>());
+
+    static string Macros(DietPlanListItemViewModel plan)
+    {
+        var parts = new List<string>();
+        if (plan.ProteinTargetG is { } protein) { parts.Add($"Protein {protein} g"); }
+        if (plan.CarbsTargetG is { } carbs) { parts.Add($"Carbohydrate {carbs} g"); }
+        if (plan.FatTargetG is { } fat) { parts.Add($"Fat {fat} g"); }
+        return parts.Count == 0 ? "Calories only" : string.Join(" · ", parts);
+    }
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h1 class="h2 mb-0">Diet plans</h1>
-    <a class="btn btn-primary" asp-action="Create">New diet plan</a>
+<div class="page-head">
+    <div class="intro">
+        <h1 class="h1">Diet plans</h1>
+        <p>Daily calorie and macro targets with planned meals. The calorie target is suggested from each client's latest measurement and goal.</p>
+    </div>
+    <div class="actions"><a class="btn btn-primary" asp-action="Create">@Icons.Svg("plus", 18)New diet plan</a></div>
 </div>
 
 @if (Model.TotalCount == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            You haven't written any diet plans yet. <a asp-action="Create">Create one</a> for one of your clients;
-            the calorie target is suggested from their latest measurement and goal.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("apple", 24)</span>
+        <p><span class="strong">You haven't written any diet plans yet.</span> Create one for a client; the calorie target is suggested from their latest measurement and goal.</p>
+        <a class="btn btn-primary" asp-action="Create">New diet plan</a>
     </div>
 }
 else
 {
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col">Plan</th>
-                        <th scope="col">Client</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Dates</th>
-                        <th scope="col" class="text-end">kcal a day</th>
-                        <th scope="col" class="text-end">Meals</th>
-                    </tr>
-                </thead>
+    <section class="card flush">
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th scope="col">Plan</th><th scope="col">Client</th><th scope="col">Status</th><th scope="col">Dates</th><th scope="col" class="r">kcal a day</th><th scope="col" class="r">Meals</th><th scope="col"><span class="visually-hidden">Open</span></th></tr></thead>
                 <tbody>
                     @foreach (var plan in Model.Items)
                     {
                         <tr>
-                            <td><a asp-action="Edit" asp-route-id="@plan.DietPlanId">@plan.Title</a></td>
-                            <td>@plan.ClientName</td>
-                            <td><span class="badge @StatusBadges.For(plan.Status)">@plan.Status.GetDisplayName()</span></td>
-                            <td class="text-nowrap small">
-                                @plan.StartDate.ToString("dd MMM yyyy")
-                                @if (plan.EndDate is { } end)
+                            <th scope="row">
+                                <span class="cell-person">
+                                    <span class="stat-icon" data-tone="orange">@Icons.Svg("apple", 18)</span>
+                                    <span><a class="strong row-link" asp-action="Edit" asp-route-id="@plan.DietPlanId">@plan.Title</a><span class="sub">@Macros(plan)</span></span>
+                                </span>
+                            </th>
+                            <td><span class="cell-person"><span class="avatar av-sm av-@(plan.ClientId % 6 + 1)">@plan.ClientName.Initials()</span>@plan.ClientName</span></td>
+                            <td><span class="badge @StatusBadges.For(plan.Status)">@if (plan.Status == PlanStatus.Draft) {@Icons.Svg("pencil", 12)} else {<span class="dot"></span>}@plan.Status.GetDisplayName()</span></td>
+                            <td class="nowrap">From @plan.StartDate.ToString("d MMM yyyy")<span class="sub">@(plan.EndDate is { } end ? "to " + end.ToString("d MMM yyyy") : "No end date")</span></td>
+                            <td class="r num">@plan.DailyCalorieTarget.ToString("N0")</td>
+                            <td class="r num">@plan.MealCount</td>
+                            <td class="r">
+                                @if (plan.Status == PlanStatus.Draft)
                                 {
-                                    <span>to @end.ToString("dd MMM yyyy")</span>
+                                    <a class="btn btn-primary btn-sm" asp-action="Edit" asp-route-id="@plan.DietPlanId">Continue</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-secondary btn-sm" asp-action="Edit" asp-route-id="@plan.DietPlanId">@(plan.Status == PlanStatus.Active ? "Edit" : "Open")</a>
                                 }
                             </td>
-                            <td class="text-end">@plan.DailyCalorieTarget.ToString("N0")</td>
-                            <td class="text-end">@plan.MealCount</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+        <partial name="_Pager" model="pager" />
+    </section>
 }
-
-<partial name="_Pager" model="pager" />

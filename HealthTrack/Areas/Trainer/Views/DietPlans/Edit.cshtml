@@ -1,179 +1,191 @@
 @model DietPlanEditViewModel
 @{
     ViewData["Title"] = Model.Title;
+    ViewData["Parent"] = "Diet plans";
+    ViewData["ParentUrl"] = Url.Action("Index");
     var addFormData = new ViewDataDictionary(ViewData) { ["PlanId"] = Model.DietPlanId };
+    var clientFirstName = Model.ClientName.Split(' ')[0];
 }
 
-<p><a asp-action="Index">&larr; Diet plans</a></p>
-
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">@Model.Title</h1>
-        <span class="badge @StatusBadges.For(Model.Status)">@Model.Status.GetDisplayName()</span>
-        <span class="text-muted small ms-1">Plan for @Model.ClientName</span>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)Diet plans</a>
+<div class="page-head">
+    <div class="intro">
+        <div class="plan-meta">
+            @if (Model.Status == PlanStatus.Draft)
+            {
+                <span class="badge">@Icons.Svg("pencil", 12)Draft</span>
+            }
+            else
+            {
+                <span class="badge @StatusBadges.For(Model.Status)"><span class="dot"></span>@Model.Status.GetDisplayName()</span>
+            }
+            <span class="small subtle">Plan for</span>
+            <span class="avatar av-sm av-client">@Model.ClientName.Initials()</span>
+            <span class="small strong">@Model.ClientName</span>
+        </div>
+        <h1 class="h1">@Model.Title</h1>
     </div>
     @if (Model.Status == PlanStatus.Draft)
     {
-        <form asp-action="Activate" asp-route-id="@Model.DietPlanId" method="post"
-              data-confirm="Activate this diet plan for @Model.ClientName? Their current active diet plan will be completed.">
-            <button type="submit" class="btn btn-primary">Activate</button>
-        </form>
+        <div class="actions">
+            <form class="inline" asp-action="Activate" asp-route-id="@Model.DietPlanId" method="post"
+                  data-confirm="Activate this diet plan for @Model.ClientName? Their current active diet plan will be completed.">
+                <button type="submit" class="btn btn-primary">@Icons.Svg("play-circle", 18)Activate</button>
+            </form>
+        </div>
     }
 </div>
 
+@if (Model.Status == PlanStatus.Draft)
+{
+    <div class="alert alert-info">@Icons.Svg("eye-off", 18)<span><span class="strong">@clientFirstName can't see this yet.</span> When you activate it, they're notified and their current diet plan is marked completed.</span></div>
+}
 @if (!Model.CanEdit)
 {
-    <div class="alert alert-secondary">This plan is @Model.Status.GetDisplayName().ToLowerInvariant() and is kept as history, so it can't be changed.</div>
+    <div class="alert on-surface">@Icons.Svg("info", 18)<span class="muted">This plan is @Model.Status.GetDisplayName().ToLowerInvariant() and is kept as history, so it can't be changed.</span></div>
 }
 
-<form asp-action="Edit" asp-route-id="@Model.DietPlanId" method="post">
-    <fieldset disabled="@(!Model.CanEdit)">
-        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+<form class="form-stack" asp-action="Edit" asp-route-id="@Model.DietPlanId" method="post">
+    <fieldset class="form-stack" disabled="@(!Model.CanEdit)">
+        <div asp-validation-summary="All" role="alert"></div>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-body row g-3">
-                <div class="col-12">
-                    <label asp-for="Title" class="form-label"></label>
-                    <input asp-for="Title" class="form-control" />
-                    <span asp-validation-for="Title" class="text-danger small"></span>
+        <section class="card form-card">
+            <h2 class="h2">Targets</h2>
+            <div class="form-grid">
+                <div class="field full">
+                    <label asp-for="Title" class="label"></label>
+                    <input asp-for="Title" class="input" />
+                    <span asp-validation-for="Title" class="error-text"></span>
                 </div>
-                <div class="col-12">
-                    <label asp-for="Description" class="form-label"></label>
-                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
-                    <span asp-validation-for="Description" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="DailyCalorieTarget" class="form-label"></label>
-                    <input asp-for="DailyCalorieTarget" type="number" min="1200" max="5000" step="10" class="form-control" />
-                    <span asp-validation-for="DailyCalorieTarget" class="text-danger small"></span>
-                    <partial name="_PlanTargets" model="Model.SuggestedCalorieTarget" />
-                </div>
-                <div class="col-md-6">
-                    <span class="form-label d-block">Daily macros <span class="text-muted small">(optional, grams)</span></span>
-                    <div class="row g-2">
-                        <div class="col-4">
-                            <label asp-for="ProteinTargetG" class="form-label small"></label>
-                            <input asp-for="ProteinTargetG" type="number" min="0" max="1000" class="form-control" />
-                        </div>
-                        <div class="col-4">
-                            <label asp-for="CarbsTargetG" class="form-label small"></label>
-                            <input asp-for="CarbsTargetG" type="number" min="0" max="1000" class="form-control" />
-                        </div>
-                        <div class="col-4">
-                            <label asp-for="FatTargetG" class="form-label small"></label>
-                            <input asp-for="FatTargetG" type="number" min="0" max="1000" class="form-control" />
-                        </div>
-                    </div>
-                    <span asp-validation-for="ProteinTargetG" class="text-danger small d-block"></span>
-                    <span asp-validation-for="CarbsTargetG" class="text-danger small d-block"></span>
-                    <span asp-validation-for="FatTargetG" class="text-danger small d-block"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="StartDate" class="form-label"></label>
-                    <input asp-for="StartDate" class="form-control" />
-                    <span asp-validation-for="StartDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-6">
-                    <label asp-for="EndDate" class="form-label"></label> <span class="text-muted small">(optional)</span>
-                    <input asp-for="EndDate" class="form-control" />
-                    <span asp-validation-for="EndDate" class="text-danger small"></span>
+                <div class="field full">
+                    <label asp-for="Description" class="label"></label>
+                    <textarea asp-for="Description" class="textarea"></textarea>
+                    <span asp-validation-for="Description" class="error-text"></span>
                 </div>
             </div>
-        </div>
-
-        <div class="card shadow-sm mb-3">
-            <div class="card-body">
-                <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
-                    <h2 class="h5">Meals</h2>
-                    @if (Model.EveryDayCalories > 0 && Model.DailyCalorieTarget is { } target)
-                    {
-                        <span class="small text-muted">Every-day meals add up to @Model.EveryDayCalories.ToString("N0") of @target.ToString("N0") kcal</span>
-                    }
+            <div class="kcal-row">
+                <div class="field">
+                    <label asp-for="DailyCalorieTarget" class="label">Daily calories</label>
+                    <div class="input-wrap"><input asp-for="DailyCalorieTarget" type="number" min="1200" max="5000" step="10" class="input" /><span class="unit">kcal</span></div>
+                    <span asp-validation-for="DailyCalorieTarget" class="error-text"></span>
                 </div>
-                @if (Model.Meals.Count == 0)
+                <partial name="_PlanTargets" model="Model.SuggestedCalorieTarget" />
+            </div>
+            <fieldset class="field">
+                <legend class="label legend-gap">Daily macros <span class="opt">Optional, in grams</span></legend>
+                <div class="form-grid macros">
+                    <div class="field">
+                        <label asp-for="ProteinTargetG" class="small muted">Protein</label>
+                        <div class="input-wrap"><input asp-for="ProteinTargetG" type="number" min="0" max="1000" class="input" /><span class="unit">g</span></div>
+                        <span asp-validation-for="ProteinTargetG" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="CarbsTargetG" class="small muted">Carbohydrate</label>
+                        <div class="input-wrap"><input asp-for="CarbsTargetG" type="number" min="0" max="1000" class="input" /><span class="unit">g</span></div>
+                        <span asp-validation-for="CarbsTargetG" class="error-text"></span>
+                    </div>
+                    <div class="field">
+                        <label asp-for="FatTargetG" class="small muted">Fat</label>
+                        <div class="input-wrap"><input asp-for="FatTargetG" type="number" min="0" max="1000" class="input" /><span class="unit">g</span></div>
+                        <span asp-validation-for="FatTargetG" class="error-text"></span>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="form-grid">
+                <div class="field">
+                    <label asp-for="StartDate" class="label"></label>
+                    <input asp-for="StartDate" class="input" />
+                    <span asp-validation-for="StartDate" class="error-text"></span>
+                </div>
+                <div class="field">
+                    <label asp-for="EndDate" class="label">End date <span class="opt">Optional</span></label>
+                    <input asp-for="EndDate" class="input" />
+                    <span asp-validation-for="EndDate" class="error-text"></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="card flush">
+            <div class="card-head pad">
+                <h2 class="h2">Meals</h2>
+                @if (Model.EveryDayCalories > 0 && Model.DailyCalorieTarget is { } target)
                 {
-                    <p class="text-muted mb-0">No meals yet. Add the first one below.</p>
+                    <span class="small subtle">Every-day meals add up to @Model.EveryDayCalories.ToString("N0") of @target.ToString("N0") kcal</span>
                 }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">Meal</th>
-                                    <th scope="col">Time</th>
-                                    <th scope="col">What to eat</th>
-                                    <th scope="col">kcal</th>
-                                    <th scope="col">Remove</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (var i = 0; i < Model.Meals.Count; i++)
+            </div>
+            @if (Model.Meals.Count == 0)
+            {
+                <p class="small muted card-pad-bottom">No meals yet. Add the first one below.</p>
+            }
+            else
+            {
+                <div class="table-wrap">
+                    <table class="table compact lines">
+                        <thead><tr><th scope="col">Meal</th><th scope="col">Time</th><th scope="col">What to eat</th><th scope="col">kcal</th><th scope="col" class="c">Remove</th></tr></thead>
+                        <tbody>
+                            @for (var i = 0; i < Model.Meals.Count; i++)
+                            {
+                                var meal = Model.Meals[i];
+                                if (i == 0 || Model.Meals[i - 1].DayOfWeek != meal.DayOfWeek)
                                 {
-                                    var meal = Model.Meals[i];
-                                    if (i == 0 || Model.Meals[i - 1].DayOfWeek != meal.DayOfWeek)
-                                    {
-                                        <tr class="table-light">
-                                            <th colspan="5" scope="rowgroup">@(meal.DayOfWeek is { } day ? day + " only" : "Every day")</th>
-                                        </tr>
-                                    }
-                                    <tr>
-                                        <td>
-                                            <input asp-for="Meals[i].DietPlanMealId" type="hidden" />
-                                            @meal.MealType.GetDisplayName()
-                                            @if (meal.TimesLogged > 0)
-                                            {
-                                                <div class="small text-muted">Logged @meal.TimesLogged @(meal.TimesLogged == 1 ? "time" : "times")</div>
-                                            }
-                                        </td>
-                                        <td>
-                                            <input asp-for="Meals[i].ScheduledTime" type="time" asp-format="{0:hh\:mm}" class="form-control form-control-sm" aria-label="Time" />
-                                            <span asp-validation-for="Meals[i].ScheduledTime" class="text-danger small"></span>
-                                        </td>
-                                        <td>
-                                            <input asp-for="Meals[i].MealDescription" class="form-control form-control-sm" aria-label="What to eat" />
-                                            <span asp-validation-for="Meals[i].MealDescription" class="text-danger small"></span>
-                                        </td>
-                                        <td>
-                                            <input asp-for="Meals[i].TargetCalories" type="number" min="50" max="2000" step="10" class="form-control form-control-sm" aria-label="Target kcal" />
-                                            <span asp-validation-for="Meals[i].TargetCalories" class="text-danger small"></span>
-                                        </td>
-                                        <td class="text-center">
-                                            @if (meal.TimesLogged == 0)
-                                            {
-                                                <input asp-for="Meals[i].Remove" class="form-check-input" aria-label="Remove this meal" />
-                                            }
-                                            else
-                                            {
-                                                <span class="small text-muted" title="Logged meals are kept as history (BR-21)">Kept</span>
-                                            }
-                                        </td>
-                                    </tr>
+                                    <tr class="group"><th colspan="5" scope="rowgroup">@(meal.DayOfWeek is { } day ? day + " only" : "Every day")</th></tr>
                                 }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
-        </div>
-
-        @if (Model.CanEdit)
-        {
-            <div class="mb-4">
-                <button type="submit" class="btn btn-primary">Save changes</button>
-            </div>
-        }
+                                <tr>
+                                    <th scope="row">
+                                        <input asp-for="Meals[i].DietPlanMealId" type="hidden" />
+                                        <span class="cell-person">
+                                            <partial name="_MealIcon" model="meal.MealType" />
+                                            <span><span class="strong d-block">@meal.MealType.GetDisplayName()</span>@if (meal.TimesLogged > 0) {<span class="sub">Logged @meal.TimesLogged @(meal.TimesLogged == 1 ? "time" : "times")</span>}</span>
+                                        </span>
+                                    </th>
+                                    <td>
+                                        <input asp-for="Meals[i].ScheduledTime" type="time" asp-format="{0:hh\:mm}" class="input input-sm" aria-label="Time" />
+                                        <span asp-validation-for="Meals[i].ScheduledTime" class="error-text"></span>
+                                    </td>
+                                    <td>
+                                        <input asp-for="Meals[i].MealDescription" class="input input-sm note" aria-label="What to eat" />
+                                        <span asp-validation-for="Meals[i].MealDescription" class="error-text"></span>
+                                    </td>
+                                    <td>
+                                        <input asp-for="Meals[i].TargetCalories" type="number" min="50" max="2000" step="10" class="input input-sm" aria-label="Target kcal" />
+                                        <span asp-validation-for="Meals[i].TargetCalories" class="error-text"></span>
+                                    </td>
+                                    <td class="c">
+                                        @if (meal.TimesLogged == 0)
+                                        {
+                                            <input asp-for="Meals[i].Remove" class="remove" aria-label="Remove this meal" />
+                                        }
+                                        else
+                                        {
+                                            <span class="xs subtle" title="Logged meals are kept as history (BR-21)">Kept</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @if (Model.CanEdit)
+            {
+                <div class="foot-note">
+                    <span class="small subtle">Tick Remove, then save, to take a meal out. Logged meals are kept as history.</span>
+                    <button type="submit" class="btn btn-primary btn-sm">Save changes</button>
+                </div>
+            }
+        </section>
     </fieldset>
 </form>
 
 @if (Model.CanEdit)
 {
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="h5">Add a meal</h2>
-            <partial name="_AddMealForm" model="Model.NewMeal" view-data="addFormData" />
+    <section class="card form-card">
+        <div class="vs gp-4">
+            <h2 class="h2">Add a meal</h2>
+            <p class="small subtle">The time also sets when the client's meal reminder is sent.</p>
         </div>
-    </div>
+        <partial name="_AddMealForm" model="Model.NewMeal" view-data="addFormData" />
+    </section>
 }
 
 @section Scripts {
