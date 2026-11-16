@@ -1223,3 +1223,14 @@ input.switch[type="checkbox"] { width: 46px; height: 28px; }
   .window-chip form { left: auto; right: 6px; bottom: 50%; transform: translateY(50%); }
 }
 .pill.wide label { min-width: 64px; } .pill label .ico { margin-right: 6px; }
+
+/* Reports */
+.report-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 16px; padding: 20px; }
+.report-toolbar .field { flex: 1 1 200px; }
+.report-toolbar .actions { flex: none; }
+.load { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+.load .bar { flex: 1; }
+.load .pct { min-width: 38px; text-align: right; font-weight: 650; }
+.bar > i.red { background: var(--red); }
+.print-only { display: none; }
+@media print { .print-only { display: block; } .no-print { display: none !important; } }

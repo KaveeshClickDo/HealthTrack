@@ -2,6 +2,7 @@
 @* Client performance (UC27), shared by the Trainer and Admin areas' ReportsController. *@
 @{
     ViewData["Title"] = "Client performance";
+    ViewData["Parent"] = Model.AllClients ? "Insights" : "Reports";
     var toolbar = new ReportToolbarViewModel { Range = Model.Range, ReportKey = HealthTrack.Services.ReportService.ClientPerformance };
     var chart = new ChartCardViewModel
     {
@@ -10,89 +11,90 @@
     };
 
     string Kg(decimal? value) => value is { } kg ? kg.ToString("0.0") : "–";
-    string Signed(decimal? value) => value is { } kg ? (kg > 0 ? "+" : string.Empty) + kg.ToString("0.0") : "–";
+    string Signed(decimal? value) => value is { } kg ? (kg > 0 ? "+" : kg < 0 ? "−" : string.Empty) + Math.Abs(kg).ToString("0.0") : "–";
 }
 
-<h1 class="h2 mb-1">Client performance</h1>
-<p class="text-muted mb-3">
-    @if (Model.AllClients)
-    {
-        @:Every client, @Model.Range.Text: workouts, adherence, eating against the diet target, calories burned and appointments
-        @:attended. Weight and BMI are left out: administrators don't see clients' measurements.
-    }
-    else
-    {
-        @:Your assigned clients, @Model.Range.Text: weight and BMI at the start and now, workouts, adherence, eating against the
-        @:diet target, calories burned and appointments attended.
-    }
-</p>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">Report</span>
+        <h1 class="h1 page-title">Client performance</h1>
+        <p>
+            @if (Model.AllClients)
+            {
+                @:Every client, @Model.Range.Text: workouts, adherence, eating against the diet target, calories burned and appointments
+                @:attended. Weight and BMI are left out: administrators don't see clients' measurements.
+            }
+            else
+            {
+                @:Your clients over the period: weight and BMI then and now, workouts, adherence, eating against the diet target,
+                @:calories burned and appointments attended.
+            }
+        </p>
+    </div>
+</div>
 
 <partial name="_ReportToolbar" model="toolbar" />
 
 @if (Model.Rows.Count == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            @(Model.AllClients ? "There are no clients yet." : "No clients are assigned to you yet, so there is nothing to report.")
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("users", 24)</span>
+        <p>@(Model.AllClients ? "There are no clients yet." : "No clients are assigned to you yet, so there is nothing to report.")</p>
     </div>
 }
 else
 {
-    <div class="card shadow-sm mb-3">
-        <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light">
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h3">@Model.Range.Text</h2><span class="small subtle">@Model.Rows.Count @(Model.Rows.Count == 1 ? "client" : "clients")</span></div>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
                     <tr>
                         <th scope="col">Client</th>
                         @if (!Model.AllClients)
                         {
-                            <th scope="col" class="text-end">Weight (kg)</th>
-                            <th scope="col" class="text-end">Change</th>
-                            <th scope="col" class="text-end">BMI</th>
+                            <th scope="col" class="r">Weight (kg)</th>
+                            <th scope="col" class="r">Change</th>
+                            <th scope="col" class="r">BMI</th>
                         }
-                        <th scope="col" class="text-end">Workouts</th>
-                        <th scope="col" class="text-end">Adherence</th>
-                        <th scope="col" class="text-end">kcal a day / target</th>
-                        <th scope="col" class="text-end">kcal burned</th>
-                        <th scope="col" class="text-end">Appointments attended</th>
+                        <th scope="col" class="r">Workouts</th>
+                        <th scope="col" class="r">Adherence</th>
+                        <th scope="col" class="r">kcal a day / target</th>
+                        <th scope="col" class="r">kcal burned</th>
+                        <th scope="col" class="r">Sessions attended</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="num">
                     @foreach (var row in Model.Rows)
                     {
                         <tr>
-                            <th scope="row" class="fw-normal">
-                                @row.ClientName
-                                @if (Model.AllClients)
-                                {
-                                    <div class="small text-muted">@(row.TrainerName ?? "Unassigned")</div>
-                                }
+                            <th scope="row">
+                                <span class="cell-person">
+                                    <span class="avatar av-sm av-client">@row.ClientName.Initials()</span>
+                                    <span><span class="d-block">@row.ClientName</span>@if (Model.AllClients) {<span class="sub">@(row.TrainerName ?? "Unassigned")</span>}</span>
+                                </span>
                             </th>
                             @if (!Model.AllClients)
                             {
-                                <td class="text-end text-nowrap">@Kg(row.StartWeightKg) → @Kg(row.LatestWeightKg)</td>
-                                <td class="text-end">@Signed(row.WeightChangeKg)</td>
-                                <td class="text-end text-nowrap">@Kg(row.StartBmi) → @Kg(row.LatestBmi)</td>
+                                <td class="r nowrap">@Kg(row.StartWeightKg) → <span class="strong">@Kg(row.LatestWeightKg)</span></td>
+                                <td class="r">@Signed(row.WeightChangeKg)</td>
+                                <td class="r nowrap">@Kg(row.StartBmi) → @Kg(row.LatestBmi)</td>
                             }
-                            <td class="text-end">@row.WorkoutsCompleted</td>
-                            <td class="text-end">@(row.AdherencePercent is { } adherence ? adherence + "%" : "–")</td>
-                            <td class="text-end text-nowrap">
-                                @(row.AverageDailyCalories?.ToString("N0") ?? "–") / @(row.AverageDailyTarget?.ToString("N0") ?? "–")
-                            </td>
-                            <td class="text-end">@row.CaloriesBurned.ToString("N0")</td>
-                            <td class="text-end">@row.AppointmentsAttended</td>
+                            <td class="r">@row.WorkoutsCompleted</td>
+                            <td class="r @(row.AdherencePercent is < 50 ? "c-amber" : string.Empty)">@(row.AdherencePercent is { } adherence ? adherence + "%" : "–")</td>
+                            <td class="r nowrap">@(row.AverageDailyCalories?.ToString("N0") ?? "–") / @(row.AverageDailyTarget?.ToString("N0") ?? "–")</td>
+                            <td class="r">@row.CaloriesBurned.ToString("N0")</td>
+                            <td class="r">@row.AppointmentsAttended</td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+        <div class="card-foot"><span>A dash means no diet plan, so there's no target to compare with.</span></div>
+    </section>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <partial name="_ChartCard" model="chart" />
-        </div>
+    <div class="grid g-2">
+        <partial name="_ChartCard" model="chart" />
     </div>
 }
 

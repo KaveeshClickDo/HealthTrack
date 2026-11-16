@@ -1,36 +1,39 @@
 @model IReadOnlyList<TrainerWorkloadRow>
 @* The trainer workload table, in the trainer workload report and at the end of the administrator's engagement report. *@
-<div class="table-responsive">
-    <table class="table table-sm table-hover align-middle mb-0">
-        <thead class="table-light">
+<div class="table-wrap">
+    <table class="table">
+        <thead>
             <tr>
                 <th scope="col">Professional</th>
-                <th scope="col" class="text-end">Active clients</th>
+                <th scope="col" class="r">Active clients</th>
                 <th scope="col">Load</th>
-                <th scope="col" class="text-end">Appointments</th>
-                <th scope="col" class="text-end">Completed</th>
-                <th scope="col" class="text-end">Plans created</th>
-                <th scope="col" class="text-end">Feedback given</th>
+                <th scope="col" class="r">Appointments</th>
+                <th scope="col" class="r">Completed</th>
+                <th scope="col" class="r">Plans created</th>
+                <th scope="col" class="r">Feedback given</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="num">
             @foreach (var row in Model)
             {
                 <tr>
-                    <th scope="row" class="fw-normal">
-                        @row.TrainerName
-                        <div class="small text-muted">@row.ProfessionalType.GetDisplayName()</div>
+                    <th scope="row">
+                        <span class="cell-person">
+                            <span class="avatar av-sm av-trainer">@row.TrainerName.Initials()</span>
+                            <span><span class="d-block">@row.TrainerName</span><span class="sub">@row.ProfessionalType.GetDisplayName()</span></span>
+                        </span>
                     </th>
-                    <td class="text-end">@row.ActiveClients of @row.MaxClients</td>
-                    <td class="report-load">
-                        <div class="progress" role="progressbar" aria-label="@row.TrainerName's load" aria-valuenow="@row.LoadPercent" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar @(row.ActiveClients >= row.MaxClients ? "bg-danger" : string.Empty)" data-progress-width="@row.LoadPercent">@row.LoadPercent%</div>
+                    <td class="r">@row.ActiveClients of @row.MaxClients</td>
+                    <td>
+                        <div class="load" role="progressbar" aria-label="@row.TrainerName's load" aria-valuenow="@row.LoadPercent" aria-valuemin="0" aria-valuemax="100">
+                            <div class="bar"><i class="@(row.ActiveClients >= row.MaxClients ? "red" : row.LoadPercent >= 80 ? "amber" : string.Empty)" data-progress-width="@row.LoadPercent"></i></div>
+                            <span class="pct">@row.LoadPercent%</span>
                         </div>
                     </td>
-                    <td class="text-end">@row.Appointments</td>
-                    <td class="text-end">@row.AppointmentsCompleted</td>
-                    <td class="text-end">@row.PlansCreated</td>
-                    <td class="text-end">@row.FeedbackGiven</td>
+                    <td class="r">@row.Appointments</td>
+                    <td class="r">@row.AppointmentsCompleted</td>
+                    <td class="r">@row.PlansCreated</td>
+                    <td class="r">@row.FeedbackGiven</td>
                 </tr>
             }
         </tbody>

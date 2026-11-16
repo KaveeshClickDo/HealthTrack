@@ -1,22 +1,20 @@
 @model ReportToolbarViewModel
 @* The date range (a GET form back to the same report), Export CSV and Print; hidden when printing, which shows the period
    as text instead. *@
-<form method="get" class="card shadow-sm mb-3 d-print-none">
-    <div class="card-body row g-2 align-items-end">
-        <div class="col-6 col-md-3">
-            <label for="from" class="form-label small">From</label>
-            <input type="date" id="from" name="from" value="@Model.Range.From.ToString("yyyy-MM-dd")" class="form-control" required />
-        </div>
-        <div class="col-6 col-md-3">
-            <label for="to" class="form-label small">To</label>
-            <input type="date" id="to" name="to" value="@Model.Range.To.ToString("yyyy-MM-dd")" class="form-control" required />
-        </div>
-        <div class="col-md-6 d-flex flex-wrap gap-2">
-            <button type="submit" class="btn btn-primary">Show</button>
-            <a class="btn btn-outline-primary" asp-action="ExportCsv" asp-route-report="@Model.ReportKey"
-               asp-route-from="@Model.Range.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.Range.To.ToString("yyyy-MM-dd")">Export CSV</a>
-            <button type="button" class="btn btn-outline-secondary" data-print>Print</button>
-        </div>
+<form method="get" class="card report-toolbar no-print">
+    <div class="field">
+        <label for="from" class="label">From</label>
+        <input type="date" id="from" name="from" value="@Model.Range.From.ToString("yyyy-MM-dd")" class="input" required />
+    </div>
+    <div class="field">
+        <label for="to" class="label">To</label>
+        <input type="date" id="to" name="to" value="@Model.Range.To.ToString("yyyy-MM-dd")" class="input" required />
+    </div>
+    <div class="actions">
+        <button type="submit" class="btn btn-primary">Show</button>
+        <a class="btn btn-secondary" asp-action="ExportCsv" asp-route-report="@Model.ReportKey"
+           asp-route-from="@Model.Range.From.ToString("yyyy-MM-dd")" asp-route-to="@Model.Range.To.ToString("yyyy-MM-dd")">@Icons.Svg("download", 18)Export CSV</a>
+        <button type="button" class="btn btn-ghost" data-print>@Icons.Svg("printer", 18)Print</button>
     </div>
 </form>
-<p class="d-none d-print-block">Period: @Model.Range.Text</p>
+<p class="print-only">Period: @Model.Range.Text</p>

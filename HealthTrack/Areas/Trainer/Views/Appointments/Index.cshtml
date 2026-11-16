@@ -31,7 +31,7 @@
 </section>
 
 <section class="card flush">
-    <div class="card-head pad"><h2 class="h2">Today and upcoming</h2><span class="small subtle">@Model.Upcoming.Count(a => a.IsOpen) booked@(Model.Upcoming.Any(a => !a.IsOpen) ? " · " + Model.Upcoming.Count(a => !a.IsOpen) + " cancelled" : string.Empty)</span></div>
+    <div class="card-head pad"><h2 class="h2">Today and upcoming</h2><span class="small subtle">@($"{Model.Upcoming.Count(a => a.IsOpen)} booked" + (Model.Upcoming.Any(a => !a.IsOpen) ? $" · {Model.Upcoming.Count(a => !a.IsOpen)} cancelled" : string.Empty))</span></div>
     @if (Model.Upcoming.Count == 0)
     {
         <p class="small muted card-pad-bottom">Nothing booked from today on. Clients can book you inside your <a asp-controller="Availability" asp-action="Index">availability windows</a>.</p>

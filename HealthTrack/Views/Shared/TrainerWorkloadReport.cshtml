@@ -2,6 +2,7 @@
 @* Trainer workload (UC27, administrators only). *@
 @{
     ViewData["Title"] = "Trainer workload";
+    ViewData["Parent"] = "Insights";
     var toolbar = new ReportToolbarViewModel { Range = Model.Range, ReportKey = HealthTrack.Services.ReportService.TrainerWorkload };
     var chart = new ChartCardViewModel
     {
@@ -10,30 +11,32 @@
     };
 }
 
-<h1 class="h2 mb-1">Trainer workload</h1>
-<p class="text-muted mb-3">
-    Each approved professional's clients against their capacity, and the appointments, plans and feedback of @Model.Range.Text.
-</p>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">Report</span>
+        <h1 class="h1 page-title">Trainer workload</h1>
+        <p>Each approved professional's clients against their capacity, and the appointments, plans and feedback of @Model.Range.Text.</p>
+    </div>
+</div>
 
 <partial name="_ReportToolbar" model="toolbar" />
 
 @if (Model.Rows.Count == 0)
 {
-    <div class="card shadow-sm">
-        <div class="card-body text-center text-muted py-5">
-            No approved professionals yet. <a asp-controller="TrainerApprovals" asp-action="Index">Review applications</a>.
-        </div>
+    <div class="card empty">
+        <span class="icon">@Icons.Svg("user-check", 24)</span>
+        <p>No approved professionals yet.</p>
+        <a class="btn btn-secondary" asp-controller="TrainerApprovals" asp-action="Index">Review applications</a>
     </div>
 }
 else
 {
-    <div class="card shadow-sm mb-3">
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h3">@Model.Range.Text</h2><span class="small subtle">@Model.Rows.Count @(Model.Rows.Count == 1 ? "professional" : "professionals")</span></div>
         <partial name="_TrainerWorkloadTable" model="Model.Rows" />
-    </div>
-    <div class="row">
-        <div class="col-lg-8">
-            <partial name="_ChartCard" model="chart" />
-        </div>
+    </section>
+    <div class="grid g-2">
+        <partial name="_ChartCard" model="chart" />
     </div>
 }
 
