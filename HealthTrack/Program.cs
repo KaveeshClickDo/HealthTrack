@@ -124,6 +124,7 @@ builder.Services.AddScoped<IDietService, DietService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IPlanCorrectionService, PlanCorrectionService>();
 builder.Services.AddScoped<INavigationService, NavigationService>();
 
 // UC34: creates due reminders for everyone every minute, even when nobody is signed in.

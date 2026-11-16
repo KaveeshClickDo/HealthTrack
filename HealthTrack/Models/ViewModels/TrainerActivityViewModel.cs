@@ -39,5 +39,11 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>Appointments with the trainer.</summary>
         public int Appointments { get; init; }
+
+        /// <summary>The clients still assigned to the professional; they must be reassigned before the account closes (BR-23).</summary>
+        public IReadOnlyList<string> ActiveClientNames { get; set; } = [];
+
+        /// <summary>Open appointments still to come, which closing the account cancels (BR-23).</summary>
+        public IReadOnlyList<AppointmentListItemViewModel> UpcomingAppointments { get; set; } = [];
     }
 }

@@ -1,180 +1,279 @@
 @model UserDetailsViewModel
 @{
     ViewData["Title"] = Model.FullName;
+    ViewData["Parent"] = "Users";
+    ViewData["ParentUrl"] = Url.Action("Index");
+    var avatarClass = Model.Role == AppRoles.Admin ? "av-admin" : Model.Role == AppRoles.Trainer ? "av-trainer" : "av-client";
+    var firstName = Model.FullName.Split(' ')[0];
 }
 
-<p><a asp-action="Index">&larr; All users</a></p>
+<a class="back" asp-action="Index">@Icons.Svg("arrow-left", 16)All users</a>
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">@Model.FullName</h1>
-        <span class="badge text-bg-light border">@Model.Role</span>
-        <span class="badge @StatusBadges.For(Model.AccountStatus)">@Model.AccountStatus.GetDisplayName()</span>
-        @if (Model.LockoutEnd is { } lockoutEnd)
-        {
-            <span class="badge text-bg-danger">Locked out until @lockoutEnd.ToLocalTime().ToString("HH:mm")</span>
-        }
+<section class="card user-head">
+    <span class="avatar av-xl @avatarClass">@Model.FullName.Initials()</span>
+    <div class="who">
+        <h1 class="h1">@Model.FullName</h1>
+        <div class="hrow wrap gp-8">
+            <span class="badge">@Model.Role</span>
+            <span class="badge @StatusBadges.For(Model.AccountStatus)"><span class="dot"></span>@Model.AccountStatus.GetDisplayName()</span>
+            @if (Model.LockoutEnd is { } lockoutEnd)
+            {
+                <span class="badge b-red">@Icons.Svg("lock", 12)Locked out until @lockoutEnd.ToLocalTime().ToString("HH:mm")</span>
+            }
+            <span class="small subtle">@Model.Email</span>
+        </div>
     </div>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="side">
         @if (Model.IsCurrentUser)
         {
-            <span class="text-muted small align-self-center">This is your account. You can't suspend yourself.</span>
+            <span class="small subtle">This is your account. You can't suspend yourself.</span>
         }
         else if (Model.AccountStatus == AccountStatus.Active)
         {
-            <form asp-action="Suspend" asp-route-id="@Model.UserId" method="post"
+            <form class="inline" asp-action="Suspend" asp-route-id="@Model.UserId" method="post"
                   data-confirm="Suspend @Model.FullName? They will be signed out within a minute and can't log in until reactivated.">
-                <button type="submit" class="btn btn-outline-danger">Suspend account</button>
+                <button type="submit" class="btn btn-danger">@Icons.Svg("x-circle", 18)Suspend account</button>
             </form>
+            <span class="xs subtle">They'd be signed out within a minute.</span>
         }
         else if (Model.AccountStatus == AccountStatus.Suspended)
         {
-            <form asp-action="Reactivate" asp-route-id="@Model.UserId" method="post">
-                <button type="submit" class="btn btn-primary">Reactivate account</button>
+            <form class="inline" asp-action="Reactivate" asp-route-id="@Model.UserId" method="post">
+                <button type="submit" class="btn btn-primary">@Icons.Svg("check-circle", 18)Reactivate account</button>
             </form>
         }
         else if (Model.AccountStatus == AccountStatus.PendingApproval)
         {
-            <a class="btn btn-primary" asp-controller="TrainerApprovals" asp-action="Index">Review the registration</a>
+            <a class="btn btn-primary" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check", 18)Review the registration</a>
         }
     </div>
-</div>
+</section>
 
-<div class="row g-3">
-    <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h5 mb-3">Account</h2>
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Email</dt>
-                    <dd class="col-sm-7">@Model.Email</dd>
-                    @if (Model.AccountStatus == AccountStatus.Deactivated)
-                    {
-                        @* BR-22: a deleted account keeps no personal details. *@
-                        <dt class="col-sm-5">Personal details</dt>
-                        <dd class="col-sm-7">Removed when the account was deleted</dd>
-                    }
-                    else
-                    {
-                        <dt class="col-sm-5">Phone number</dt>
-                        <dd class="col-sm-7">@(Model.PhoneNumber ?? "Not given")</dd>
-                        <dt class="col-sm-5">Date of birth</dt>
-                        <dd class="col-sm-7">@Model.DateOfBirth.ToString("dd MMM yyyy") (age @Model.Age)</dd>
-                        <dt class="col-sm-5">Gender</dt>
-                        <dd class="col-sm-7">@Model.Gender.GetDisplayName()</dd>
-                    }
-                    <dt class="col-sm-5">Registered</dt>
-                    <dd class="col-sm-7">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
-                    <dt class="col-sm-5">Last login</dt>
-                    <dd class="col-sm-7">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
+<div class="split">
+    <section class="main card gp-20">
+        <h2 class="h2">Account</h2>
+        <dl class="kv">
+            <dt>Email</dt><dd>@Model.Email</dd>
+            @if (Model.AccountStatus == AccountStatus.Deactivated && Model.Trainer is null)
+            {
+                @* BR-22: a deleted account keeps no personal details. *@
+                <dt>Personal details</dt><dd class="muted">Removed when the account was deleted</dd>
+            }
+            else
+            {
+                <dt>Phone number</dt><dd>@(Model.PhoneNumber ?? "Not given")</dd>
+                <dt>Date of birth</dt><dd>@Model.DateOfBirth.ToString("d MMM yyyy") <span class="subtle">· age @Model.Age</span></dd>
+                <dt>Gender</dt><dd>@Model.Gender.GetDisplayName()</dd>
+            }
+            <dt>Registered</dt><dd>@Model.CreatedAt.ToString("d MMM yyyy 'at' HH:mm")</dd>
+            <dt>Last login</dt><dd>@(Model.LastLoginAt?.ToString("d MMM yyyy 'at' HH:mm") ?? "Never")</dd>
+        </dl>
+    </section>
 
-    <div class="col-lg-6">
+    <div class="aside">
         @if (Model.Client is { } client)
         {
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 mb-1">Client activity</h2>
-                    <p class="text-muted small mb-3">Totals only: administrators never see clinical notes or measurement values.</p>
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5">Goal</dt>
-                        <dd class="col-sm-7">@client.FitnessGoal.GetDisplayName()</dd>
-                        <dt class="col-sm-5">Activity level</dt>
-                        <dd class="col-sm-7">@client.ActivityLevel.GetDisplayName()</dd>
-                        <dt class="col-sm-5">Trainer</dt>
-                        <dd class="col-sm-7">
-                            @if (client.TrainerName is null)
-                            {
-                                <span>None</span> <a asp-controller="Assignments" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign a trainer</a>
-                            }
-                            else
-                            {
-                                @client.TrainerName
-                            }
-                        </dd>
-                        <dt class="col-sm-5">Workouts logged</dt>
-                        <dd class="col-sm-7">
-                            @client.WorkoutsLogged
-                            @if (client.LastWorkoutDate is { } lastWorkout)
-                            {
-                                <span class="text-muted">(last on @lastWorkout.ToString("dd MMM yyyy"))</span>
-                            }
-                        </dd>
-                        <dt class="col-sm-5">Meals logged</dt>
-                        <dd class="col-sm-7">@client.MealsLogged</dd>
-                        <dt class="col-sm-5">Measurements recorded</dt>
-                        <dd class="col-sm-7">@client.MeasurementsRecorded</dd>
-                        <dt class="col-sm-5">Appointments</dt>
-                        <dd class="col-sm-7">@client.Appointments</dd>
-                    </dl>
+            <section class="card vs gp-16">
+                <div class="vs gp-4"><h2 class="h2">Client activity</h2><p class="small subtle">Totals only — administrators never see clinical notes or measurement values.</p></div>
+                <dl class="kv compact">
+                    <dt>Goal</dt><dd>@client.FitnessGoal.GetDisplayName()</dd>
+                    <dt>Activity level</dt><dd>@client.ActivityLevel.GetDisplayName()</dd>
+                    <dt>Trainer</dt>
+                    <dd>
+                        @if (client.TrainerName is null)
+                        {
+                            <span class="subtle">None</span> <a asp-controller="Assignments" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign a trainer</a>
+                        }
+                        else
+                        {
+                            <span class="hrow gp-8"><span class="avatar av-sm av-trainer">@client.TrainerName.Initials()</span>@client.TrainerName</span>
+                        }
+                    </dd>
+                </dl>
+                <div class="divider"></div>
+                <div class="tiles-2">
+                    <div class="tile-stat"><span class="kpi">@client.WorkoutsLogged</span><span class="xs subtle">Workouts logged@(client.LastWorkoutDate is { } last ? " · last " + last.ToString("d MMM") : string.Empty)</span></div>
+                    <div class="tile-stat"><span class="kpi">@client.MealsLogged</span><span class="xs subtle">Meals logged</span></div>
+                    <div class="tile-stat"><span class="kpi">@client.MeasurementsRecorded</span><span class="xs subtle">Measurements recorded</span></div>
+                    <div class="tile-stat"><span class="kpi">@client.Appointments</span><span class="xs subtle">Appointments</span></div>
                 </div>
-            </div>
+            </section>
         }
         else if (Model.Trainer is { } trainer)
         {
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h2 class="h5 mb-3">Professional details</h2>
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5">Profession</dt>
-                        <dd class="col-sm-7">@trainer.ProfessionalType.GetDisplayName()</dd>
-                        <dt class="col-sm-5">Specialisation</dt>
-                        <dd class="col-sm-7">@trainer.Specialization</dd>
-                        <dt class="col-sm-5">Licence number</dt>
-                        <dd class="col-sm-7">@(trainer.LicenseNumber ?? "Not needed")</dd>
-                        <dt class="col-sm-5">Experience</dt>
-                        <dd class="col-sm-7">@trainer.YearsOfExperience years</dd>
-                        <dt class="col-sm-5">Approved</dt>
-                        <dd class="col-sm-7">@(trainer.ApprovedAt?.ToString("dd MMM yyyy") ?? "Not yet")</dd>
-                        <dt class="col-sm-5">Active clients</dt>
-                        <dd class="col-sm-7">@trainer.ActiveClients of @trainer.MaxClients</dd>
-                        <dt class="col-sm-5">Plans written</dt>
-                        <dd class="col-sm-7">@trainer.WorkoutPlans workout, @trainer.DietPlans diet</dd>
-                        <dt class="col-sm-5">Appointments</dt>
-                        <dd class="col-sm-7">@trainer.Appointments</dd>
-                    </dl>
+            <section class="card vs gp-16">
+                <h2 class="h2">Professional details</h2>
+                <dl class="kv compact">
+                    <dt>Profession</dt><dd>@trainer.ProfessionalType.GetDisplayName()</dd>
+                    <dt>Specialisation</dt><dd>@trainer.Specialization</dd>
+                    <dt>Licence number</dt><dd>@(trainer.LicenseNumber ?? "Not needed")</dd>
+                    <dt>Experience</dt><dd>@trainer.YearsOfExperience years</dd>
+                    <dt>Approved</dt><dd>@(trainer.ApprovedAt?.ToString("d MMM yyyy") ?? "Not yet")</dd>
+                </dl>
+                <div class="divider"></div>
+                <div class="tiles-2">
+                    <div class="tile-stat"><span class="kpi">@trainer.ActiveClients<small>of @trainer.MaxClients</small></span><span class="xs subtle">Active clients</span></div>
+                    <div class="tile-stat"><span class="kpi">@trainer.Appointments</span><span class="xs subtle">Appointments</span></div>
+                    <div class="tile-stat"><span class="kpi">@trainer.WorkoutPlans</span><span class="xs subtle">Workout plans</span></div>
+                    <div class="tile-stat"><span class="kpi">@trainer.DietPlans</span><span class="xs subtle">Diet plans</span></div>
                 </div>
-            </div>
+            </section>
         }
     </div>
 </div>
 
-<div class="card shadow-sm mt-3">
-    <div class="card-body">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-            <h2 class="h5 mb-0">Recent activity</h2>
-            <a asp-controller="AuditLog" asp-action="Index" asp-route-userEmail="@Model.Email">Full audit log for this user</a>
+@if (Model.Client is { } planOwner && planOwner.Plans.Count > 0)
+{
+    @* EXT-02 (BR-24): move a plan that went to the wrong client. The administrator only corrects the link; the plan becomes
+       a draft and its professional checks and activates it. *@
+    <section class="card flush">
+        <div class="card-head pad">
+            <div class="vs gp-4"><h2 class="h2">Plans</h2><span class="small subtle">A plan given to the wrong client can be moved, while nothing has been logged against it. It becomes a draft for the professional to check.</span></div>
         </div>
-        @if (Model.RecentEvents.Count == 0)
-        {
-            <p class="text-muted mb-0">No audited activity yet.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead>
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th scope="col">Plan</th><th scope="col">Professional</th><th scope="col">Status</th><th scope="col">Starts</th><th scope="col"><span class="visually-hidden">Correction</span></th></tr></thead>
+                <tbody>
+                    @foreach (var plan in planOwner.Plans)
+                    {
                         <tr>
-                            <th scope="col">When</th>
-                            <th scope="col">Action</th>
-                            <th scope="col">Details</th>
+                            <th scope="row"><span class="cell-person"><span class="stat-icon" data-tone="@(plan.IsDietPlan ? "orange" : "blue")">@Icons.Svg(plan.IsDietPlan ? "apple" : "clipboard", 16)</span><span>@plan.Title<span class="sub">@(plan.IsDietPlan ? "Diet plan" : "Workout plan")</span></span></span></th>
+                            <td>@plan.TrainerName</td>
+                            <td><span class="badge @StatusBadges.For(plan.Status)">@plan.Status.GetDisplayName()</span></td>
+                            <td class="nowrap">@(plan.StartDate?.ToString("d MMM yyyy") ?? "–")</td>
+                            <td class="r small subtle">
+                                @if (plan.CanCorrect)
+                                {
+                                    <span>Can be moved</span>
+                                }
+                                else if (plan.HasLogs)
+                                {
+                                    <span>In use — stays with @firstName</span>
+                                }
+                                else if (plan.Status is not (PlanStatus.Draft or PlanStatus.Active))
+                                {
+                                    <span>Kept as history</span>
+                                }
+                                else
+                                {
+                                    <span>No other client of this professional</span>
+                                }
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.RecentEvents)
+                        @if (plan.CanCorrect)
                         {
-                            <tr>
-                                <td class="text-nowrap">@item.Timestamp.ToString("dd MMM yyyy HH:mm")</td>
-                                <td><span class="badge @StatusBadges.For(item.Action)">@item.Action.GetDisplayName()</span></td>
-                                <td>@item.Details</td>
+                            <tr class="correct-row">
+                                <td colspan="5">
+                                    <form class="correct-form" asp-action="CorrectPlan" asp-route-id="@Model.UserId" method="post"
+                                          data-confirm="Move “@plan.Title” away from @Model.FullName? It becomes a draft for @plan.TrainerName to check, and both they and @firstName are told.">
+                                        <input type="hidden" name="IsDietPlan" value="@(plan.IsDietPlan ? "true" : "false")" />
+                                        <input type="hidden" name="PlanId" value="@plan.PlanId" />
+                                        <div class="field">
+                                            <label class="xs subtle" for="target-@(plan.IsDietPlan ? "d" : "w")@plan.PlanId">Move “@plan.Title” to</label>
+                                            <select class="select select-sm" id="target-@(plan.IsDietPlan ? "d" : "w")@plan.PlanId" name="NewClientId" required>
+                                                <option value="">Choose the correct client…</option>
+                                                @foreach (var target in plan.CorrectionTargets)
+                                                {
+                                                    <option value="@target.Id">@target.Label</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div class="field reason">
+                                            <label class="xs subtle" for="reason-@(plan.IsDietPlan ? "d" : "w")@plan.PlanId">Reason (kept in the audit log)</label>
+                                            <input class="input input-sm" id="reason-@(plan.IsDietPlan ? "d" : "w")@plan.PlanId" name="Reason" required minlength="5" maxlength="300" placeholder="For example, the trainer picked the wrong client" />
+                                        </div>
+                                        <button type="submit" class="btn btn-secondary btn-sm">@Icons.Svg("user-check", 16)Move the plan</button>
+                                    </form>
+                                </td>
                             </tr>
                         }
-                    </tbody>
-                </table>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
+@if (Model.Trainer is { } departing && Model.AccountStatus is AccountStatus.Active or AccountStatus.Suspended && !Model.IsCurrentUser)
+{
+    @* EXT-01 (BR-23): close the account of a professional who has left, after reviewing who and what it affects. *@
+    <section class="card danger-zone">
+        <div class="hrow items-start gp-14">
+            <span class="stat-icon danger">@Icons.Svg("user-x", 18)</span>
+            <div class="vs gp-4">
+                <h2 class="h2">Close this professional's account</h2>
+                <p class="small subtle">For a professional who has left. They can no longer sign in; their plans, feedback, past appointments and assignments stay, still credited to them.</p>
             </div>
+        </div>
+        <div class="grid g-2">
+            <div class="review-list">
+                <span class="label">Clients still assigned</span>
+                @if (departing.ActiveClientNames.Count == 0)
+                {
+                    <span class="small c-green hrow gp-6">@Icons.Svg("check-circle", 16)None — everyone has been reassigned.</span>
+                }
+                else
+                {
+                    <span class="small c-amber">@string.Join(", ", departing.ActiveClientNames)</span>
+                    <a class="link-sm" asp-controller="Assignments" asp-action="Index">Reassign them first @Icons.Svg("chevron-right", 14)</a>
+                }
+            </div>
+            <div class="review-list">
+                <span class="label">Upcoming appointments that will be cancelled</span>
+                @if (departing.UpcomingAppointments.Count == 0)
+                {
+                    <span class="small subtle">None booked.</span>
+                }
+                else
+                {
+                    @foreach (var appointment in departing.UpcomingAppointments)
+                    {
+                        <span class="small">@appointment.StartDateTime.ToString("ddd d MMM, HH:mm") · @appointment.ClientName · @appointment.AppointmentType.GetDisplayName() <span class="badge @StatusBadges.For(appointment.Status)">@appointment.Status.GetDisplayName()</span></span>
+                    }
+                    <span class="xs subtle">Each client is told, with your reason, so they can book someone else.</span>
+                }
+            </div>
+        </div>
+        @if (departing.ActiveClientNames.Count == 0)
+        {
+            <form class="correct-form" asp-action="DeactivateTrainer" asp-route-id="@Model.UserId" method="post"
+                  data-confirm="Close @Model.FullName's account for good? They can't sign in again, and @departing.UpcomingAppointments.Count upcoming @(departing.UpcomingAppointments.Count == 1 ? "appointment is" : "appointments are") cancelled.">
+                <div class="field reason">
+                    <label for="deactivate-reason" class="label">Reason</label>
+                    <input id="deactivate-reason" name="Reason" class="input" required minlength="5" maxlength="300" placeholder="For example, left the practice on 31 October" />
+                    <span class="hint">Shown to clients whose sessions are cancelled, and kept in the audit log.</span>
+                </div>
+                <button type="submit" class="btn btn-danger-solid">@Icons.Svg("user-x", 18)Close the account</button>
+            </form>
         }
+    </section>
+}
+
+<section class="card flush">
+    <div class="card-head pad">
+        <h2 class="h2">Recent activity</h2>
+        <a class="link-sm" asp-controller="AuditLog" asp-action="Index" asp-route-userEmail="@Model.Email">Full audit log for @firstName @Icons.Svg("chevron-right", 14)</a>
     </div>
-</div>
+    @if (Model.RecentEvents.Count == 0)
+    {
+        <p class="small muted card-pad-bottom">No audited activity yet.</p>
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table class="table">
+                <thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">Details</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.RecentEvents)
+                    {
+                        <tr>
+                            <td class="nowrap">@item.Timestamp.ToString("d MMM yyyy")<span class="sub">@item.Timestamp.ToString("HH:mm")</span></td>
+                            <td><span class="badge @StatusBadges.For(item.Action)">@item.Action.GetDisplayName()</span></td>
+                            <td class="small">@(item.Details ?? "–")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

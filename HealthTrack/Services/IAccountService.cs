@@ -120,6 +120,20 @@ namespace HealthTrack.Services
         Task<bool> SetAccountStatusAsync(string userId, AccountStatus status, string actingAdminId);
 
         /// <summary>
+        /// Closes the account of a professional who has left (EXT-01, BR-23): their clients must already be reassigned;
+        /// their upcoming open appointments are cancelled with the reason and each client is told; the account becomes
+        /// Deactivated and is signed out. Their plans, feedback and past appointments stay, still credited to them.
+        /// </summary>
+        /// <param name="trainerUserId">The professional's user ID.</param>
+        /// <param name="reason">Why the account is closed; required.</param>
+        /// <param name="actingAdminId">The administrator closing it.</param>
+        /// <returns>False when the user isn't a professional.</returns>
+        /// <exception cref="Helpers.BusinessRuleException">
+        /// BR-23: the account isn't active or suspended, no reason was given, or clients are still assigned.
+        /// </exception>
+        Task<bool> DeactivateTrainerAsync(string trainerUserId, string reason, string actingAdminId);
+
+        /// <summary>
         /// One page of users with their roles, by name (UC29).
         /// </summary>
         /// <param name="filter">Optional search, role and status filters.</param>

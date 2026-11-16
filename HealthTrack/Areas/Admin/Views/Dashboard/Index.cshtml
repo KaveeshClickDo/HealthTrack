@@ -1,4 +1,5 @@
 @model AdminDashboardViewModel
+@inject IClock Clock
 @{
     ViewData["Title"] = "Dashboard";
     var loginsChart = new ChartCardViewModel
@@ -9,193 +10,152 @@
     {
         Title = "Appointments by status", Series = Model.AppointmentsByStatus, LabelHeader = "Status", EmptyText = "No appointments yet."
     };
+    string Count(string role) => Model.UsersByRole.FirstOrDefault(r => r.Role == role)?.Total.ToString() ?? "0";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
-    <div>
-        <h1 class="h2 mb-1">Welcome back, @Model.FirstName</h1>
-        <p class="text-muted mb-0">Users, approvals, assignments and usage across HealthTrack.</p>
+<div class="page-head">
+    <div class="intro">
+        <span class="eyebrow">@Clock.Now.ToString("dddd d MMMM")</span>
+        <h1 class="h1 page-title">Overview</h1>
+        <p>Users, approvals, assignments and usage across HealthTrack.</p>
     </div>
-    <a class="btn btn-outline-primary" asp-controller="Reports" asp-action="Engagement">Engagement report</a>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Users</div>
-            <div class="fs-3 fw-semibold">@Model.TotalUsers</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">New this month</div>
-            <div class="fs-3 fw-semibold">@Model.NewRegistrationsThisMonth</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Signed in, last 7 days</div>
-            <div class="fs-3 fw-semibold">@Model.ActiveUsersLast7Days</div>
-        </div></div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="card shadow-sm h-100"><div class="card-body">
-            <div class="small text-muted">Awaiting approval</div>
-            <div class="fs-3 fw-semibold @(Model.TrainersAwaitingApproval > 0 ? "text-warning" : string.Empty)">@Model.TrainersAwaitingApproval</div>
-            @if (Model.TrainersAwaitingApproval > 0)
-            {
-                <a class="small" asp-controller="TrainerApprovals" asp-action="Index">Review applications</a>
-            }
-        </div></div>
+    <div class="actions">
+        <a class="btn btn-secondary" asp-controller="Reports" asp-action="Engagement">@Icons.Svg("activity", 18)Engagement report</a>
+        <a class="btn btn-primary" asp-controller="TrainerApprovals" asp-action="Index">@Icons.Svg("user-check", 18)Review approvals</a>
     </div>
 </div>
 
-<div class="row g-3 mb-3">
-    <div class="col-lg-6">
-        <partial name="_ChartCard" model="loginsChart" />
+<div class="grid g-4">
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-blue">@Icons.Svg("users", 18)</span>Users</span>
+        <span class="kpi">@Model.TotalUsers</span>
+        <span class="stat-meta">@Count("Admin") admin · @Count("Trainer") professionals · @Count("Client") clients</span>
     </div>
-    <div class="col-lg-6">
-        <partial name="_ChartCard" model="appointmentsChart" />
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon i-green">@Icons.Svg("user-plus", 18)</span>New this month</span>
+        <span class="kpi">@Model.NewRegistrationsThisMonth</span>
+        <span class="stat-meta">Registrations since the 1st</span>
     </div>
-</div>
-
-<div class="row g-3 mb-3">
-    <div class="col-lg-6">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">Users by role and status</h2>
-                    <a class="small" asp-controller="Users" asp-action="Index">All users</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Role</th>
-                                <th scope="col" class="text-end">Active</th>
-                                <th scope="col" class="text-end">Pending</th>
-                                <th scope="col" class="text-end">Suspended</th>
-                                <th scope="col" class="text-end">Deactivated</th>
-                                <th scope="col" class="text-end">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in Model.UsersByRole)
-                            {
-                                <tr>
-                                    <th scope="row">@row.Role</th>
-                                    <td class="text-end">@row.Active</td>
-                                    <td class="text-end">@row.PendingApproval</td>
-                                    <td class="text-end">@row.Suspended</td>
-                                    <td class="text-end">@row.Deactivated</td>
-                                    <td class="text-end fw-semibold">@row.Total</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
+    <div class="card stat">
+        <span class="stat-label"><span class="stat-icon" data-tone="violet">@Icons.Svg("log-in", 18)</span>Signed in, last 7 days</span>
+        <span class="kpi">@Model.ActiveUsersLast7Days<small>of @Model.TotalUsers</small></span>
     </div>
-    <div class="col-lg-6">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">Unassigned clients</h2>
-                    <a class="small" asp-controller="Assignments" asp-action="Index">Assignments</a>
-                </div>
-                @if (Model.UnassignedClients.Count == 0)
-                {
-                    <p class="text-muted mb-0">Every active client has a trainer.</p>
-                }
-                else
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var client in Model.UnassignedClients)
-                        {
-                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
-                                <div>
-                                    @client.FullName
-                                    <div class="small text-muted">@client.Email · joined @client.JoinedAt.ToString("dd MMM yyyy")</div>
-                                </div>
-                                <a class="btn btn-sm btn-outline-primary" asp-controller="Assignments" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign</a>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        </section>
+    <div class="card stat @(Model.TrainersAwaitingApproval > 0 ? "attention" : string.Empty)">
+        <span class="stat-label"><span class="stat-icon" data-tone="amber">@Icons.Svg("clock", 18)</span>Awaiting approval</span>
+        <span class="kpi @(Model.TrainersAwaitingApproval > 0 ? "c-amber" : string.Empty)">@Model.TrainersAwaitingApproval</span>
+        @if (Model.TrainersAwaitingApproval > 0)
+        {
+            <a class="link-sm" asp-controller="TrainerApprovals" asp-action="Index">Review the @(Model.TrainersAwaitingApproval == 1 ? "application" : "applications") @Icons.Svg("chevron-right", 14)</a>
+        }
+        else
+        {
+            <span class="stat-meta">Nobody waiting</span>
+        }
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-lg-5">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <h2 class="h5">Trainer workload</h2>
-                @if (Model.TrainerLoad.Count == 0)
-                {
-                    <p class="text-muted mb-0">No approved professionals yet.</p>
-                }
-                else
-                {
-                    @foreach (var trainer in Model.TrainerLoad)
+<div class="grid g-2">
+    <partial name="_ChartCard" model="loginsChart" />
+    <partial name="_ChartCard" model="appointmentsChart" />
+</div>
+
+<div class="grid g-2">
+    <section class="card flush">
+        <div class="card-head pad"><h2 class="h3">Users by role and status</h2><a class="link-sm" asp-controller="Users" asp-action="Index">All users @Icons.Svg("chevron-right", 14)</a></div>
+        <div class="table-wrap">
+            <table class="table compact">
+                <thead><tr><th scope="col">Role</th><th scope="col" class="r">Active</th><th scope="col" class="r">Pending</th><th scope="col" class="r">Suspended</th><th scope="col" class="r">Deactivated</th><th scope="col" class="r">Total</th></tr></thead>
+                <tbody class="num">
+                    @foreach (var row in Model.UsersByRole)
                     {
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between small">
-                                <span>@trainer.FullName <span class="text-muted">· @trainer.ProfessionalType.GetDisplayName()</span></span>
-                                <span>@trainer.ActiveClients of @trainer.MaxClients</span>
-                            </div>
-                            <div class="progress" role="progressbar" aria-label="@trainer.FullName's load" aria-valuenow="@trainer.LoadPercent" aria-valuemin="0" aria-valuemax="100">
-                                <div class="progress-bar @(trainer.HasCapacity ? string.Empty : "bg-danger")" data-progress-width="@trainer.LoadPercent"></div>
-                            </div>
-                        </div>
+                        <tr>
+                            <th scope="row">@row.Role</th>
+                            <td class="r">@row.Active</td>
+                            <td class="r @(row.PendingApproval > 0 ? "c-amber" : string.Empty)">@row.PendingApproval</td>
+                            <td class="r">@row.Suspended</td>
+                            <td class="r">@row.Deactivated</td>
+                            <td class="r strong">@row.Total</td>
+                        </tr>
                     }
-                }
-            </div>
-        </section>
-    </div>
-    <div class="col-lg-7">
-        <section class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-baseline">
-                    <h2 class="h5">Latest audit events</h2>
-                    <a class="small" asp-controller="AuditLog" asp-action="Index">Audit log</a>
-                </div>
-                @if (Model.RecentAuditEvents.Count == 0)
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="card vs gp-14">
+        <div class="card-head">
+            <div class="hrow gap-10"><h2 class="h3">Unassigned clients</h2>@if (Model.UnassignedClients.Count > 0) {<span class="badge b-amber count-chip">@Model.UnassignedClients.Count</span>}</div>
+            <a class="link-sm" asp-controller="Assignments" asp-action="Index">Assignments @Icons.Svg("chevron-right", 14)</a>
+        </div>
+        @if (Model.UnassignedClients.Count == 0)
+        {
+            <p class="small muted">Every active client has a trainer.</p>
+        }
+        else
+        {
+            <ul class="list">
+                @foreach (var client in Model.UnassignedClients)
                 {
-                    <p class="text-muted mb-0">Nothing recorded yet.</p>
+                    <li class="hrow">
+                        <span class="avatar av-sm av-@(client.ClientId % 6 + 1)">@client.FullName.Initials()</span>
+                        <div class="grow meal-line"><div class="small strong">@client.FullName</div><div class="xs subtle truncate">@client.Email · joined @client.JoinedAt.ToString("d MMM yyyy")</div></div>
+                        <a class="btn btn-primary btn-sm" asp-controller="Assignments" asp-action="Assign" asp-route-clientId="@client.ClientId">Assign</a>
+                    </li>
                 }
-                else
+            </ul>
+        }
+    </section>
+</div>
+
+<div class="split">
+    <section class="aside card vs gp-16">
+        <div class="card-head"><h2 class="h3">Trainer workload</h2><a class="link-sm" asp-controller="Reports" asp-action="TrainerWorkload">Report @Icons.Svg("chevron-right", 14)</a></div>
+        @if (Model.TrainerLoad.Count == 0)
+        {
+            <p class="small muted">No approved professionals yet.</p>
+        }
+        else
+        {
+            <div class="load-list">
+                @foreach (var trainer in Model.TrainerLoad)
                 {
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th scope="col">When</th>
-                                    <th scope="col">Who</th>
-                                    <th scope="col">What</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Model.RecentAuditEvents)
-                                {
-                                    <tr>
-                                        <td class="text-nowrap small">@item.Timestamp.ToString("dd MMM yyyy HH:mm")</td>
-                                        <td class="small">@(item.UserName ?? item.UserEmail ?? "Unknown")</td>
-                                        <td class="small">
-                                            <span class="badge text-bg-light border">@item.Action.GetDisplayName()</span>
-                                            @item.Details
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                    <div class="vs gp-8">
+                        <div class="row-head">
+                            <span class="hrow gp-8"><span class="avatar av-sm av-trainer">@trainer.FullName.Initials()</span><span><span class="strong">@trainer.FullName</span> <span class="subtle">· @trainer.ProfessionalType.GetDisplayName()</span></span></span>
+                            <span class="num"><span class="strong">@trainer.ActiveClients</span> <span class="subtle">of @trainer.MaxClients</span></span>
+                        </div>
+                        <div class="bar" role="progressbar" aria-label="@trainer.FullName's load" aria-valuenow="@trainer.LoadPercent" aria-valuemin="0" aria-valuemax="100"><i class="@(trainer.HasCapacity ? string.Empty : "red")" data-progress-width="@trainer.LoadPercent"></i></div>
                     </div>
                 }
             </div>
-        </section>
-    </div>
+        }
+    </section>
+
+    <section class="main card flush">
+        <div class="card-head pad"><h2 class="h3">Latest audit events</h2><a class="link-sm" asp-controller="AuditLog" asp-action="Index">Audit log @Icons.Svg("chevron-right", 14)</a></div>
+        @if (Model.RecentAuditEvents.Count == 0)
+        {
+            <p class="small muted card-pad-bottom">Nothing recorded yet.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="table compact">
+                    <thead><tr><th scope="col">When</th><th scope="col">Who</th><th scope="col">What</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in Model.RecentAuditEvents)
+                        {
+                            <tr>
+                                <td class="nowrap">@item.Timestamp.ToString("d MMM yyyy")<span class="sub">@item.Timestamp.ToString("HH:mm")</span></td>
+                                <td>@(item.UserName ?? item.UserEmail ?? "Unknown")</td>
+                                <td><span class="badge @StatusBadges.For(item.Action)">@item.Action.GetDisplayName()</span> <span class="small muted">@item.Details</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
 </div>
 
 @section Scripts {

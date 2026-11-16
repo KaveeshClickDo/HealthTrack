@@ -203,6 +203,8 @@ Food: item calories = quantity × CaloriesPerServing, and the same for protein, 
 | BR-20 | Sensitive free-text health fields are encrypted at rest; numeric metrics stay plain for analytics | EncryptionService |
 | BR-21 | Exercises, foods and used plans are deactivated or archived, never hard-deleted | Services (IsActive, Status) |
 | BR-22 | Clients can export their data and delete their account; deletion anonymises the user and removes health records | AccountService |
+| BR-23 | A professional who leaves is closed (Deactivated) by an administrator only after their clients are reassigned and with a reason; their upcoming open appointments are cancelled with that reason and the clients notified; their plans, feedback and past records stay credited to them (EXT-01) | AccountService |
+| BR-24 | An administrator may move a draft or active plan that went to the wrong client, if nothing has been logged against it, to another client actively assigned to the same professional, with a reason; the plan becomes a draft for the professional to check and activate, and the professional and the previous client are notified and the move audited (EXT-02) | PlanCorrectionService |
 
 ### 1.12 Non-functional requirements
 

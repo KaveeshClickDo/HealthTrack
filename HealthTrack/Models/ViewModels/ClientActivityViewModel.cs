@@ -34,5 +34,8 @@ namespace HealthTrack.Models.ViewModels
 
         /// <summary>The most recent workout date.</summary>
         public DateTime? LastWorkoutDate { get; init; }
+
+        /// <summary>The client's workout and diet plans, for the plan correction (EXT-02).</summary>
+        public IReadOnlyList<ClientPlanViewModel> Plans { get; set; } = [];
     }
 }

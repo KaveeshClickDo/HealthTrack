@@ -117,6 +117,7 @@ public sealed class TestHost : IAsyncDisposable
         services.AddScoped<IReminderService, ReminderService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IPlanCorrectionService, PlanCorrectionService>();
 
         var host = new TestHost(services.BuildServiceProvider(), clock, httpContextAccessor);
 

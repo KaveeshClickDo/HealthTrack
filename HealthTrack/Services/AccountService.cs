@@ -532,6 +532,39 @@ namespace HealthTrack.Services
                 })
                 .FirstOrDefaultAsync();
 
+            if (client is not null)
+            {
+                client.Plans = await ClientPlansAsync(client.ClientId);
+            }
+
+            if (trainer is not null)
+            {
+                // What closing the account would touch (BR-23): clients still assigned, and open sessions to come.
+                trainer.ActiveClientNames = await _db.TrainerAssignments.AsNoTracking()
+                    .Where(a => a.TrainerId == trainer.TrainerId && a.EndDate == null)
+                    .OrderBy(a => a.Client.User.FirstName)
+                    .Select(a => a.Client.User.FirstName + " " + a.Client.User.LastName)
+                    .ToListAsync();
+                var now = _clock.Now;
+                trainer.UpcomingAppointments = await _db.Appointments.AsNoTracking()
+                    .Where(a => a.TrainerId == trainer.TrainerId && a.StartDateTime > now
+                        && (a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Approved || a.Status == AppointmentStatus.Rescheduled))
+                    .OrderBy(a => a.StartDateTime)
+                    .Select(a => new AppointmentListItemViewModel
+                    {
+                        AppointmentId = a.AppointmentId,
+                        StartDateTime = a.StartDateTime,
+                        DurationMinutes = a.DurationMinutes,
+                        AppointmentType = a.AppointmentType,
+                        Mode = a.Mode,
+                        Status = a.Status,
+                        ClientName = a.Client.User.FirstName + " " + a.Client.User.LastName,
+                        TrainerName = user.FirstName + " " + user.LastName,
+                        ProfessionalType = trainer.ProfessionalType
+                    })
+                    .ToListAsync();
+            }
+
             var recentEvents = await _db.AuditLogs.AsNoTracking()
                 .Where(a => a.UserId == userId)
                 .OrderByDescending(a => a.Timestamp)
@@ -569,6 +602,138 @@ namespace HealthTrack.Services
                 Trainer = trainer,
                 RecentEvents = recentEvents
             };
+        }
+
+        // A client's workout and diet plans, each with the clients it could be moved to (EXT-02): the others actively
+        // assigned to the plan's professional. Counts and titles only, never the plan's contents.
+        private async Task<IReadOnlyList<ClientPlanViewModel>> ClientPlansAsync(int clientId)
+        {
+            var workout = await _db.WorkoutPlans.AsNoTracking()
+                .Where(p => p.ClientId == clientId && !p.IsTemplate)
+                .Select(p => new
+                {
+                    IsDiet = false,
+                    Id = p.WorkoutPlanId,
+                    p.Title,
+                    p.Status,
+                    p.TrainerId,
+                    TrainerName = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
+                    p.StartDate,
+                    HasLogs = _db.WorkoutLogs.Any(l => l.WorkoutPlanId == p.WorkoutPlanId)
+                })
+                .ToListAsync();
+            var diet = await _db.DietPlans.AsNoTracking()
+                .Where(p => p.ClientId == clientId)
+                .Select(p => new
+                {
+                    IsDiet = true,
+                    Id = p.DietPlanId,
+                    p.Title,
+                    p.Status,
+                    p.TrainerId,
+                    TrainerName = p.Trainer.User.FirstName + " " + p.Trainer.User.LastName,
+                    StartDate = (DateTime?)p.StartDate,
+                    HasLogs = _db.MealLogs.Any(l => l.DietPlanMeal != null && l.DietPlanMeal.DietPlanId == p.DietPlanId)
+                })
+                .ToListAsync();
+
+            var trainerIds = workout.Select(p => p.TrainerId).Concat(diet.Select(p => p.TrainerId)).Distinct().ToList();
+            var targets = (await _db.TrainerAssignments.AsNoTracking()
+                    .Where(a => trainerIds.Contains(a.TrainerId) && a.EndDate == null && a.ClientId != clientId)
+                    .Select(a => new { a.TrainerId, a.ClientId, Name = a.Client.User.FirstName + " " + a.Client.User.LastName })
+                    .ToListAsync())
+                .GroupBy(a => a.TrainerId)
+                .ToDictionary(g => g.Key, g => (IReadOnlyList<SelectOptionViewModel>)g
+                    .OrderBy(a => a.Name)
+                    .Select(a => new SelectOptionViewModel(a.ClientId, a.Name))
+                    .ToList());
+
+            return workout.Concat(diet)
+                .OrderBy(p => p.Status == PlanStatus.Active ? 0 : p.Status == PlanStatus.Draft ? 1 : 2)
+                .ThenByDescending(p => p.StartDate)
+                .Select(p => new ClientPlanViewModel
+                {
+                    IsDietPlan = p.IsDiet,
+                    PlanId = p.Id,
+                    Title = p.Title,
+                    Status = p.Status,
+                    TrainerName = p.TrainerName,
+                    StartDate = p.StartDate,
+                    HasLogs = p.HasLogs,
+                    CorrectionTargets = targets.GetValueOrDefault(p.TrainerId) ?? []
+                })
+                .ToList();
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> DeactivateTrainerAsync(string trainerUserId, string reason, string actingAdminId)
+        {
+            var trainer = await _db.TrainerProfiles.Include(t => t.User).FirstOrDefaultAsync(t => t.UserId == trainerUserId);
+            if (trainer is null)
+            {
+                return false;
+            }
+
+            // BR-23: only a professional who is working (or suspended) is closed this way; a pending registration is
+            // rejected instead, and a closed account stays closed.
+            if (trainer.User.AccountStatus is not (AccountStatus.Active or AccountStatus.Suspended))
+            {
+                throw new BusinessRuleException("BR-23", "Only an active or suspended professional's account can be closed.");
+            }
+
+            var trimmedReason = reason?.Trim();
+            if (string.IsNullOrEmpty(trimmedReason))
+            {
+                throw new BusinessRuleException("BR-23", "Give the reason for closing the account.");
+            }
+
+            // BR-23: clients are never left without a trainer; the administrator reassigns them first (UC31).
+            var assigned = await _db.TrainerAssignments.CountAsync(a => a.TrainerId == trainer.TrainerId && a.EndDate == null);
+            if (assigned > 0)
+            {
+                throw new BusinessRuleException("BR-23",
+                    $"Reassign this professional's {assigned} {(assigned == 1 ? "client" : "clients")} to someone else first.");
+            }
+
+            var now = _clock.Now;
+            var name = trainer.User.FullName;
+            var open = await _db.Appointments.Include(a => a.Client)
+                .Where(a => a.TrainerId == trainer.TrainerId && a.StartDateTime > now
+                    && (a.Status == AppointmentStatus.Pending || a.Status == AppointmentStatus.Approved || a.Status == AppointmentStatus.Rescheduled))
+                .ToListAsync();
+
+            await using var transaction = await _db.Database.BeginTransactionAsync();
+
+            // Sessions still to come are cancelled with the reason, and each client is told so they can book someone else.
+            var cancellationReason = $"{name} has left HealthTrack. {trimmedReason}".Truncate(500)!;
+            foreach (var appointment in open)
+            {
+                if (appointment.Status == AppointmentStatus.Pending)
+                {
+                    appointment.Reject(cancellationReason);
+                }
+                else
+                {
+                    appointment.CancelByTrainer(cancellationReason, now);
+                }
+
+                appointment.UpdatedAt = now;
+                await _notifications.NotifyAsync(appointment.Client.UserId, NotificationType.AppointmentUpdate, "Appointment cancelled",
+                    $"Your {appointment.AppointmentType.GetDisplayName().ToLowerInvariant()} on {appointment.StartDateTime:dd MMM yyyy} at {appointment.StartDateTime:HH:mm} " +
+                    $"with {name} was cancelled because they have left HealthTrack. You can book with another professional.",
+                    $"/Client/Appointments/Details/{appointment.AppointmentId}");
+            }
+
+            // The account closes for good; a new security stamp signs them out within a minute (BR-05). Their plans,
+            // feedback, past appointments and assignments stay as history, still credited to them.
+            trainer.User.AccountStatus = AccountStatus.Deactivated;
+            ThrowIfFailed(await _userManager.UpdateSecurityStampAsync(trainer.User));
+
+            await _audit.LogAsync(actingAdminId, AuditAction.Update, nameof(ApplicationUser), trainer.UserId,
+                $"Professional account closed: {trainer.User.Email}. {open.Count} upcoming {(open.Count == 1 ? "appointment" : "appointments")} cancelled. Reason: {trimmedReason}".Truncate(500));
+
+            await transaction.CommitAsync();
+            return true;
         }
 
         /// <inheritdoc />
